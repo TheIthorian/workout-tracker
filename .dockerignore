@@ -1,0 +1,27 @@
+# Everything the build stage does not need. Keeping this tight matters more than usual here: the
+# build stage copies the whole repo, so anything listed below would otherwise be sent to the daemon
+# and land in a layer.
+node_modules
+**/node_modules
+dist
+**/dist
+.turbo
+**/.turbo
+*.tsbuildinfo
+**/*.tsbuildinfo
+
+# Secrets. `.env.example` is deliberately NOT ignored - it is the documentation.
+.env
+**/.env
+!**/.env.example
+
+.git
+.github
+.worktrees
+.superpowers
+bench/results
+docs
+*.log
+**/*.log
+.DS_Store
+**/.DS_Store

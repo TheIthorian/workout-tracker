@@ -1,0 +1,16 @@
+{
+    "extends": "@app/tsconfig/base.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "rootDir": "src",
+        "types": ["node"],
+        "composite": true
+    },
+    "include": ["src"],
+    "references": [
+        { "path": "../../packages/auth" },
+        { "path": "../../packages/db" },
+        { "path": "../../packages/env" },
+        { "path": "../../packages/errors" }
+    ]
+}

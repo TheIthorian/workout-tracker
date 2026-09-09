@@ -1,0 +1,10 @@
+{
+    "extends": "@app/tsconfig/nestjs.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "rootDir": "src",
+        "composite": true
+    },
+    "include": ["src"],
+    "references": [{ "path": "../auth" }, { "path": "../errors" }, { "path": "../logger" }]
+}

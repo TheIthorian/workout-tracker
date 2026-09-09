@@ -1,0 +1,36 @@
+{
+    "extends": "@app/tsconfig/nestjs.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "rootDir": "src",
+        "types": ["node"],
+        "composite": true
+    },
+    "include": ["src"],
+    "references": [
+        {
+            "path": "../../packages/api-contract"
+        },
+        {
+            "path": "../../packages/auth"
+        },
+        {
+            "path": "../../packages/db"
+        },
+        {
+            "path": "../../packages/env"
+        },
+        {
+            "path": "../../packages/errors"
+        },
+        {
+            "path": "../../packages/logger"
+        },
+        {
+            "path": "../../packages/nest-common"
+        },
+        {
+            "path": "../../packages/services"
+        }
+    ]
+}

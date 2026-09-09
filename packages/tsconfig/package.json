@@ -1,0 +1,13 @@
+{
+    "name": "@app/tsconfig",
+    "version": "0.0.1",
+    "private": true,
+    "exports": {
+        "./base.json": "./base.json",
+        "./nestjs.json": "./nestjs.json",
+        "./react.json": "./react.json"
+    },
+    "scripts": {
+        "format": "oxfmt --config ../../.oxfmtrc.json ."
+    }
+}

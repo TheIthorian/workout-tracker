@@ -1,0 +1,27 @@
+{
+    "extends": "@app/tsconfig/base.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "rootDir": "src",
+        "types": ["node"],
+        "composite": true
+    },
+    "include": ["src"],
+    "references": [
+        {
+            "path": "../api-contract"
+        },
+        {
+            "path": "../auth"
+        },
+        {
+            "path": "../db"
+        },
+        {
+            "path": "../errors"
+        },
+        {
+            "path": "../logger"
+        }
+    ]
+}

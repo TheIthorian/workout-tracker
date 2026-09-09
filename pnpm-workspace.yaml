@@ -1,0 +1,13 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+overrides:
+  fastify: $fastify
+allowBuilds:
+  '@swc/core': true
+  core-js: true
+  cpu-features: set this to true or false
+  esbuild: true
+  protobufjs: true
+  ssh2: set this to true or false
+  workerd: true

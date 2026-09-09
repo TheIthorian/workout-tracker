@@ -1,0 +1,55 @@
+{
+    "$schema": "https://json.schemastore.org/tsconfig",
+    "extends": "./packages/tsconfig/base.json",
+    "compilerOptions": {
+        "noEmit": true
+    },
+    "include": [],
+    "references": [
+        {
+            "path": "./packages/api-contract"
+        },
+        {
+            "path": "./packages/api-client"
+        },
+        {
+            "path": "./packages/domain"
+        },
+        {
+            "path": "./packages/errors"
+        },
+        {
+            "path": "./packages/logger"
+        },
+        {
+            "path": "./packages/nest-common"
+        },
+        {
+            "path": "./packages/llm"
+        },
+        {
+            "path": "./packages/env"
+        },
+        {
+            "path": "./packages/db"
+        },
+        {
+            "path": "./packages/auth"
+        },
+        {
+            "path": "./packages/storage"
+        },
+        {
+            "path": "./packages/services"
+        },
+        {
+            "path": "./apps/admin"
+        },
+        {
+            "path": "./apps/api"
+        },
+        {
+            "path": "./apps/mcp"
+        }
+    ]
+}

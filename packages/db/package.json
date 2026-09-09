@@ -1,0 +1,43 @@
+{
+    "name": "@app/db",
+    "version": "0.0.1",
+    "private": true,
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
+        },
+        "./testing": {
+            "types": "./dist/testing/index.d.ts",
+            "default": "./dist/testing/index.js"
+        }
+    },
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "dev": "tsc -p tsconfig.build.json --watch",
+        "test": "vitest run",
+        "lint": "oxlint .",
+        "format": "oxfmt --config ../../.oxfmtrc.json .",
+        "db:generate": "drizzle-kit generate",
+        "db:migrate": "drizzle-kit migrate",
+        "db:studio": "drizzle-kit studio"
+    },
+    "dependencies": {
+        "@app/errors": "workspace:*",
+        "drizzle-orm": "0.45.2",
+        "pg": "8.23.0"
+    },
+    "devDependencies": {
+        "@app/logger": "workspace:*",
+        "@app/tsconfig": "workspace:*",
+        "@testcontainers/postgresql": "12.1.0",
+        "@types/node": "26.2.0",
+        "@types/pg": "8.23.1",
+        "drizzle-kit": "0.31.10",
+        "testcontainers": "12.1.0",
+        "typescript": "6.0.3",
+        "vitest": "4.1.10"
+    }
+}

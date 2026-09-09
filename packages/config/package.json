@@ -1,0 +1,15 @@
+{
+    "name": "@app/config",
+    "version": "0.0.1",
+    "private": true,
+    "exports": {
+        "./oxlint.json": "./oxlint.json"
+    },
+    "scripts": {
+        "format": "oxfmt --config ../../.oxfmtrc.json ."
+    },
+    "dependencies": {
+        "oxfmt": "0.60.0",
+        "oxlint": "1.75.0"
+    }
+}

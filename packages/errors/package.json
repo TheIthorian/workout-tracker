@@ -1,0 +1,19 @@
+{
+    "name": "@app/errors",
+    "version": "0.0.1",
+    "private": true,
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "dev": "tsc -p tsconfig.build.json --watch",
+        "test": "vitest run",
+        "lint": "oxlint .",
+        "format": "oxfmt --config ../../.oxfmtrc.json ."
+    },
+    "devDependencies": {
+        "@app/tsconfig": "workspace:*",
+        "typescript": "6.0.3",
+        "vitest": "4.1.10"
+    }
+}

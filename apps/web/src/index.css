@@ -1,0 +1,172 @@
+@import './fonts.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
+All colors MUST be HSL.
+*/
+
+@layer base {
+    :root {
+        --background: 40 20% 97%;
+        --foreground: 220 15% 15%;
+
+        --card: 40 15% 99%;
+        --card-foreground: 220 15% 15%;
+
+        --popover: 40 15% 99%;
+        --popover-foreground: 220 15% 15%;
+
+        /* 36% lightness keeps white text on a primary fill at 4.82:1, and primary-as-text on the
+           page background at 4.82:1. At the previous 38% both landed on 4.40:1, under WCAG AA. */
+        --primary: 152 38% 36%;
+        --primary-foreground: 0 0% 100%;
+        --primary-hover: 152 38% 30%;
+
+        --secondary: 40 12% 93%;
+        --secondary-foreground: 220 15% 20%;
+
+        --muted: 40 10% 94%;
+        --muted-foreground: 220 10% 46%;
+
+        --accent: 24 80% 55%;
+        --accent-foreground: 0 0% 100%;
+
+        /* Success green for positive transactions */
+        --success: 142 71% 45%;
+        --success-foreground: 0 0% 100%;
+        --success-light: 142 71% 95%;
+
+        /* Warning amber for alerts */
+        --warning: 38 92% 50%;
+        --warning-foreground: 0 0% 100%;
+        --warning-light: 38 92% 95%;
+
+        /* Error red for negative transactions */
+        --destructive: 0 84% 60%;
+        --destructive-foreground: 0 0% 100%;
+        --destructive-light: 0 84% 95%;
+
+        --border: 40 12% 90%;
+        --input: 40 12% 90%;
+        --ring: 152 38% 38%;
+
+        --radius: 0.75rem;
+
+        --font-heading: 'DM Serif Display', serif;
+        --font-body: 'DM Sans', system-ui, sans-serif;
+
+        /* Sidebar colors */
+        --sidebar-background: 40 15% 96%;
+        --sidebar-foreground: 220 15% 15%;
+        --sidebar-primary: 152 38% 36%;
+        --sidebar-primary-foreground: 0 0% 100%;
+        --sidebar-accent: 40 12% 93%;
+        --sidebar-accent-foreground: 220 15% 20%;
+        --sidebar-border: 40 12% 90%;
+        --sidebar-ring: 152 38% 38%;
+
+        /* Animations */
+        --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .dark {
+        --background: 220 15% 10%;
+        --foreground: 40 10% 92%;
+
+        --card: 220 15% 13%;
+        --card-foreground: 40 10% 92%;
+
+        --popover: 220 15% 13%;
+        --popover-foreground: 40 10% 92%;
+
+        /* Dark mode uses primary two ways that pull the lightness in opposite directions: as text
+           on a dark surface (wants lighter) and as a fill behind its foreground (wants darker with
+           white text). Resolved by lightening the fill to 50% — primary-as-text now clears the
+           header background at 5.51:1 — and flipping the foreground to near-black, which reads
+           5.58:1 on the fill. White on the old 45% fill was 3.26:1. */
+        --primary: 152 38% 50%;
+        --primary-foreground: 152 45% 12%;
+        --primary-hover: 152 38% 56%;
+
+        --secondary: 220 12% 18%;
+        --secondary-foreground: 40 10% 90%;
+
+        --muted: 220 10% 20%;
+        --muted-foreground: 220 10% 60%;
+
+        --accent: 24 80% 55%;
+        --accent-foreground: 0 0% 100%;
+
+        --success: 142 71% 50%;
+        --success-foreground: 0 0% 100%;
+        --success-light: 142 71% 15%;
+
+        --warning: 38 92% 55%;
+        --warning-foreground: 0 0% 100%;
+        --warning-light: 38 92% 15%;
+
+        --destructive: 0 84% 65%;
+        --destructive-foreground: 0 0% 100%;
+        --destructive-light: 0 84% 15%;
+
+        --border: 220 12% 20%;
+        --input: 220 12% 20%;
+        --ring: 152 38% 45%;
+
+        --sidebar-background: 220 15% 8%;
+        --sidebar-foreground: 40 10% 92%;
+        --sidebar-primary: 152 38% 50%;
+        --sidebar-primary-foreground: 152 45% 12%;
+        --sidebar-accent: 220 12% 15%;
+        --sidebar-accent-foreground: 40 10% 90%;
+        --sidebar-border: 220 12% 18%;
+        --sidebar-ring: 152 38% 45%;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    html,
+    body {
+        @apply bg-background text-foreground;
+        /* `clip` still suppresses sideways overflow but, unlike `hidden`, does not turn the
+           document into a scroll container — which silently breaks position: sticky. */
+        overflow-x: clip;
+    }
+
+    body {
+        min-width: 0;
+        font-family: var(--font-body);
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+        font-family: var(--font-heading);
+    }
+}
+
+@layer utilities {
+    .font-heading {
+        font-family: var(--font-heading);
+    }
+
+    .font-body {
+        font-family: var(--font-body);
+    }
+
+    .safe-area-pb {
+        padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    .safe-area-pt {
+        padding-top: env(safe-area-inset-top, 0);
+    }
+}

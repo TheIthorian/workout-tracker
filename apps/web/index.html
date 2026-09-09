@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>App</title>
+        <meta name="description" content="A starting point for a new application." />
+
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+        <!--
+            The two faces every page paints with. Without these the browser only discovers them
+            after it has downloaded and parsed the stylesheet, which is itself render-blocking.
+            The latin-ext subsets are deliberately not preloaded: they are only fetched when a page
+            actually contains characters in that range.
+        -->
+        <link rel="preload" href="/fonts/dm-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="preload" href="/fonts/dm-serif-display-latin.woff2" as="font" type="font/woff2" crossorigin />
+
+        <meta property="og:title" content="App" />
+        <meta property="og:description" content="A starting point for a new application." />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="App" />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="App" />
+        <meta name="twitter:description" content="A starting point for a new application." />
+    </head>
+
+    <body>
+        <div id="root"></div>
+        <script type="module" src="/src/main.tsx"></script>
+    </body>
+</html>

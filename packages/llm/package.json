@@ -1,0 +1,25 @@
+{
+    "name": "@app/llm",
+    "version": "0.0.1",
+    "private": true,
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "dev": "tsc -p tsconfig.build.json --watch",
+        "test": "vitest run",
+        "lint": "oxlint .",
+        "format": "oxfmt --config ../../.oxfmtrc.json ."
+    },
+    "dependencies": {
+        "@app/errors": "workspace:*",
+        "@app/logger": "workspace:*",
+        "openai": "7.5.0"
+    },
+    "devDependencies": {
+        "@app/tsconfig": "workspace:*",
+        "@types/node": "26.2.0",
+        "typescript": "6.0.3",
+        "vitest": "4.1.10"
+    }
+}
