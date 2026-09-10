@@ -17,6 +17,7 @@ let guides: ExerciseGuideService;
 let userId: string;
 let workspaceId: string;
 let exerciseId: string;
+let siblingExerciseId: string;
 let outsiderId: string;
 let otherWorkspaceId: string;
 let otherExerciseId: string;
@@ -32,6 +33,9 @@ beforeAll(async () => {
     workspaceId = await seedWorkspace(db, userId);
     exerciseId = (
         await exercises.create({ userId, workspaceId, name: 'Bench Press', trackingType: TrackingType.WeightReps })
+    ).id;
+    siblingExerciseId = (
+        await exercises.create({ userId, workspaceId, name: 'Squat', trackingType: TrackingType.WeightReps })
     ).id;
 
     outsiderId = await seedUser(db, 'Outsider');
@@ -159,6 +163,67 @@ describe('images', () => {
             workspaceId: otherWorkspaceId,
             exerciseId: otherExerciseId,
         });
+        expect(detail.images.map((entry) => entry.id)).toContain(image.id);
+    });
+});
+
+describe('cross-exercise boundary within the same workspace', () => {
+    it('refuses to update a link through a sibling exercise id, and leaves it unchanged', async () => {
+        const link = await guides.addLink({
+            userId,
+            workspaceId,
+            exerciseId,
+            url: 'https://example.com/sibling-update',
+            label: 'Original',
+        });
+
+        await expect(
+            guides.updateLink({
+                userId,
+                workspaceId,
+                exerciseId: siblingExerciseId,
+                linkId: link.id,
+                label: 'Hijacked',
+            }),
+        ).rejects.toBeInstanceOf(EntityNotFoundError);
+
+        const detail = await exercises.get({ userId, workspaceId, exerciseId });
+        expect(detail.links.find((entry) => entry.id === link.id)).toMatchObject({
+            url: 'https://example.com/sibling-update',
+            label: 'Original',
+        });
+    });
+
+    it('refuses to remove a link through a sibling exercise id, and leaves it in place', async () => {
+        const link = await guides.addLink({
+            userId,
+            workspaceId,
+            exerciseId,
+            url: 'https://example.com/sibling-remove',
+        });
+
+        await expect(
+            guides.removeLink({ userId, workspaceId, exerciseId: siblingExerciseId, linkId: link.id }),
+        ).rejects.toBeInstanceOf(EntityNotFoundError);
+
+        const detail = await exercises.get({ userId, workspaceId, exerciseId });
+        expect(detail.links.map((entry) => entry.id)).toContain(link.id);
+    });
+
+    it('refuses to remove an image through a sibling exercise id, and leaves it in place', async () => {
+        const image = await guides.addImage({
+            userId,
+            workspaceId,
+            exerciseId,
+            storageKey: 'sibling.png',
+            contentType: 'image/png',
+        });
+
+        await expect(
+            guides.removeImage({ userId, workspaceId, exerciseId: siblingExerciseId, imageId: image.id }),
+        ).rejects.toBeInstanceOf(EntityNotFoundError);
+
+        const detail = await exercises.get({ userId, workspaceId, exerciseId });
         expect(detail.images.map((entry) => entry.id)).toContain(image.id);
     });
 });
