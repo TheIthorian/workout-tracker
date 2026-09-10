@@ -71,6 +71,10 @@ export const exerciseGuideImages = pgTable(
             .notNull(),
     },
     (table) => [
+        index('exercise_guide_images_workspace_id_idx').using(
+            'btree',
+            table.workspaceId.asc().nullsLast().op('uuid_ops'),
+        ),
         index('exercise_guide_images_exercise_id_idx').using(
             'btree',
             table.exerciseId.asc().nullsLast().op('uuid_ops'),
@@ -103,6 +107,7 @@ export const exerciseLinks = pgTable(
             .notNull(),
     },
     (table) => [
+        index('exercise_links_workspace_id_idx').using('btree', table.workspaceId.asc().nullsLast().op('uuid_ops')),
         index('exercise_links_exercise_id_idx').using('btree', table.exerciseId.asc().nullsLast().op('uuid_ops')),
         foreignKey({
             columns: [table.workspaceId],

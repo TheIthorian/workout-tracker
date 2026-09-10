@@ -1,0 +1,2 @@
+CREATE INDEX "exercise_guide_images_workspace_id_idx" ON "exercise_guide_images" USING btree ("workspace_id" uuid_ops);--> statement-breakpoint
+CREATE INDEX "exercise_links_workspace_id_idx" ON "exercise_links" USING btree ("workspace_id" uuid_ops);
