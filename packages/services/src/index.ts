@@ -1,3 +1,4 @@
+export { ExerciseGuideService } from './exercise-guide.service.js';
 export {
     ExercisesService,
     type ExerciseDetail,
