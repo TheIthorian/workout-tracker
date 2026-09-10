@@ -18,7 +18,15 @@ async function signUpUser(): Promise<{ cookie: string; workspaceId: string; user
     return { cookie, userId: body.userId, workspaceId: body.workspaces[0]?.workspaceId as string };
 }
 
-async function createExercise(cookie: string, workspaceId: string, payload: Record<string, unknown>): Promise<string> {
+async function createExercise({
+    cookie,
+    workspaceId,
+    payload,
+}: {
+    cookie: string;
+    workspaceId: string;
+    payload: Record<string, unknown>;
+}): Promise<string> {
     const response = await app.inject({
         method: 'POST',
         url: `/api/v1/workspaces/${workspaceId}/exercises`,
@@ -103,9 +111,10 @@ describe('exercise routes', () => {
     it("returns 404 for another workspace's exercise", async () => {
         const owner = await signUpUser();
         const outsider = await signUpUser();
-        const exerciseId = await createExercise(owner.cookie, owner.workspaceId, {
-            name: 'Theirs',
-            trackingType: 'weight_reps',
+        const exerciseId = await createExercise({
+            cookie: owner.cookie,
+            workspaceId: owner.workspaceId,
+            payload: { name: 'Theirs', trackingType: 'weight_reps' },
         });
 
         const response = await app.inject({
@@ -119,11 +128,15 @@ describe('exercise routes', () => {
 
     it('updates one guide field and leaves the others alone', async () => {
         const { cookie, workspaceId } = await signUpUser();
-        const exerciseId = await createExercise(cookie, workspaceId, {
-            name: 'Squat',
-            trackingType: 'weight_reps',
-            guideSetup: 'Bar on traps.',
-            guideCues: 'Knees out.',
+        const exerciseId = await createExercise({
+            cookie,
+            workspaceId,
+            payload: {
+                name: 'Squat',
+                trackingType: 'weight_reps',
+                guideSetup: 'Bar on traps.',
+                guideCues: 'Knees out.',
+            },
         });
 
         const patched = await app.inject({
@@ -142,9 +155,10 @@ describe('exercise routes', () => {
 
     it('hides an archived exercise from the default list', async () => {
         const { cookie, workspaceId } = await signUpUser();
-        const exerciseId = await createExercise(cookie, workspaceId, {
-            name: 'Retired',
-            trackingType: 'duration',
+        const exerciseId = await createExercise({
+            cookie,
+            workspaceId,
+            payload: { name: 'Retired', trackingType: 'duration' },
         });
 
         await app.inject({
@@ -165,8 +179,8 @@ describe('exercise routes', () => {
 
     it('filters the list by search', async () => {
         const { cookie, workspaceId } = await signUpUser();
-        await createExercise(cookie, workspaceId, { name: 'Bench Press', trackingType: 'weight_reps' });
-        await createExercise(cookie, workspaceId, { name: 'Plank', trackingType: 'duration' });
+        await createExercise({ cookie, workspaceId, payload: { name: 'Bench Press', trackingType: 'weight_reps' } });
+        await createExercise({ cookie, workspaceId, payload: { name: 'Plank', trackingType: 'duration' } });
 
         const listed = await app.inject({
             method: 'GET',
