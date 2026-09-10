@@ -18,6 +18,7 @@
         "format": "oxfmt --config ../../.oxfmtrc.json ."
     },
     "dependencies": {
+        "@app/domain": "workspace:*",
         "zod": "4.4.3"
     },
     "devDependencies": {

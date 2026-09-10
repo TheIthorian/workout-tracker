@@ -17,3 +17,13 @@ export function itemWebPath({ workspaceId, itemId }: { workspaceId: string; item
 export function itemApiPath({ workspaceId, itemId }: { workspaceId: string; itemId: string }): string {
     return `/workspaces/${workspaceId}/items/${itemId}`;
 }
+
+/** The exercise's page in the SPA. */
+export function exerciseWebPath({ workspaceId, exerciseId }: { workspaceId: string; exerciseId: string }): string {
+    return `/workspaces/${workspaceId}/exercises/${exerciseId}`;
+}
+
+/** The exercise's own REST route, without the `/api/v1` prefix the generator adds. */
+export function exerciseApiPath({ workspaceId, exerciseId }: { workspaceId: string; exerciseId: string }): string {
+    return `/workspaces/${workspaceId}/exercises/${exerciseId}`;
+}
