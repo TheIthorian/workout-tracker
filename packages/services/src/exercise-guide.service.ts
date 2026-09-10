@@ -148,6 +148,42 @@ export class ExerciseGuideService {
     }
 
     /**
+     * One image record, including the storage key its bytes live under.
+     *
+     * @throws EntityNotFoundError when the caller is not a member, or the image is not on this
+     * exercise in this workspace.
+     */
+    async getImage({
+        userId,
+        workspaceId,
+        exerciseId,
+        imageId,
+    }: {
+        userId: string;
+        workspaceId: string;
+        exerciseId: string;
+        imageId: string;
+    }): Promise<ExerciseGuideImage> {
+        await this.requireExercise({ userId, workspaceId, exerciseId });
+
+        const [row] = await this.db
+            .select(IMAGE_COLUMNS)
+            .from(exerciseGuideImages)
+            .where(
+                scopedToWorkspace(
+                    exerciseGuideImages,
+                    workspaceId,
+                    eq(exerciseGuideImages.id, imageId),
+                    eq(exerciseGuideImages.exerciseId, exerciseId),
+                ),
+            );
+
+        if (!row) throw new EntityNotFoundError('Exercise image not found');
+
+        return row;
+    }
+
+    /**
      * Deletes an image record.
      *
      * @returns the storage key of the deleted row, so the caller can remove the stored object.

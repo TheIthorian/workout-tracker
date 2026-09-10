@@ -50,17 +50,16 @@ const schema = Joi.object({
     LLM_API_KEY: Joi.string().allow('').default(''),
     LLM_BASE_URL: Joi.string().uri().default('https://openrouter.ai/api/v1'),
     LLM_MODEL: Joi.string().default('openai/gpt-4o-mini'),
-    // S3/MinIO object storage. Optional as a group: a template app may not store files at all, and
-    // `S3_BUCKET` being unset is what turns storage off. If you make storage core to your app,
-    // change `S3_BUCKET` and the credentials to `.required()` so a misconfigured deployment fails
-    // at boot rather than on a user's first upload. ENDPOINT/REGION/FORCE_PATH_STYLE have real,
-    // safe defaults (unset endpoint means real AWS S3; path-style addressing, which MinIO needs and
-    // AWS tolerates).
+    // S3/MinIO object storage. The bucket and its credentials are required: exercise guide images
+    // are uploaded to and served from this bucket, so a deployment that exposes those routes with
+    // storage silently disabled would fail on a user's first upload rather than at boot.
+    // ENDPOINT/REGION/FORCE_PATH_STYLE have real, safe defaults (unset endpoint means real AWS S3;
+    // path-style addressing, which MinIO needs and AWS tolerates).
     S3_ENDPOINT: Joi.string().optional(),
     S3_REGION: Joi.string().default('us-east-1'),
-    S3_BUCKET: Joi.string().allow('').default(''),
-    S3_ACCESS_KEY_ID: Joi.string().allow('').default(''),
-    S3_SECRET_ACCESS_KEY: Joi.string().allow('').default(''),
+    S3_BUCKET: Joi.string().required(),
+    S3_ACCESS_KEY_ID: Joi.string().required(),
+    S3_SECRET_ACCESS_KEY: Joi.string().required(),
     S3_FORCE_PATH_STYLE: Joi.boolean().default(true),
 });
 

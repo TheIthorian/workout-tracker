@@ -27,3 +27,16 @@ export function exerciseWebPath({ workspaceId, exerciseId }: { workspaceId: stri
 export function exerciseApiPath({ workspaceId, exerciseId }: { workspaceId: string; exerciseId: string }): string {
     return `/workspaces/${workspaceId}/exercises/${exerciseId}`;
 }
+
+/** The API route that streams an exercise guide image's bytes, without the `/api/v1` prefix. */
+export function exerciseImageContentPath({
+    workspaceId,
+    exerciseId,
+    imageId,
+}: {
+    workspaceId: string;
+    exerciseId: string;
+    imageId: string;
+}): string {
+    return `/workspaces/${workspaceId}/exercises/${exerciseId}/images/${imageId}/content`;
+}

@@ -1,4 +1,5 @@
 import {
+    exerciseImageContentPath,
     exerciseWebPath,
     guidSchema,
     paginationQuerySchema,
@@ -72,7 +73,7 @@ export class ExercisesController {
         const exercise = await this.exercises.get({ userId: currentUser.userId, workspaceId, exerciseId });
 
         return {
-            ...toDetailResponse(exercise),
+            ...toDetailResponse({ exercise, workspaceId }),
             webUrl: this.urls.webAppUrl({ path: exerciseWebPath({ workspaceId, exerciseId }) }),
         };
     }
@@ -87,7 +88,7 @@ export class ExercisesController {
     ): Promise<ExerciseDetailResponse> {
         const created = await this.exercises.create({ userId: currentUser.userId, workspaceId, ...body });
 
-        return toDetailResponse(created);
+        return toDetailResponse({ exercise: created, workspaceId });
     }
 
     /** Updates an exercise. An omitted key leaves the stored value alone. */
@@ -105,22 +106,28 @@ export class ExercisesController {
             ...body,
         });
 
-        return toDetailResponse(updated);
+        return toDetailResponse({ exercise: updated, workspaceId });
     }
 }
 
 /**
- * Storage keys never reach the wire. Task 7 replaces the empty `url` with a real one once the
- * image-serving route exists; until then the detail response carries no image URLs.
+ * Storage keys never reach the wire: each image is addressed by the guarded content route that
+ * streams its bytes (`ExerciseGuideController.getImageContent`).
  */
-function toDetailResponse(exercise: ExerciseDetail): ExerciseDetailResponse {
+function toDetailResponse({
+    exercise,
+    workspaceId,
+}: {
+    exercise: ExerciseDetail;
+    workspaceId: string;
+}): ExerciseDetailResponse {
     return {
         ...exercise,
         images: exercise.images.map((image) => ({
             id: image.id,
             caption: image.caption,
             position: image.position,
-            url: '',
+            url: exerciseImageContentPath({ workspaceId, exerciseId: exercise.id, imageId: image.id }),
         })),
     };
 }

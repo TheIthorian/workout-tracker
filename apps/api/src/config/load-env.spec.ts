@@ -9,6 +9,9 @@ const BASE_ENV = {
     WEB_APP_BASE_URL: 'http://localhost:5173',
     API_BASE_URL: 'http://localhost:3000',
     MCP_BASE_URL: 'http://localhost:3100',
+    S3_BUCKET: 'app-uploads',
+    S3_ACCESS_KEY_ID: 'minioadmin',
+    S3_SECRET_ACCESS_KEY: 'minioadmin',
 };
 
 const MANAGED_KEYS = [
@@ -38,15 +41,22 @@ describe('loadEnv', () => {
         }
     });
 
-    it.each(['DATABASE_URL', 'AUTH_SECRET', 'AUTH_BASE_URL', 'WEB_APP_BASE_URL', 'API_BASE_URL', 'MCP_BASE_URL'])(
-        'rejects a missing %s',
-        (key) => {
-            Object.assign(process.env, BASE_ENV);
-            delete process.env[key];
+    it.each([
+        'DATABASE_URL',
+        'AUTH_SECRET',
+        'AUTH_BASE_URL',
+        'WEB_APP_BASE_URL',
+        'API_BASE_URL',
+        'MCP_BASE_URL',
+        'S3_BUCKET',
+        'S3_ACCESS_KEY_ID',
+        'S3_SECRET_ACCESS_KEY',
+    ])('rejects a missing %s', (key) => {
+        Object.assign(process.env, BASE_ENV);
+        delete process.env[key];
 
-            expect(() => loadEnv()).toThrow(ConfigurationError);
-        },
-    );
+        expect(() => loadEnv()).toThrow(ConfigurationError);
+    });
 
     it('rejects a non-numeric PORT', () => {
         Object.assign(process.env, BASE_ENV, { PORT: 'not-a-number' });
@@ -70,14 +80,14 @@ describe('loadEnv', () => {
         expect(loadEnv()['LLM_API_KEY']).toBe('');
     });
 
-    // Also optional as a group, so the template boots with no object storage at all. Make
-    // S3_BUCKET `.required()` in `load-env.ts` once your app genuinely depends on storage.
-    it('defaults the S3 group rather than failing to boot without it', () => {
+    // Guide images are core to this app, so the bucket and its credentials are required (asserted
+    // above). Only the addressing settings still default - an unset endpoint means real AWS S3.
+    it('defaults the S3 addressing settings around the required bucket', () => {
         Object.assign(process.env, BASE_ENV);
 
         const env = loadEnv();
 
-        expect(env['S3_BUCKET']).toBe('');
+        expect(env['S3_BUCKET']).toBe('app-uploads');
         expect(env['S3_REGION']).toBe('us-east-1');
         expect(env['S3_ENDPOINT']).toBeUndefined();
         expect(env['S3_FORCE_PATH_STYLE']).toBe(true);

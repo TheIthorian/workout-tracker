@@ -165,6 +165,38 @@ describe('images', () => {
         });
         expect(detail.images.map((entry) => entry.id)).toContain(image.id);
     });
+
+    it('reads back an image record with its storage key and content type', async () => {
+        const image = await guides.addImage({
+            userId,
+            workspaceId,
+            exerciseId,
+            storageKey: 'readable.webp',
+            contentType: 'image/webp',
+            caption: 'Top position',
+        });
+
+        await expect(guides.getImage({ userId, workspaceId, exerciseId, imageId: image.id })).resolves.toMatchObject({
+            id: image.id,
+            storageKey: 'readable.webp',
+            contentType: 'image/webp',
+            caption: 'Top position',
+        });
+    });
+
+    it("refuses to read an image on another workspace's exercise", async () => {
+        const image = await guides.addImage({
+            userId: outsiderId,
+            workspaceId: otherWorkspaceId,
+            exerciseId: otherExerciseId,
+            storageKey: 'theirs-readable.png',
+            contentType: 'image/png',
+        });
+
+        await expect(guides.getImage({ userId, workspaceId, exerciseId, imageId: image.id })).rejects.toBeInstanceOf(
+            EntityNotFoundError,
+        );
+    });
 });
 
 describe('cross-exercise boundary within the same workspace', () => {
@@ -208,6 +240,20 @@ describe('cross-exercise boundary within the same workspace', () => {
 
         const detail = await exercises.get({ userId, workspaceId, exerciseId });
         expect(detail.links.map((entry) => entry.id)).toContain(link.id);
+    });
+
+    it('refuses to read an image through a sibling exercise id', async () => {
+        const image = await guides.addImage({
+            userId,
+            workspaceId,
+            exerciseId,
+            storageKey: 'sibling-read.png',
+            contentType: 'image/png',
+        });
+
+        await expect(
+            guides.getImage({ userId, workspaceId, exerciseId: siblingExerciseId, imageId: image.id }),
+        ).rejects.toBeInstanceOf(EntityNotFoundError);
     });
 
     it('refuses to remove an image through a sibling exercise id, and leaves it in place', async () => {
