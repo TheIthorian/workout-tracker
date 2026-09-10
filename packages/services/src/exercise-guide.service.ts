@@ -218,7 +218,15 @@ export class ExerciseGuideService {
         return deleted;
     }
 
-    private async requireExercise({
+    /**
+     * Asserts the caller may write to this exercise's guide, so an unauthorised request can be
+     * refused before it costs anything - a caller uploading an image is checked before their bytes
+     * are read.
+     *
+     * @throws EntityNotFoundError when the caller is not a member, or the exercise is not in this
+     * workspace - the two are deliberately indistinguishable on the wire.
+     */
+    async requireExercise({
         userId,
         workspaceId,
         exerciseId,

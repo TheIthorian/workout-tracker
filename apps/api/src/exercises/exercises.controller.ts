@@ -73,7 +73,7 @@ export class ExercisesController {
         const exercise = await this.exercises.get({ userId: currentUser.userId, workspaceId, exerciseId });
 
         return {
-            ...toDetailResponse({ exercise, workspaceId }),
+            ...toDetailResponse({ exercise, workspaceId, urls: this.urls }),
             webUrl: this.urls.webAppUrl({ path: exerciseWebPath({ workspaceId, exerciseId }) }),
         };
     }
@@ -88,7 +88,7 @@ export class ExercisesController {
     ): Promise<ExerciseDetailResponse> {
         const created = await this.exercises.create({ userId: currentUser.userId, workspaceId, ...body });
 
-        return toDetailResponse({ exercise: created, workspaceId });
+        return toDetailResponse({ exercise: created, workspaceId, urls: this.urls });
     }
 
     /** Updates an exercise. An omitted key leaves the stored value alone. */
@@ -106,7 +106,7 @@ export class ExercisesController {
             ...body,
         });
 
-        return toDetailResponse({ exercise: updated, workspaceId });
+        return toDetailResponse({ exercise: updated, workspaceId, urls: this.urls });
     }
 }
 
@@ -117,9 +117,11 @@ export class ExercisesController {
 function toDetailResponse({
     exercise,
     workspaceId,
+    urls,
 }: {
     exercise: ExerciseDetail;
     workspaceId: string;
+    urls: ResourceUrlGenerator;
 }): ExerciseDetailResponse {
     return {
         ...exercise,
@@ -127,7 +129,9 @@ function toDetailResponse({
             id: image.id,
             caption: image.caption,
             position: image.position,
-            url: exerciseImageContentPath({ workspaceId, exerciseId: exercise.id, imageId: image.id }),
+            url: urls.apiUrl({
+                path: exerciseImageContentPath({ workspaceId, exerciseId: exercise.id, imageId: image.id }),
+            }),
         })),
     };
 }

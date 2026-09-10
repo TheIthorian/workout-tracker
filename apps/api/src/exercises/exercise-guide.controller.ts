@@ -11,6 +11,8 @@ import {
 import { EntityNotFoundError, InvalidFormatError } from '@app/errors';
 import {
     CurrentUser,
+    RESOURCE_URL_GENERATOR,
+    ResourceUrlGenerator,
     SessionOrMcpPatGuard,
     ValidatedBody,
     ValidatedParam,
@@ -45,6 +47,7 @@ export class ExerciseGuideController {
     constructor(
         @Inject(EXERCISE_GUIDE_SERVICE) private readonly guides: ExerciseGuideService,
         @Inject(STORAGE_SERVICE) private readonly storage: StorageService,
+        @Inject(RESOURCE_URL_GENERATOR) private readonly urls: ResourceUrlGenerator,
     ) {}
 
     /** Appends an external link to the exercise's guide. */
@@ -97,6 +100,10 @@ export class ExerciseGuideController {
         @ValidatedParam({ name: 'exerciseId', schema: guidSchema }) exerciseId: string,
         @Req() request: FastifyRequest,
     ): Promise<ExerciseGuideImageResponse> {
+        // Before a byte is read: everything this check needs comes from the session and the path,
+        // so an unauthorised caller must not be able to drive an upload to the bucket at all.
+        await this.guides.requireExercise({ userId: currentUser.userId, workspaceId, exerciseId });
+
         const file = await request.file({ limits: { fileSize: MAX_IMAGE_BYTES } });
 
         if (!file) throw new InvalidFormatError('An image file is required');
@@ -145,7 +152,7 @@ export class ExerciseGuideController {
             id: image.id,
             caption: image.caption,
             position: image.position,
-            url: exerciseImageContentPath({ workspaceId, exerciseId, imageId: image.id }),
+            url: this.urls.apiUrl({ path: exerciseImageContentPath({ workspaceId, exerciseId, imageId: image.id }) }),
         };
     }
 

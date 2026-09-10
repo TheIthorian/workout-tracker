@@ -3,9 +3,9 @@ import { CreateBucketCommand, ListObjectsV2Command, S3Client } from '@aws-sdk/cl
 import { createLogger } from '@app/logger';
 import { StorageService } from '@app/storage';
 import { GenericContainer, type StartedTestContainer } from 'testcontainers';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { STORAGE_SERVICE } from '../src/providers.js';
-import { createTestApp, signIn, type TestApp } from './harness.js';
+import { createTestApp, signIn, TEST_API_BASE_URL, type TestApp } from './harness.js';
 
 const BUCKET = 'exercise-guide-test-bucket';
 const ACCESS_KEY_ID = 'minioadmin';
@@ -22,6 +22,7 @@ const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 let app: TestApp;
 let minio: StartedTestContainer;
 let s3: S3Client;
+let storage: StorageService;
 
 beforeAll(async () => {
     // A real bucket rather than a fake storage service: this suite exists to prove the upload,
@@ -47,7 +48,7 @@ beforeAll(async () => {
     });
     await s3.send(new CreateBucketCommand({ Bucket: BUCKET }));
 
-    const storage = new StorageService({
+    storage = new StorageService({
         config: {
             endpoint,
             region: 'us-east-1',
@@ -157,13 +158,14 @@ describe('guide image routes', () => {
 
         expect(uploaded.statusCode).toBe(200);
         const image = JSON.parse(uploaded.body) as { id: string; caption: string | null; url: string };
+        const path = contentPath({ workspaceId, exerciseId, imageId: image.id });
         expect(image).toMatchObject({
             caption: 'Bottom position',
             position: 0,
-            url: `/workspaces/${workspaceId}/exercises/${exerciseId}/images/${image.id}/content`,
+            url: `${TEST_API_BASE_URL}${path}`,
         });
 
-        const content = await app.inject({ method: 'GET', url: `/api/v1${image.url}`, headers: { cookie } });
+        const content = await app.inject({ method: 'GET', url: path, headers: { cookie } });
 
         expect(content.statusCode).toBe(200);
         expect(content.headers['content-type']).toBe('image/png');
@@ -179,9 +181,12 @@ describe('guide image routes', () => {
         const exerciseId = await createExercise({ cookie, workspaceId });
         const image = JSON.parse(
             (await postImage({ cookie, workspaceId, exerciseId, contentType: 'image/png', content: PNG_BYTES })).body,
-        ) as { url: string };
+        ) as { id: string };
 
-        const response = await app.inject({ method: 'GET', url: `/api/v1${image.url}` });
+        const response = await app.inject({
+            method: 'GET',
+            url: contentPath({ workspaceId, exerciseId, imageId: image.id }),
+        });
 
         expect(response.statusCode).toBe(401);
     });
@@ -240,7 +245,7 @@ describe('guide image routes', () => {
         const before = await countStoredObjects();
         const image = JSON.parse(
             (await postImage({ cookie, workspaceId, exerciseId, contentType: 'image/webp', content: PNG_BYTES })).body,
-        ) as { id: string; url: string };
+        ) as { id: string };
 
         expect(await countStoredObjects()).toBe(before + 1);
 
@@ -253,9 +258,48 @@ describe('guide image routes', () => {
         expect(deleted.statusCode).toBe(200);
         expect(await countStoredObjects()).toBe(before);
 
-        const content = await app.inject({ method: 'GET', url: `/api/v1${image.url}`, headers: { cookie } });
+        const content = await app.inject({
+            method: 'GET',
+            url: contentPath({ workspaceId, exerciseId, imageId: image.id }),
+            headers: { cookie },
+        });
 
         expect(content.statusCode).toBe(404);
+    });
+
+    // The access check runs before `request.file()`, so an unauthorised caller cannot drive an
+    // upload to the bucket at all - not even one that is deleted again afterwards.
+    it('refuses an upload from a non-member without reading the body into storage', async () => {
+        const owner = await signUpUser();
+        const outsider = await signUpUser();
+        const exerciseId = await createExercise({ cookie: owner.cookie, workspaceId: owner.workspaceId });
+
+        const before = await countStoredObjects();
+        const uploadSpy = vi.spyOn(storage, 'uploadFile');
+
+        try {
+            const response = await postImage({
+                cookie: outsider.cookie,
+                workspaceId: owner.workspaceId,
+                exerciseId,
+                contentType: 'image/png',
+                content: PNG_BYTES,
+            });
+
+            expect(response.statusCode).toBe(404);
+            expect(uploadSpy).not.toHaveBeenCalled();
+        } finally {
+            uploadSpy.mockRestore();
+        }
+
+        expect(await countStoredObjects()).toBe(before);
+
+        const detail = await getDetail({
+            cookie: owner.cookie,
+            workspaceId: owner.workspaceId,
+            exerciseId,
+        });
+        expect(detail.images).toHaveLength(0);
     });
 });
 
@@ -451,6 +495,19 @@ function multipartBody({
     );
 
     return Buffer.concat(parts);
+}
+
+/** The content route's path on this app, which the response's absolute `url` is built from. */
+function contentPath({
+    workspaceId,
+    exerciseId,
+    imageId,
+}: {
+    workspaceId: string;
+    exerciseId: string;
+    imageId: string;
+}): string {
+    return `/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/images/${imageId}/content`;
 }
 
 /** How many objects the bucket holds, so a test can prove an upload left nothing behind. */
