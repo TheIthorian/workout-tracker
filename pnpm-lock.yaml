@@ -786,6 +786,9 @@ importers:
       '@app/db':
         specifier: workspace:*
         version: link:../db
+      '@app/domain':
+        specifier: workspace:*
+        version: link:../domain
       '@app/errors':
         specifier: workspace:*
         version: link:../errors
