@@ -87,20 +87,20 @@ by Zod via `z.enum(...)`.
 
 The library, and the guide.
 
-| Column | Type | Notes |
-| --- | --- | --- |
-| `id` | uuid pk | |
-| `workspace_id` | uuid | FK → `workspaces.id`, on delete cascade |
-| `created_by_user_id` | uuid null | FK → `user.id`, on delete set null |
-| `name` | text | |
-| `tracking_type` | enum | `weight_reps` \| `duration` \| `distance_time` |
-| `notes` | text null | |
-| `guide_setup` | text null | |
-| `guide_execution` | text null | |
-| `guide_cues` | text null | |
-| `guide_mistakes` | text null | |
-| `archived_at` | timestamptz null | |
-| `created_at` / `updated_at` | timestamptz | |
+| Column                      | Type             | Notes                                          |
+| --------------------------- | ---------------- | ---------------------------------------------- |
+| `id`                        | uuid pk          |                                                |
+| `workspace_id`              | uuid             | FK → `workspaces.id`, on delete cascade        |
+| `created_by_user_id`        | uuid null        | FK → `user.id`, on delete set null             |
+| `name`                      | text             |                                                |
+| `tracking_type`             | enum             | `weight_reps` \| `duration` \| `distance_time` |
+| `notes`                     | text null        |                                                |
+| `guide_setup`               | text null        |                                                |
+| `guide_execution`           | text null        |                                                |
+| `guide_cues`                | text null        |                                                |
+| `guide_mistakes`            | text null        |                                                |
+| `archived_at`               | timestamptz null |                                                |
+| `created_at` / `updated_at` | timestamptz      |                                                |
 
 The four `guide_*` fields sit on the exercise rather than in a one-to-one child table. Structure
 matters more than richness here: a fixed set of short fields can be laid out for a five-second
