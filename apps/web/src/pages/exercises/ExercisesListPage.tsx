@@ -1,6 +1,6 @@
 import { useState, type ChangeEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ChevronRight, Dumbbell, Plus, Route, Search, Timer, type LucideIcon } from 'lucide-react';
+import { ChevronRight, Plus, Search } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { LoadingState } from '@/components/common/LoadingState';
 import { Badge } from '@/components/ui/badge';
@@ -19,17 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useDebounce } from '@/hooks/use-debounce';
 import { useCreateExercise, useExercises } from '@/hooks/use-exercises';
 import { toast } from '@/hooks/use-toast';
-import { TrackingType, type Exercise } from '@/models/exercise';
-
-/**
- * Label and icon for each tracking type, shared by the list badge, the create dialog's select, and
- * the detail page's header badge.
- */
-export const TRACKING_TYPE_META: Record<TrackingType, { label: string; icon: LucideIcon }> = {
-    [TrackingType.WeightReps]: { label: 'Weight & reps', icon: Dumbbell },
-    [TrackingType.Duration]: { label: 'Duration', icon: Timer },
-    [TrackingType.DistanceTime]: { label: 'Distance & time', icon: Route },
-};
+import { TRACKING_TYPE_META, TrackingType, type Exercise } from '@/models/exercise';
 
 /**
  * The exercise library: a searchable, single-column list built to be scanned one-handed at the
