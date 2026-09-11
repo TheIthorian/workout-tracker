@@ -184,6 +184,22 @@ describe('update', () => {
         expect(updated).toMatchObject({ name: 'Renamed', guideSetup: 'Keep me' });
     });
 
+    // The web editor's real path: an emptied textarea sends `guideSetup: null` (`setup.trim() ||
+    // null`), which must clear the column rather than being treated as "field not given".
+    it('clears a guide field when it is explicitly set to null', async () => {
+        const { id } = await exercises.create({
+            userId,
+            workspaceId,
+            name: 'Clearable',
+            trackingType: TrackingType.WeightReps,
+            guideSetup: 'Bar at chest height.',
+        });
+
+        const updated = await exercises.update({ userId, workspaceId, exerciseId: id, guideSetup: null });
+
+        expect(updated.guideSetup).toBeNull();
+    });
+
     it('archives and unarchives', async () => {
         const { id } = await exercises.create({
             userId,
