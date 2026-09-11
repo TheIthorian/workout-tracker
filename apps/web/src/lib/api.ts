@@ -1,4 +1,5 @@
 import type { LoginRequest, RegisterRequest } from '@/models/auth';
+import type { Exercise, ExerciseDetail, PatchExerciseRequest, SaveExerciseRequest } from '@/models/exercise';
 import type { Item, PatchItemRequest, SaveItemRequest } from '@/models/item';
 import type { McpAccessTokenCreated, McpAccessTokenListItem } from '@/models/mcp';
 import type { PaginatedResponse } from '@/models/pagination';
@@ -57,4 +58,20 @@ export const itemsApi = {
         httpClient.patch<Item>(`/api/v1/workspaces/${workspaceId}/items/${itemId}`, data),
     remove: (workspaceId: string, itemId: string) =>
         httpClient.delete<void>(`/api/v1/workspaces/${workspaceId}/items/${itemId}`),
+};
+
+/** The workspace's exercise library. */
+export const exercisesApi = {
+    getAll: (
+        workspaceId: string,
+        params?: { search?: string; includeArchived?: boolean; page?: number; pageSize?: number },
+    ) => httpClient.get<PaginatedResponse<Exercise>>(`/api/v1/workspaces/${workspaceId}/exercises`, { params }),
+    getById: (workspaceId: string, exerciseId: string) =>
+        httpClient.get<ExerciseDetail & { webUrl: string }>(
+            `/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}`,
+        ),
+    create: (workspaceId: string, data: SaveExerciseRequest) =>
+        httpClient.post<ExerciseDetail>(`/api/v1/workspaces/${workspaceId}/exercises`, data),
+    update: (workspaceId: string, exerciseId: string, data: PatchExerciseRequest) =>
+        httpClient.patch<ExerciseDetail>(`/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}`, data),
 };
