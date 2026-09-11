@@ -39,11 +39,13 @@ This is plan 1 of 4 for Phase 1. Later plans cover routines, the sessions API an
 Which measurement fields a set must carry is decided by the exercise's tracking type. This is the single source of that rule — the Zod refinement, the database check constraint, and the web client's choice of input widget all derive from it. It is pure logic with no I/O, so it lives in `packages/domain`.
 
 **Files:**
+
 - Create: `packages/domain/src/tracking-type.ts`
 - Test: `packages/domain/src/tracking-type.spec.ts`
 - Modify: `packages/domain/src/index.ts`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: `enum TrackingType { WeightReps = 'weight_reps', Duration = 'duration', DistanceTime = 'distance_time' }`; `type SetMeasurements = { weightKg?: number | null; reps?: number | null; durationSeconds?: number | null; distanceM?: number | null }`; `requiredMeasurementFields(trackingType: TrackingType): ReadonlyArray<keyof SetMeasurements>`; `validateSetMeasurements({ trackingType, measurements }): { valid: true } | { valid: false; missing: ReadonlyArray<keyof SetMeasurements>; unexpected: ReadonlyArray<keyof SetMeasurements> }`.
 
@@ -80,9 +82,9 @@ describe('validateSetMeasurements', () => {
     });
 
     it('accepts a bodyweight set with reps and no load', () => {
-        expect(
-            validateSetMeasurements({ trackingType: TrackingType.WeightReps, measurements: { reps: 12 } }),
-        ).toEqual({ valid: true });
+        expect(validateSetMeasurements({ trackingType: TrackingType.WeightReps, measurements: { reps: 12 } })).toEqual({
+            valid: true,
+        });
     });
 
     it('reports a missing required field', () => {
@@ -183,12 +185,7 @@ export function validateSetMeasurements({
     return { valid: false, missing, unexpected };
 }
 
-const MEASUREMENT_FIELDS: ReadonlyArray<keyof SetMeasurements> = [
-    'weightKg',
-    'reps',
-    'durationSeconds',
-    'distanceM',
-];
+const MEASUREMENT_FIELDS: ReadonlyArray<keyof SetMeasurements> = ['weightKg', 'reps', 'durationSeconds', 'distanceM'];
 
 const REQUIRED_FIELDS: Record<TrackingType, ReadonlyArray<keyof SetMeasurements>> = {
     [TrackingType.WeightReps]: ['reps'],
@@ -238,11 +235,13 @@ git commit -m "feat(domain): add exercise tracking types and set measurement rul
 ### Task 2: Exercise tables and migration
 
 **Files:**
+
 - Create: `packages/db/src/schema/exercises.ts`
 - Modify: `packages/db/src/schema/index.ts`
 - Create: `packages/db/drizzle/<generated>.sql` (produced by `db:generate`, not hand-written)
 
 **Interfaces:**
+
 - Consumes: `TrackingType` from `@app/domain` (Task 1).
 - Produces: `exercises`, `exerciseGuideImages`, `exerciseLinks` Drizzle tables, and `trackingTypeEnum` as a `pgEnum`. `exercises` columns: `id`, `workspaceId`, `createdByUserId`, `name`, `trackingType`, `notes`, `guideSetup`, `guideExecution`, `guideCues`, `guideMistakes`, `archivedAt`, `createdAt`, `updatedAt`.
 
@@ -420,12 +419,14 @@ git commit -m "feat(db): add exercises, guide images, and exercise links tables"
 ### Task 3: Exercise contract schemas
 
 **Files:**
+
 - Create: `packages/api-contract/src/exercise.contract.ts`
 - Modify: `packages/api-contract/src/resource-paths.ts`
 - Modify: `packages/api-contract/src/index.ts`
 - Test: `packages/api-contract/src/exercise.contract.spec.ts`
 
 **Interfaces:**
+
 - Consumes: `TrackingType` from `@app/domain`; `guidSchema`, `paginatedResponseSchema` from `./primitives.js`.
 - Produces: `exerciseResponseSchema`, `exerciseListResponseSchema`, `exerciseDetailResponseSchema`, `postExerciseRequestSchema`, `patchExerciseRequestSchema`, `postExerciseLinkRequestSchema`, `patchExerciseLinkRequestSchema`, `exerciseLinkResponseSchema`, `exerciseGuideImageResponseSchema`, and the types inferred from each. Path helpers `exerciseWebPath({ workspaceId, exerciseId })` and `exerciseApiPath({ workspaceId, exerciseId })`.
 
@@ -645,11 +646,13 @@ git commit -m "feat(api): add exercise contract schemas and resource paths"
 ### Task 4: `ExercisesService`
 
 **Files:**
+
 - Create: `packages/services/src/exercises.service.ts`
 - Test: `packages/services/src/exercises.service.spec.ts`
 - Modify: `packages/services/src/index.ts`
 
 **Interfaces:**
+
 - Consumes: `Db`, `schema`, `scopedToWorkspace` from `@app/db`; `WorkspaceMembershipService` from `./workspace-membership.service.js`; `TrackingType` from `@app/domain`; `EntityNotFoundError` from `@app/errors`.
 - Produces: `class ExercisesService` with `list({ userId, workspaceId, page, pageSize, search?, includeArchived? }): Promise<PaginatedExercises>`, `get({ userId, workspaceId, exerciseId }): Promise<ExerciseDetail>`, `create({ userId, workspaceId, name, trackingType, notes?, guideSetup?, guideExecution?, guideCues?, guideMistakes? }): Promise<ExerciseDetail>`, `update({ userId, workspaceId, exerciseId, ...fields, archived? }): Promise<ExerciseDetail>`. Types `ExerciseSummary`, `ExerciseDetail`, `PaginatedExercises`.
 
@@ -802,17 +805,17 @@ describe('list', () => {
     });
 
     it('refuses a workspace the caller does not belong to', async () => {
-        await expect(
-            exercises.list({ userId, workspaceId: otherWorkspaceId, ...page }),
-        ).rejects.toBeInstanceOf(EntityNotFoundError);
+        await expect(exercises.list({ userId, workspaceId: otherWorkspaceId, ...page })).rejects.toBeInstanceOf(
+            EntityNotFoundError,
+        );
     });
 });
 
 describe('get', () => {
     it('throws EntityNotFoundError for an unknown exercise', async () => {
-        await expect(
-            exercises.get({ userId, workspaceId, exerciseId: randomUUID() }),
-        ).rejects.toBeInstanceOf(EntityNotFoundError);
+        await expect(exercises.get({ userId, workspaceId, exerciseId: randomUUID() })).rejects.toBeInstanceOf(
+            EntityNotFoundError,
+        );
     });
 
     // The tenant filter, not just the membership check: the caller IS a member of `workspaceId`,
@@ -854,8 +857,12 @@ describe('update', () => {
             trackingType: TrackingType.Duration,
         });
 
-        expect((await exercises.update({ userId, workspaceId, exerciseId: id, archived: true })).archivedAt).not.toBeNull();
-        expect((await exercises.update({ userId, workspaceId, exerciseId: id, archived: false })).archivedAt).toBeNull();
+        expect(
+            (await exercises.update({ userId, workspaceId, exerciseId: id, archived: true })).archivedAt,
+        ).not.toBeNull();
+        expect(
+            (await exercises.update({ userId, workspaceId, exerciseId: id, archived: false })).archivedAt,
+        ).toBeNull();
     });
 
     it('refuses an exercise in another workspace, and leaves it untouched', async () => {
@@ -870,9 +877,9 @@ describe('update', () => {
             exercises.update({ userId, workspaceId, exerciseId: id, name: 'hijacked' }),
         ).rejects.toBeInstanceOf(EntityNotFoundError);
 
-        expect(
-            (await exercises.get({ userId: outsiderId, workspaceId: otherWorkspaceId, exerciseId: id })).name,
-        ).toBe('theirs');
+        expect((await exercises.get({ userId: outsiderId, workspaceId: otherWorkspaceId, exerciseId: id })).name).toBe(
+            'theirs',
+        );
     });
 });
 ```
@@ -1146,11 +1153,7 @@ export class ExercisesService {
                 })
                 .from(exerciseGuideImages)
                 .where(
-                    scopedToWorkspace(
-                        exerciseGuideImages,
-                        workspaceId,
-                        eq(exerciseGuideImages.exerciseId, exerciseId),
-                    ),
+                    scopedToWorkspace(exerciseGuideImages, workspaceId, eq(exerciseGuideImages.exerciseId, exerciseId)),
                 )
                 .orderBy(asc(exerciseGuideImages.position)),
             this.db
@@ -1224,11 +1227,13 @@ git commit -m "feat(api): add ExercisesService with workspace-scoped library and
 Split from `ExercisesService` because it owns writes to two child tables and, in Task 7, the object-storage side effect of deleting an image. Keeping it separate stops `exercises.service.ts` growing into a file that does too much.
 
 **Files:**
+
 - Create: `packages/services/src/exercise-guide.service.ts`
 - Test: `packages/services/src/exercise-guide.service.spec.ts`
 - Modify: `packages/services/src/index.ts`
 
 **Interfaces:**
+
 - Consumes: `ExercisesService` types from Task 4; `Db`, `schema`, `scopedToWorkspace`; `WorkspaceMembershipService`.
 - Produces: `class ExerciseGuideService` with `addLink({ userId, workspaceId, exerciseId, url, label? }): Promise<ExerciseLink>`, `updateLink({ userId, workspaceId, exerciseId, linkId, url?, label?, position? }): Promise<ExerciseLink>`, `removeLink({ userId, workspaceId, exerciseId, linkId }): Promise<void>`, `addImage({ userId, workspaceId, exerciseId, storageKey, contentType, caption? }): Promise<ExerciseGuideImage>`, `removeImage({ userId, workspaceId, exerciseId, imageId }): Promise<{ storageKey: string }>`.
 
@@ -1391,9 +1396,9 @@ describe('images', () => {
             contentType: 'image/png',
         });
 
-        await expect(
-            guides.removeImage({ userId, workspaceId, exerciseId, imageId: image.id }),
-        ).rejects.toBeInstanceOf(EntityNotFoundError);
+        await expect(guides.removeImage({ userId, workspaceId, exerciseId, imageId: image.id })).rejects.toBeInstanceOf(
+            EntityNotFoundError,
+        );
 
         const detail = await exercises.get({
             userId: outsiderId,
@@ -1681,6 +1686,7 @@ git commit -m "feat(api): add ExerciseGuideService for guide links and image rec
 ### Task 6: Exercises API routes
 
 **Files:**
+
 - Create: `apps/api/src/exercises/exercises.controller.ts`
 - Create: `apps/api/src/exercises/exercises.providers.ts`
 - Create: `apps/api/src/exercises/exercises.module.ts`
@@ -1688,6 +1694,7 @@ git commit -m "feat(api): add ExerciseGuideService for guide links and image rec
 - Test: `apps/api/test/exercises.e2e.spec.ts`
 
 **Interfaces:**
+
 - Consumes: `ExercisesService` (Task 4); contract schemas (Task 3).
 - Produces: routes `GET|POST /v1/workspaces/:workspaceId/exercises`, `GET|PATCH /v1/workspaces/:workspaceId/exercises/:exerciseId`. DI token `EXERCISES_SERVICE`. Exports `exerciseServiceProviders`.
 
@@ -1903,11 +1910,7 @@ async function signUpUser(): Promise<{ cookie: string; workspaceId: string; user
     return { cookie, userId: body.userId, workspaceId: body.workspaces[0]?.workspaceId as string };
 }
 
-async function createExercise(
-    cookie: string,
-    workspaceId: string,
-    payload: Record<string, unknown>,
-): Promise<string> {
+async function createExercise(cookie: string, workspaceId: string, payload: Record<string, unknown>): Promise<string> {
     const response = await app.inject({
         method: 'POST',
         url: `/api/v1/workspaces/${workspaceId}/exercises`,
@@ -2094,12 +2097,14 @@ git commit -m "feat(api): add exercise library routes"
 This is the **first upload route in this repository** — there is no existing pattern to copy. `@fastify/multipart` is already registered in `apps/api/src/bootstrap.ts` with a 60 MB limit, and `StorageService.uploadFile({ fileStream, fileName, contentType })` returns the generated storage key.
 
 **Files:**
+
 - Create: `apps/api/src/exercises/exercise-guide.controller.ts`
 - Modify: `apps/api/src/exercises/exercises.module.ts`
 - Modify: `apps/api/src/exercises/exercises.controller.ts` (fill in the image `url`)
 - Test: `apps/api/test/exercise-guide.e2e.spec.ts`
 
 **Interfaces:**
+
 - Consumes: `ExerciseGuideService` and `EXERCISE_GUIDE_SERVICE` (Tasks 5, 6); `StorageService` from `@app/storage` via the existing `STORAGE_SERVICE` provider token in `apps/api/src/providers.ts` — check that file for the exact token name before wiring, and if no storage token exists yet, add one there following the shape of `DB`.
 - Produces: routes `POST|PATCH|DELETE /v1/workspaces/:workspaceId/exercises/:exerciseId/links[/:linkId]`, `POST|DELETE /v1/workspaces/:workspaceId/exercises/:exerciseId/images[/:imageId]`, and `GET /v1/workspaces/:workspaceId/exercises/:exerciseId/images/:imageId/content`.
 
@@ -2304,12 +2309,14 @@ git commit -m "feat(api): add exercise guide link and image routes"
 ### Task 8: MCP exercise tools
 
 **Files:**
+
 - Modify: `packages/api-contract/src/mcp-tool.contract.ts`
 - Create: `apps/mcp/src/mcp/tools/exercise.tools.ts`
 - Modify: the tool registry that `apps/mcp` builds its tool list from (find it with `grep -rn "buildItemTools" apps/mcp/src`)
 - Modify: `apps/api/test/route-guard-coverage.e2e.spec.ts` (the tool-to-route map only)
 
 **Interfaces:**
+
 - Consumes: `ApiClient` from `@app/api-client`; contract types from Task 3.
 - Produces: tools `ListExercises`, `GetExercise`, `CreateExercise`, `UpdateExercise`, `AddExerciseLink`. Arg schemas `listExercisesToolArgsSchema`, `getExerciseToolArgsSchema`, `createExerciseToolArgsSchema`, `updateExerciseToolArgsSchema`, `addExerciseLinkToolArgsSchema`.
 
@@ -2390,6 +2397,7 @@ git commit -m "feat(mcp): add exercise library tools"
 ### Task 9: Exercise library web pages
 
 **Files:**
+
 - Create: `apps/web/src/models/exercise.ts`
 - Create: `apps/web/src/hooks/use-exercises.ts`
 - Create: `apps/web/src/pages/exercises/ExercisesListPage.tsx`
@@ -2397,6 +2405,7 @@ git commit -m "feat(mcp): add exercise library tools"
 - Modify: `apps/web/src/components/layout/AppBottomNav.tsx`
 
 **Interfaces:**
+
 - Consumes: the REST routes from Tasks 6 and 7; `httpClient` from `apps/web/src/lib/http-client.ts`.
 - Produces: `type Exercise`, `type ExerciseDetail`, `type ExerciseLink`, `type ExerciseGuideImage`; hooks `useExercises({ workspaceId, search })`, `useExercise({ workspaceId, exerciseId })`, `useCreateExercise({ workspaceId })`, `useUpdateExercise({ workspaceId })`; route `/workspaces/:workspaceId/exercises`.
 
@@ -2447,12 +2456,14 @@ git commit -m "feat(web): add exercise library list page"
 ### Task 10: Exercise detail and guide editor
 
 **Files:**
+
 - Create: `apps/web/src/pages/exercises/ExerciseDetailPage.tsx`
 - Create: `apps/web/src/components/exercises/ExerciseGuide.tsx`
 - Create: `apps/web/src/components/exercises/ExerciseGuideEditor.tsx`
 - Modify: `apps/web/src/App.tsx`
 
 **Interfaces:**
+
 - Consumes: `useExercise`, `useUpdateExercise` (Task 9); the link and image routes (Task 7).
 - Produces: route `/workspaces/:workspaceId/exercises/:exerciseId`; `<ExerciseGuide exercise={...} />`, the read-only guide view reused as the workout-mode bottom sheet's body in plan 4.
 

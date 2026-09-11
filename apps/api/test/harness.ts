@@ -83,6 +83,13 @@ export async function createTestApp({
     process.env['WEB_APP_BASE_URL'] ??= TEST_WEB_APP_BASE_URL;
     process.env['API_BASE_URL'] ??= TEST_API_BASE_URL;
     process.env['MCP_BASE_URL'] ??= TEST_MCP_BASE_URL;
+    // Object storage is required configuration for this app, so the container refuses to boot
+    // without it. Only `test/exercise-guide.e2e.spec.ts` talks to storage, and it overrides
+    // `STORAGE_SERVICE` with one pointed at its own MinIO container; these placeholders exist so
+    // every other suite can boot without one.
+    process.env['S3_BUCKET'] ??= 'test-bucket';
+    process.env['S3_ACCESS_KEY_ID'] ??= 'test-access-key';
+    process.env['S3_SECRET_ACCESS_KEY'] ??= 'test-secret-key';
 
     // A caller-supplied db is already running and owned elsewhere: closing this app must not stop it.
     if (providedDb) {

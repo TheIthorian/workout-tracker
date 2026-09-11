@@ -95,6 +95,17 @@ const MCP_TOKEN_ROUTES: { method: string; path: string }[] = [
     { method: 'POST', path: '/api/v1/workspaces/:workspaceId/items' },
     { method: 'PATCH', path: '/api/v1/workspaces/:workspaceId/items/:itemId' },
     { method: 'DELETE', path: '/api/v1/workspaces/:workspaceId/items/:itemId' },
+    // ListExercises
+    { method: 'GET', path: '/api/v1/workspaces/:workspaceId/exercises' },
+    // GetExercise
+    { method: 'GET', path: '/api/v1/workspaces/:workspaceId/exercises/:exerciseId' },
+    // CreateExercise
+    { method: 'POST', path: '/api/v1/workspaces/:workspaceId/exercises' },
+    // UpdateExercise
+    { method: 'PATCH', path: '/api/v1/workspaces/:workspaceId/exercises/:exerciseId' },
+    // AddExerciseLink. No UpdateExerciseLink/RemoveExerciseLink tool exists, so patching or
+    // deleting a link stays session-only (exercise-guide.controller.ts) rather than joining this map.
+    { method: 'POST', path: '/api/v1/workspaces/:workspaceId/exercises/:exerciseId/links' },
 ];
 
 /**

@@ -21,6 +21,7 @@
         "@app/api-contract": "workspace:*",
         "@app/auth": "workspace:*",
         "@app/db": "workspace:*",
+        "@app/domain": "workspace:*",
         "@app/errors": "workspace:*",
         "drizzle-orm": "0.45.2"
     },

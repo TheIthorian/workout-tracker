@@ -3,6 +3,7 @@ import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import {
     connectedClient,
     createTestApp,
+    seedExercise,
     seedItem,
     seedMcpToken,
     seedUser,
@@ -129,6 +130,79 @@ describe('MCP tools', () => {
             const { id } = await seedItem(app.db, { userId, workspaceId: other.id, name: 'Elsewhere' });
 
             const result = await client.callTool({ name: 'get_item', arguments: { itemId: id } });
+
+            expect(result.isError).toBe(true);
+        });
+    });
+
+    describe('exercise tools', () => {
+        it('creates an exercise and returns it with both links attached', async () => {
+            const result = await client.callTool({
+                name: 'create_exercise',
+                arguments: { name: 'Back Squat', trackingType: 'weight_reps' },
+            });
+
+            expect(toolResultBody(result)).toMatchObject({
+                name: 'Back Squat',
+                trackingType: 'weight_reps',
+                webUrl: expect.stringContaining(`${TEST_WEB_APP_BASE_URL}/workspaces/${workspaceId}/exercises/`),
+            });
+        });
+
+        it('lists the workspace exercises with links on every entry', async () => {
+            await seedExercise(app.db, { userId, workspaceId, name: 'Listed Exercise' });
+
+            const body = toolResultBody(await client.callTool({ name: 'list_exercises', arguments: {} })) as {
+                data: { name: string; webUrl: string }[];
+            };
+
+            expect(body.data.map((exercise) => exercise.name)).toContain('Listed Exercise');
+            expect(body.data.every((exercise) => exercise.webUrl.startsWith(TEST_WEB_APP_BASE_URL))).toBe(true);
+        });
+
+        it('reads one exercise back by id, including its tracking type', async () => {
+            const { id } = await seedExercise(app.db, { userId, workspaceId, name: 'Readable Exercise' });
+
+            const result = await client.callTool({ name: 'get_exercise', arguments: { exerciseId: id } });
+
+            expect(toolResultBody(result)).toMatchObject({
+                id,
+                name: 'Readable Exercise',
+                trackingType: 'weight_reps',
+            });
+        });
+
+        // An omitted field keeps its stored value; the model must be able to rename without also
+        // having to resend a tracking type it never saw.
+        it('updates only the fields it is given', async () => {
+            const { id } = await seedExercise(app.db, { userId, workspaceId, name: 'Before Exercise' });
+
+            const result = await client.callTool({
+                name: 'update_exercise',
+                arguments: { exerciseId: id, name: 'After Exercise' },
+            });
+
+            expect(toolResultBody(result)).toMatchObject({ id, name: 'After Exercise' });
+        });
+
+        it('appends a link to an exercise guide', async () => {
+            const { id } = await seedExercise(app.db, { userId, workspaceId, name: 'Linked Exercise' });
+
+            const result = await client.callTool({
+                name: 'add_exercise_link',
+                arguments: { exerciseId: id, url: 'https://example.com/demo' },
+            });
+
+            expect(toolResultBody(result)).toMatchObject({ url: 'https://example.com/demo' });
+        });
+
+        // The pin is the point: a token issued for one workspace must not read another's rows even
+        // though its owner is a member of both.
+        it('cannot reach an exercise in another workspace the same user owns', async () => {
+            const other = await seedWorkspace(app.db, { name: 'Other Exercises', ownerId: userId });
+            const { id } = await seedExercise(app.db, { userId, workspaceId: other.id, name: 'Elsewhere Exercise' });
+
+            const result = await client.callTool({ name: 'get_exercise', arguments: { exerciseId: id } });
 
             expect(result.isError).toBe(true);
         });

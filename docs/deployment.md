@@ -67,7 +67,7 @@ without one of these crashes at startup rather than running half-configured):
 | `MCP_BASE_URL`         | The `apps/mcp` origin. Used to build a token's `mcpUrl`. |
 | `PROBLEM_TYPE_BASE`    | Optional. Base URI for RFC 7807 `type` values.           |
 | `LLM_*`                | Optional. A blank `LLM_API_KEY` disables LLM features.   |
-| `S3_*`                 | Optional. A blank `S3_BUCKET` disables object storage.   |
+| `S3_*`                 | `S3_BUCKET` and both credentials are required.           |
 
 `TZ=UTC` is set in `apps/api/Dockerfile` and must stay set — see the Auth section of `CLAUDE.md`
 for why every process touching the Better Auth tables has to agree on one timezone.

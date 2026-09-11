@@ -1,4 +1,4 @@
-import { Boxes } from 'lucide-react';
+import { Boxes, Dumbbell } from 'lucide-react';
 
 /** One destination in the workspace navigation, shared by the desktop header and mobile tab bar. */
 export type NavItem = {
@@ -15,5 +15,8 @@ export type NavItem = {
  * bar stays about the workspace's content rather than the account.
  */
 export function workspaceNavItems(workspaceId: string): NavItem[] {
-    return [{ to: `/workspaces/${workspaceId}/`, icon: Boxes, label: 'Items', end: true }];
+    return [
+        { to: `/workspaces/${workspaceId}/`, icon: Boxes, label: 'Items', end: true },
+        { to: `/workspaces/${workspaceId}/exercises`, icon: Dumbbell, label: 'Exercises', end: false },
+    ];
 }

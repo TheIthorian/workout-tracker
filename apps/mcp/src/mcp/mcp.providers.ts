@@ -5,6 +5,7 @@ import type { Provider } from '@nestjs/common';
 import { APP_LOGGER } from '../providers.js';
 import { loadEnv } from '../config/load-env.js';
 import { buildServerInstructions } from './mcp-server.js';
+import { buildExerciseTools } from './tools/exercise.tools.js';
 import { buildItemTools } from './tools/item.tools.js';
 import { buildSessionTools } from './tools/session.tools.js';
 import type { McpToolDefinition } from './tool-definition.js';
@@ -44,6 +45,7 @@ export const mcpProviders: Provider[] = [
                 return [
                     ...buildSessionTools({ context, client }),
                     ...buildItemTools({ context, client, logger, urls }),
+                    ...buildExerciseTools({ context, client, logger, urls }),
                 ];
             };
         },

@@ -1,3 +1,12 @@
+export { ExerciseGuideService } from './exercise-guide.service.js';
+export {
+    ExercisesService,
+    type ExerciseDetail,
+    type ExerciseGuideImage,
+    type ExerciseLink,
+    type ExerciseSummary,
+    type PaginatedExercises,
+} from './exercises.service.js';
 export { ItemsService, type ItemResponse, type PaginatedItems } from './items.service.js';
 export {
     McpAccessTokensService,

@@ -32,6 +32,7 @@
     },
     "devDependencies": {
         "@app/db": "workspace:*",
+        "@app/domain": "workspace:*",
         "@app/services": "workspace:*",
         "@app/tsconfig": "workspace:*",
         "@nestjs/testing": "11.1.28",

@@ -2,6 +2,7 @@ import { AuthService, McpTokenService, UserProvisioningService, type AuthConfig 
 import { createDb, type Db } from '@app/db';
 import { createLogger, type Logger } from '@app/logger';
 import { WorkspaceMembershipService } from '@app/services';
+import { StorageService } from '@app/storage';
 import {
     MCP_TOKEN_SERVICE,
     McpPatAuthGuard,
@@ -19,6 +20,9 @@ export const APP_LOGGER = Symbol('APP_LOGGER');
 
 /** DI token for the pooled {@link Db} handle. */
 export const DB = Symbol('DB');
+
+/** DI token for the configured {@link StorageService}. */
+export const STORAGE_SERVICE = Symbol('STORAGE_SERVICE');
 
 /** DI token for the configured {@link AuthService}. */
 export const AUTH_SERVICE = Symbol('AUTH_SERVICE');
@@ -67,6 +71,27 @@ export const infrastructureProviders: Provider[] = [
         useFactory: (logger: Logger): Db => {
             const env = loadEnv();
             return createDb({ config: { connectionString: String(env['DATABASE_URL']) }, logger }).db;
+        },
+        inject: [APP_LOGGER],
+    },
+    {
+        provide: STORAGE_SERVICE,
+        useFactory: (logger: Logger): StorageService => {
+            const env = loadEnv();
+            const endpoint = env['S3_ENDPOINT'];
+
+            return new StorageService({
+                config: {
+                    // Unset means real AWS S3; MinIO and every other S3-compatible service needs it.
+                    ...(endpoint === undefined ? {} : { endpoint: String(endpoint) }),
+                    region: String(env['S3_REGION']),
+                    bucket: String(env['S3_BUCKET']),
+                    accessKeyId: String(env['S3_ACCESS_KEY_ID']),
+                    secretAccessKey: String(env['S3_SECRET_ACCESS_KEY']),
+                    forcePathStyle: Boolean(env['S3_FORCE_PATH_STYLE']),
+                },
+                logger,
+            });
         },
         inject: [APP_LOGGER],
     },

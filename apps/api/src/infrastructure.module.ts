@@ -12,16 +12,17 @@ import {
     AUTH_SERVICE,
     DB,
     infrastructureProviders,
+    STORAGE_SERVICE,
     USER_PROVISIONING_SERVICE,
     WORKSPACE_MEMBERSHIP_SERVICE,
 } from './providers.js';
 
 /**
  * Provides the application's infrastructure tokens - the logger, the pooled `Db` handle, the
- * configured `AuthService`, `WorkspaceMembershipService`, `SessionAuthGuard`'s
- * `SESSION_AUTH_SERVICE` alias, `MCP_TOKEN_SERVICE`, and the session/token guards themselves - to
- * every feature module. `@Global()` plus `exports` makes these reachable from every route-slice
- * module without each one re-declaring or re-importing them.
+ * configured `AuthService`, `WorkspaceMembershipService`, the configured `StorageService`,
+ * `SessionAuthGuard`'s `SESSION_AUTH_SERVICE` alias, `MCP_TOKEN_SERVICE`, and the session/token
+ * guards themselves - to every feature module. `@Global()` plus `exports` makes these reachable
+ * from every route-slice module without each one re-declaring or re-importing them.
  *
  * `SessionAuthGuard`, `McpPatAuthGuard` and `SessionOrMcpPatGuard` are exported here (rather than
  * left to Nest's per-controller `@UseGuards` auto-discovery) so every controller that references
@@ -45,6 +46,7 @@ import {
         SESSION_AUTH_SERVICE,
         RESOURCE_URL_GENERATOR,
         MCP_TOKEN_SERVICE,
+        STORAGE_SERVICE,
         SessionAuthGuard,
         McpPatAuthGuard,
         SessionOrMcpPatGuard,

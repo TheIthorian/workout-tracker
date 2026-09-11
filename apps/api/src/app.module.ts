@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from './auth/auth.module.js';
+import { ExercisesModule } from './exercises/exercises.module.js';
 import { HealthController } from './health/health.controller.js';
 import { InfrastructureModule } from './infrastructure.module.js';
 import { ItemsModule } from './items/items.module.js';
@@ -20,7 +21,7 @@ import { WorkspacesModule } from './workspaces/workspaces.module.js';
  * instead, on the instances both `createApp` and `test/harness.ts` build.
  */
 @Module({
-    imports: [InfrastructureModule, AuthModule, MeModule, WorkspacesModule, ItemsModule],
+    imports: [InfrastructureModule, AuthModule, MeModule, WorkspacesModule, ItemsModule, ExercisesModule],
     controllers: [HealthController],
 })
 export class AppModule {}
