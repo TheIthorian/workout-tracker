@@ -1,7 +1,7 @@
-import { schema, scopedToWorkspace, type Db } from '@app/db';
+import { schema, scopedToWorkspace, scopedToWorkspaceOrGlobal, type Db } from '@app/db';
 import type { TrackingType } from '@app/domain';
 import { EntityNotFoundError } from '@app/errors';
-import { asc, count, desc, eq, ilike, isNull } from 'drizzle-orm';
+import { asc, count, desc, eq, ilike, isNull, sql } from 'drizzle-orm';
 import type { WorkspaceMembershipService } from './workspace-membership.service.js';
 
 const { exerciseGuideImages, exerciseLinks, exercises } = schema;
@@ -9,6 +9,8 @@ const { exerciseGuideImages, exerciseLinks, exercises } = schema;
 export type ExerciseSummary = {
     id: string;
     name: string;
+    slug: string | null;
+    isCatalog: boolean;
     trackingType: TrackingType;
     notes: string | null;
     archivedAt: string | null;
@@ -49,7 +51,10 @@ export type PaginatedExercises = {
 };
 
 /**
- * The workspace's exercise library, including each exercise's how-to guide.
+ * The exercise library a workspace sees: the shared catalog plus its own custom exercises.
+ *
+ * Reads admit catalog rows; writes are scoped strictly to the workspace, so a catalog id through
+ * `update` is a not-found rather than an edit of shared content.
  *
  * Images are returned as storage keys rather than URLs: turning a key into a URL needs
  * deployment configuration, which belongs to the app, not to a package.
@@ -64,7 +69,7 @@ export class ExercisesService {
     }
 
     /**
-     * A page of the workspace's exercises, newest first.
+     * A page of the exercises the workspace can see — catalog and custom — by name.
      *
      * @param search matches anywhere in the name, case-insensitively.
      * @throws EntityNotFoundError when the caller is not a member of the workspace.
@@ -86,7 +91,7 @@ export class ExercisesService {
     }): Promise<PaginatedExercises> {
         await this.membership.require({ userId, workspaceId });
 
-        const where = scopedToWorkspace(
+        const where = scopedToWorkspaceOrGlobal(
             exercises,
             workspaceId,
             search === undefined || search === '' ? undefined : ilike(exercises.name, `%${search}%`),
@@ -98,7 +103,7 @@ export class ExercisesService {
                 .select(EXERCISE_SUMMARY_COLUMNS)
                 .from(exercises)
                 .where(where)
-                .orderBy(desc(exercises.createdAt))
+                .orderBy(asc(exercises.name), desc(exercises.createdAt))
                 .limit(pageSize)
                 .offset((page - 1) * pageSize),
             this.db.select({ totalCount: count() }).from(exercises).where(where),
@@ -242,7 +247,7 @@ export class ExercisesService {
         const [exercise] = await this.db
             .select(EXERCISE_DETAIL_COLUMNS)
             .from(exercises)
-            .where(scopedToWorkspace(exercises, workspaceId, eq(exercises.id, exerciseId)));
+            .where(scopedToWorkspaceOrGlobal(exercises, workspaceId, eq(exercises.id, exerciseId)));
 
         if (!exercise) throw new EntityNotFoundError('Exercise not found');
 
@@ -257,7 +262,11 @@ export class ExercisesService {
                 })
                 .from(exerciseGuideImages)
                 .where(
-                    scopedToWorkspace(exerciseGuideImages, workspaceId, eq(exerciseGuideImages.exerciseId, exerciseId)),
+                    scopedToWorkspaceOrGlobal(
+                        exerciseGuideImages,
+                        workspaceId,
+                        eq(exerciseGuideImages.exerciseId, exerciseId),
+                    ),
                 )
                 .orderBy(asc(exerciseGuideImages.position)),
             this.db
@@ -268,7 +277,7 @@ export class ExercisesService {
                     position: exerciseLinks.position,
                 })
                 .from(exerciseLinks)
-                .where(scopedToWorkspace(exerciseLinks, workspaceId, eq(exerciseLinks.exerciseId, exerciseId)))
+                .where(scopedToWorkspaceOrGlobal(exerciseLinks, workspaceId, eq(exerciseLinks.exerciseId, exerciseId)))
                 .orderBy(asc(exerciseLinks.position)),
         ]);
 
@@ -279,6 +288,8 @@ export class ExercisesService {
 const EXERCISE_SUMMARY_COLUMNS = {
     id: exercises.id,
     name: exercises.name,
+    slug: exercises.slug,
+    isCatalog: sql<boolean>`${exercises.workspaceId} is null`,
     trackingType: exercises.trackingType,
     notes: exercises.notes,
     archivedAt: exercises.archivedAt,

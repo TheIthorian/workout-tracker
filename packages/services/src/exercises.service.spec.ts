@@ -1,11 +1,12 @@
 import { randomUUID } from 'node:crypto';
-import type { Db } from '@app/db';
+import { schema, type Db } from '@app/db';
 import { startTestDatabase } from '@app/db/testing';
 import { TrackingType } from '@app/domain';
 import { EntityNotFoundError } from '@app/errors';
+import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ExercisesService } from './exercises.service.js';
-import { seedUser, seedWorkspace } from './testing.js';
+import { seedCatalogExercise, seedUser, seedWorkspace } from './testing.js';
 import { WorkspaceMembershipService } from './workspace-membership.service.js';
 
 let database: Awaited<ReturnType<typeof startTestDatabase>>;
@@ -66,7 +67,7 @@ describe('create', () => {
 });
 
 describe('list', () => {
-    it("returns only this workspace's exercises, newest first", async () => {
+    it("returns this workspace's exercises by name", async () => {
         const ownerId = await seedUser(db);
         const scopedWorkspaceId = await seedWorkspace(db, ownerId);
         await exercises.create({
@@ -90,7 +91,7 @@ describe('list', () => {
 
         const result = await exercises.list({ userId: ownerId, workspaceId: scopedWorkspaceId, ...page });
 
-        expect(result.data.map((exercise) => exercise.name)).toEqual(['second', 'first']);
+        expect(result.data.map((exercise) => exercise.name)).toEqual(['first', 'second']);
         expect(result.totalCount).toBe(2);
     });
 
@@ -231,5 +232,57 @@ describe('update', () => {
         expect((await exercises.get({ userId: outsiderId, workspaceId: otherWorkspaceId, exerciseId: id })).name).toBe(
             'theirs',
         );
+    });
+});
+
+describe('catalog exercises', () => {
+    it('lists and reads a catalog exercise from any workspace, marked as catalog', async () => {
+        const catalogId = await seedCatalogExercise(db, { slug: `catalog-${randomUUID()}`, name: 'Catalog Squat' });
+
+        const listed = await exercises.list({ userId, workspaceId, ...page });
+        expect(listed.data.find((row) => row.id === catalogId)).toMatchObject({
+            name: 'Catalog Squat',
+            isCatalog: true,
+        });
+
+        const detail = await exercises.get({ userId, workspaceId, exerciseId: catalogId });
+        expect(detail).toMatchObject({ id: catalogId, isCatalog: true, images: [], links: [] });
+        expect(detail.slug).toMatch(/^catalog-/);
+    });
+
+    it('marks a custom exercise as not catalog', async () => {
+        const custom = await exercises.create({
+            userId,
+            workspaceId,
+            name: 'My Machine',
+            trackingType: TrackingType.WeightReps,
+        });
+
+        expect(custom).toMatchObject({ isCatalog: false, slug: null });
+    });
+
+    it('refuses to update or archive a catalog exercise through a workspace, and leaves it unchanged', async () => {
+        const catalogId = await seedCatalogExercise(db, { slug: `catalog-${randomUUID()}`, name: 'Untouchable' });
+
+        await expect(
+            exercises.update({ userId, workspaceId, exerciseId: catalogId, name: 'Vandalised' }),
+        ).rejects.toBeInstanceOf(EntityNotFoundError);
+        await expect(
+            exercises.update({ userId, workspaceId, exerciseId: catalogId, archived: true }),
+        ).rejects.toBeInstanceOf(EntityNotFoundError);
+
+        const [row] = await db
+            .select({ name: schema.exercises.name, archivedAt: schema.exercises.archivedAt })
+            .from(schema.exercises)
+            .where(eq(schema.exercises.id, catalogId));
+        expect(row).toEqual({ name: 'Untouchable', archivedAt: null });
+    });
+
+    it('still refuses a workspace the caller does not belong to, even for a catalog id', async () => {
+        const catalogId = await seedCatalogExercise(db, { slug: `catalog-${randomUUID()}` });
+
+        await expect(
+            exercises.get({ userId, workspaceId: otherWorkspaceId, exerciseId: catalogId }),
+        ).rejects.toBeInstanceOf(EntityNotFoundError);
     });
 });
