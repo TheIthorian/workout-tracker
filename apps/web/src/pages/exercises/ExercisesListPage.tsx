@@ -43,13 +43,20 @@ export default function ExercisesListPage(): JSX.Element {
 
     const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');
-    const debouncedSetSearch = useDebounce((value: string) => setSearch(value), 300);
+    // Trimmed once here, upstream of everywhere `search` is read (the query key, the request
+    // filter, and `isSearching` below) — so those three can never disagree about whether a
+    // whitespace-only box counts as "searching".
+    const debouncedSetSearch = useDebounce((value: string) => setSearch(value.trim()), 300);
 
-    const { data, isLoading } = useExercises({ workspaceId, search });
+    const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useExercises({
+        workspaceId,
+        search,
+    });
     const createExercise = useCreateExercise({ workspaceId });
 
-    const exercises = data?.data ?? [];
-    const isSearching = search.trim().length > 0;
+    const exercises = data?.pages.flatMap(page => page.data) ?? [];
+    const totalCount = data?.pages[0]?.totalCount ?? 0;
+    const isSearching = search.length > 0;
     const hasNoExercisesAtAll = !isLoading && exercises.length === 0 && !isSearching;
     const hasNoSearchResults = !isLoading && exercises.length === 0 && isSearching;
 
@@ -129,11 +136,24 @@ export default function ExercisesListPage(): JSX.Element {
                         </Button>
                     </div>
                 ) : (
-                    <ul className='space-y-2'>
-                        {exercises.map(exercise => (
-                            <ExerciseRow key={exercise.id} exercise={exercise} workspaceId={workspaceId} />
-                        ))}
-                    </ul>
+                    <>
+                        <ul className='space-y-2'>
+                            {exercises.map(exercise => (
+                                <ExerciseRow key={exercise.id} exercise={exercise} workspaceId={workspaceId} />
+                            ))}
+                        </ul>
+
+                        {hasNextPage && (
+                            <div className='mt-4 flex flex-col items-center gap-2'>
+                                <Button variant='outline' onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+                                    {isFetchingNextPage ? 'Loading…' : 'Load more'}
+                                </Button>
+                                <p className='text-xs text-muted-foreground'>
+                                    Showing {exercises.length} of {totalCount}
+                                </p>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
 
