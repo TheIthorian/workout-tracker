@@ -1,6 +1,6 @@
 import { TrackingType } from '@app/domain';
 import { z } from 'zod';
-import { guidSchema, paginatedResponseSchema } from './primitives.js';
+import { guidSchema, paginatedResponseSchema, paginationQuerySchema } from './primitives.js';
 
 const guideFieldSchema = z.string().max(4000);
 
@@ -43,6 +43,15 @@ export const exerciseDetailResponseSchema = exerciseResponseSchema.extend({
 
 export const exerciseListResponseSchema = paginatedResponseSchema(exerciseResponseSchema);
 
+/** Query parameters for `GET /api/v1/workspaces/{workspaceId}/exercises`. */
+export const exerciseListQuerySchema = paginationQuerySchema.extend({
+    search: z.string().max(200).optional(),
+    includeArchived: z
+        .enum(['true', 'false'])
+        .optional()
+        .transform((value) => value === 'true'),
+});
+
 /** The body of `POST /api/v1/workspaces/{workspaceId}/exercises`. */
 export const postExerciseRequestSchema = z.object({
     name: z.string().min(1, 'Name is required').max(200, 'Name must not exceed 200 characters'),
@@ -84,6 +93,7 @@ export const patchExerciseLinkRequestSchema = z
 export type ExerciseResponse = z.infer<typeof exerciseResponseSchema>;
 export type ExerciseDetailResponse = z.infer<typeof exerciseDetailResponseSchema>;
 export type ExerciseListResponse = z.infer<typeof exerciseListResponseSchema>;
+export type ExerciseListQuery = z.infer<typeof exerciseListQuerySchema>;
 export type ExerciseGuideImageResponse = z.infer<typeof exerciseGuideImageResponseSchema>;
 export type ExerciseLinkResponse = z.infer<typeof exerciseLinkResponseSchema>;
 export type PostExerciseRequest = z.infer<typeof postExerciseRequestSchema>;

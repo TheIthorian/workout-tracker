@@ -1,13 +1,13 @@
 import {
     exerciseImageContentPath,
+    exerciseListQuerySchema,
     exerciseWebPath,
     guidSchema,
-    paginationQuerySchema,
     patchExerciseRequestSchema,
     postExerciseRequestSchema,
     type ExerciseDetailResponse,
+    type ExerciseListQuery,
     type ExerciseListResponse,
-    type PaginationQuery,
     type PatchExerciseRequest,
     type PostExerciseRequest,
 } from '@app/api-contract';
@@ -23,19 +23,7 @@ import {
 } from '@app/nest-common';
 import type { ExerciseDetail, ExercisesService } from '@app/services';
 import { Controller, Get, HttpCode, Inject, Patch, Post, UseGuards } from '@nestjs/common';
-import { z } from 'zod';
 import { EXERCISES_SERVICE } from './exercises.providers.js';
-
-const exerciseListQuerySchema = paginationQuerySchema.extend({
-    search: z.string().max(200).optional(),
-    includeArchived: z
-        .unknown()
-        .optional()
-        .transform((raw) => String(raw ?? '').toLowerCase() === 'true')
-        .pipe(z.boolean()),
-});
-
-type ExerciseListQuery = PaginationQuery & { search?: string; includeArchived: boolean };
 
 /** The workspace's exercise library and each exercise's guide. */
 @Controller('v1/workspaces/:workspaceId/exercises')

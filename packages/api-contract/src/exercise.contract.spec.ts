@@ -1,6 +1,7 @@
 import { TrackingType } from '@app/domain';
 import { describe, expect, it } from 'vitest';
 import {
+    exerciseListQuerySchema,
     patchExerciseRequestSchema,
     postExerciseLinkRequestSchema,
     postExerciseRequestSchema,
@@ -42,6 +43,20 @@ describe('patchExerciseRequestSchema', () => {
         expect(patchExerciseRequestSchema.parse({ guideCues: 'Elbows at 45 degrees.' })).toMatchObject({
             guideCues: 'Elbows at 45 degrees.',
         });
+    });
+});
+
+describe('exerciseListQuerySchema', () => {
+    it('rejects a junk includeArchived value instead of coercing it', () => {
+        expect(() => exerciseListQuerySchema.parse({ includeArchived: 'yes' })).toThrow();
+    });
+
+    it('parses "true" to true', () => {
+        expect(exerciseListQuerySchema.parse({ includeArchived: 'true' }).includeArchived).toBe(true);
+    });
+
+    it('defaults to false when absent', () => {
+        expect(exerciseListQuerySchema.parse({}).includeArchived).toBe(false);
     });
 });
 
