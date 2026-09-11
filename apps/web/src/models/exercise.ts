@@ -62,3 +62,14 @@ export type PatchExerciseRequest = {
     guideMistakes?: string | null;
     archived?: boolean;
 };
+
+export type SaveExerciseLinkRequest = {
+    url: string;
+    label?: string | null;
+};
+
+export type PatchExerciseLinkRequest = {
+    url?: string;
+    label?: string | null;
+    position?: number;
+};

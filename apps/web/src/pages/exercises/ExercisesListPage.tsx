@@ -21,8 +21,11 @@ import { useCreateExercise, useExercises } from '@/hooks/use-exercises';
 import { toast } from '@/hooks/use-toast';
 import { TrackingType, type Exercise } from '@/models/exercise';
 
-/** Label and icon for each tracking type, shared by the list badge and the create dialog's select. */
-const TRACKING_TYPE_META: Record<TrackingType, { label: string; icon: LucideIcon }> = {
+/**
+ * Label and icon for each tracking type, shared by the list badge, the create dialog's select, and
+ * the detail page's header badge.
+ */
+export const TRACKING_TYPE_META: Record<TrackingType, { label: string; icon: LucideIcon }> = {
     [TrackingType.WeightReps]: { label: 'Weight & reps', icon: Dumbbell },
     [TrackingType.Duration]: { label: 'Duration', icon: Timer },
     [TrackingType.DistanceTime]: { label: 'Distance & time', icon: Route },

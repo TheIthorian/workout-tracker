@@ -9,7 +9,16 @@ import {
     type UseQueryResult,
 } from '@tanstack/react-query';
 import { exercisesApi } from '@/lib/api';
-import type { Exercise, ExerciseDetail, PatchExerciseRequest, SaveExerciseRequest } from '@/models/exercise';
+import type {
+    Exercise,
+    ExerciseDetail,
+    ExerciseGuideImage,
+    ExerciseLink,
+    PatchExerciseLinkRequest,
+    PatchExerciseRequest,
+    SaveExerciseLinkRequest,
+    SaveExerciseRequest,
+} from '@/models/exercise';
 import type { PaginatedResponse } from '@/models/pagination';
 
 /**
@@ -84,6 +93,97 @@ export function useUpdateExercise({
     return useMutation({
         mutationFn: ({ exerciseId, data }: { exerciseId: string; data: PatchExerciseRequest }) =>
             exercisesApi.update(workspaceId, exerciseId, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exercises', workspaceId] });
+        },
+    });
+}
+
+/** Adds an external link to an exercise's guide and refreshes its detail query. */
+export function useAddExerciseLink({
+    workspaceId,
+    exerciseId,
+}: {
+    workspaceId: string;
+    exerciseId: string;
+}): UseMutationResult<ExerciseLink, Error, SaveExerciseLinkRequest> {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (data: SaveExerciseLinkRequest) => exercisesApi.addLink(workspaceId, exerciseId, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exercises', workspaceId] });
+        },
+    });
+}
+
+/** Updates one of an exercise guide's links and refreshes its detail query. */
+export function useUpdateExerciseLink({
+    workspaceId,
+    exerciseId,
+}: {
+    workspaceId: string;
+    exerciseId: string;
+}): UseMutationResult<ExerciseLink, Error, { linkId: string; data: PatchExerciseLinkRequest }> {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ linkId, data }: { linkId: string; data: PatchExerciseLinkRequest }) =>
+            exercisesApi.updateLink(workspaceId, exerciseId, linkId, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exercises', workspaceId] });
+        },
+    });
+}
+
+/** Removes a link from an exercise's guide and refreshes its detail query. */
+export function useRemoveExerciseLink({
+    workspaceId,
+    exerciseId,
+}: {
+    workspaceId: string;
+    exerciseId: string;
+}): UseMutationResult<void, Error, string> {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (linkId: string) => exercisesApi.removeLink(workspaceId, exerciseId, linkId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exercises', workspaceId] });
+        },
+    });
+}
+
+/** Uploads a guide image (as multipart form data) and refreshes the exercise's detail query. */
+export function useUploadExerciseImage({
+    workspaceId,
+    exerciseId,
+}: {
+    workspaceId: string;
+    exerciseId: string;
+}): UseMutationResult<ExerciseGuideImage, Error, FormData> {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (formData: FormData) => exercisesApi.uploadImage(workspaceId, exerciseId, formData),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exercises', workspaceId] });
+        },
+    });
+}
+
+/** Removes a guide image and refreshes the exercise's detail query. */
+export function useRemoveExerciseImage({
+    workspaceId,
+    exerciseId,
+}: {
+    workspaceId: string;
+    exerciseId: string;
+}): UseMutationResult<void, Error, string> {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (imageId: string) => exercisesApi.removeImage(workspaceId, exerciseId, imageId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['exercises', workspaceId] });
         },
