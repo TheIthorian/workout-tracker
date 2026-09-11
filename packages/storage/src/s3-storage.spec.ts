@@ -215,4 +215,16 @@ describe('StorageService', () => {
         expect(downloadedBuffer).toHaveLength(payload.length);
         expect(downloadedBuffer.equals(payload)).toBe(true);
     });
+
+    it('fileExists is true for an uploaded key and false for a missing one', async () => {
+        const key = `exists-${randomBytes(4).toString('hex')}.txt`;
+        await service.uploadFileAtKey({ fileStream: Buffer.from('hi'), key, contentType: 'text/plain' });
+
+        expect(await service.fileExists(key)).toBe(true);
+        expect(await service.fileExists(`missing-${key}`)).toBe(false);
+    });
+
+    it('fileExists throws (not false) when the bucket itself does not exist', async () => {
+        await expect(wrongBucketService.fileExists('anything')).rejects.toThrow();
+    });
 });

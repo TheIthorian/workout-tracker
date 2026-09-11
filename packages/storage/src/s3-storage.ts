@@ -1,6 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import type { Readable } from 'node:stream';
-import { CopyObjectCommand, DeleteObjectCommand, GetObjectCommand, NoSuchKey, S3Client } from '@aws-sdk/client-s3';
+import {
+    CopyObjectCommand,
+    DeleteObjectCommand,
+    GetObjectCommand,
+    HeadBucketCommand,
+    HeadObjectCommand,
+    NoSuchKey,
+    S3Client,
+} from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import type { Logger } from '@app/logger';
 
@@ -183,6 +191,27 @@ export class StorageService {
         }
     }
 
+    /**
+     * Whether an object exists at the key, without fetching its bytes. A missing bucket still
+     * throws, for the same reason `tryDownloadFile` does not swallow it.
+     */
+    async fileExists(key: string): Promise<boolean> {
+        // Verify the bucket exists first, since HeadObject returns the same NotFound error for
+        // both missing key and missing bucket. Any error from this check is a configuration
+        // problem (missing or inaccessible bucket) and should propagate.
+        await this.client.send(new HeadBucketCommand({ Bucket: this.bucket }));
+
+        try {
+            await this.client.send(new HeadObjectCommand({ Bucket: this.bucket, Key: key }));
+            return true;
+        } catch (error) {
+            if (isNotFoundError(error)) {
+                return false;
+            }
+            throw error;
+        }
+    }
+
     async deleteFile(key: string): Promise<void> {
         this.logger.info({ 's3.bucket': this.bucket, 's3.key': key }, 'Deleting file from S3');
 
@@ -206,13 +235,9 @@ export class StorageService {
  * Branching on a 404 status alone would conflate the two and lose data silently rather than
  * surface a fixable configuration error.
  *
- * `HeadObjectCommand` is unused by this service, and is not a safe way to add an existence check
- * later: both a missing key and a missing bucket surface from `HeadObjectCommand` as the same
- * `NotFound` error name, so it cannot discriminate the two cases the way `NoSuchKey`/`NoSuchBucket`
- * do here. A future caller that needs "does this object exist" (e.g. checking for an image
- * variant before serving it) should either issue a `HeadBucketCommand` first to confirm the
- * bucket, or use `GetObjectCommand` - whose typed errors this function already relies on - rather
- * than trusting `HeadObjectCommand`'s error name.
+ * `HeadObjectCommand` returns a `NotFound` error for both missing key and missing bucket, so
+ * `fileExists` first checks the bucket exists with `HeadBucketCommand`. Any `NotFound` error
+ * from `HeadObjectCommand` after the bucket check must be a missing key.
  */
 function isNotFoundError(error: unknown): boolean {
     if (error instanceof NoSuchKey) {
@@ -223,6 +248,6 @@ function isNotFoundError(error: unknown): boolean {
         error !== null &&
         typeof error === 'object' &&
         'name' in error &&
-        (error as { name: unknown }).name === 'NoSuchKey'
+        ((error as { name: unknown }).name === 'NoSuchKey' || (error instanceof Error && error.name === 'NotFound'))
     );
 }
