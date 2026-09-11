@@ -1,7 +1,8 @@
 # Local development services. Start them before `pnpm dev`.
 #
-# Data lives in named volumes rather than host bind mounts, so `docker compose down -v` is the one
-# command that resets local state and nothing outside the volume is ever touched.
+# Data lives in bind mounts outside the repo, so neither `docker compose down -v` nor a git purge
+# can wipe it. `DATA_DIR` comes from the root `.env` (see `.env.example`); delete that directory to
+# reset local state.
 
 services:
     db:
@@ -13,7 +14,7 @@ services:
         # the setting is silently gone. A flag here cannot drift from a file nobody reads.
         command: postgres -c shared_preload_libraries=pg_stat_statements
         volumes:
-            - postgres-data:/var/lib/postgresql/data
+            - ${DATA_DIR:?set DATA_DIR in the root .env}/postgres:/var/lib/postgresql/data
         ports:
             - '5432:5432'
         environment:
@@ -33,7 +34,7 @@ services:
         restart: unless-stopped
         command: redis-server --save 60 1
         volumes:
-            - redis-data:/data
+            - ${DATA_DIR:?set DATA_DIR in the root .env}/redis:/data
         ports:
             - '6379:6379'
         healthcheck:
@@ -50,7 +51,7 @@ services:
         restart: unless-stopped
         command: server /data --console-address ':9001'
         volumes:
-            - minio-data:/data
+            - ${DATA_DIR:?set DATA_DIR in the root .env}/minio:/data
         ports:
             - '9000:9000'
             - '9001:9001'
@@ -62,8 +63,3 @@ services:
             interval: 5s
             timeout: 5s
             retries: 10
-
-volumes:
-    postgres-data:
-    redis-data:
-    minio-data:

@@ -93,8 +93,10 @@ version), revert it and re-apply only the intended lines.
 docker compose up -d       # Postgres, Redis, MinIO
 ```
 
-Data lives in named volumes, so `docker compose down -v` is the one command that resets local state
-and nothing outside the volume is touched. Each deployable app has its own `Dockerfile`.
+Data lives in **bind mounts outside the repo**, never named volumes and never inside the tree, so
+neither `docker compose down -v` nor a git purge can wipe it. The location is `DATA_DIR` in the
+root `.env` (copy `.env.example`); no path is hard-coded in `docker-compose.yml`. Delete that
+directory to reset local state. Each deployable app has its own `Dockerfile`.
 
 ## Tech Stack
 
