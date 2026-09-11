@@ -110,7 +110,7 @@ export function useAddExerciseLink({
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (data: SaveExerciseLinkRequest) => exercisesApi.addLink(workspaceId, exerciseId, data),
+        mutationFn: (data: SaveExerciseLinkRequest) => exercisesApi.addLink({ workspaceId, exerciseId, data }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['exercises', workspaceId] });
         },
@@ -129,7 +129,7 @@ export function useUpdateExerciseLink({
 
     return useMutation({
         mutationFn: ({ linkId, data }: { linkId: string; data: PatchExerciseLinkRequest }) =>
-            exercisesApi.updateLink(workspaceId, exerciseId, linkId, data),
+            exercisesApi.updateLink({ workspaceId, exerciseId, linkId, data }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['exercises', workspaceId] });
         },
@@ -147,7 +147,7 @@ export function useRemoveExerciseLink({
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (linkId: string) => exercisesApi.removeLink(workspaceId, exerciseId, linkId),
+        mutationFn: (linkId: string) => exercisesApi.removeLink({ workspaceId, exerciseId, linkId }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['exercises', workspaceId] });
         },
@@ -165,7 +165,7 @@ export function useUploadExerciseImage({
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (formData: FormData) => exercisesApi.uploadImage(workspaceId, exerciseId, formData),
+        mutationFn: (formData: FormData) => exercisesApi.uploadImage({ workspaceId, exerciseId, formData }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['exercises', workspaceId] });
         },
@@ -183,7 +183,7 @@ export function useRemoveExerciseImage({
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (imageId: string) => exercisesApi.removeImage(workspaceId, exerciseId, imageId),
+        mutationFn: (imageId: string) => exercisesApi.removeImage({ workspaceId, exerciseId, imageId }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['exercises', workspaceId] });
         },

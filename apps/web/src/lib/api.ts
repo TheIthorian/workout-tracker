@@ -83,20 +83,45 @@ export const exercisesApi = {
         httpClient.post<ExerciseDetail>(`/api/v1/workspaces/${workspaceId}/exercises`, data),
     update: (workspaceId: string, exerciseId: string, data: PatchExerciseRequest) =>
         httpClient.patch<ExerciseDetail>(`/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}`, data),
-    addLink: (workspaceId: string, exerciseId: string, data: SaveExerciseLinkRequest) =>
-        httpClient.post<ExerciseLink>(`/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/links`, data),
-    updateLink: (workspaceId: string, exerciseId: string, linkId: string, data: PatchExerciseLinkRequest) =>
+    addLink: ({
+        workspaceId,
+        exerciseId,
+        data,
+    }: {
+        workspaceId: string;
+        exerciseId: string;
+        data: SaveExerciseLinkRequest;
+    }) => httpClient.post<ExerciseLink>(`/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/links`, data),
+    updateLink: ({
+        workspaceId,
+        exerciseId,
+        linkId,
+        data,
+    }: {
+        workspaceId: string;
+        exerciseId: string;
+        linkId: string;
+        data: PatchExerciseLinkRequest;
+    }) =>
         httpClient.patch<ExerciseLink>(
             `/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/links/${linkId}`,
             data,
         ),
-    removeLink: (workspaceId: string, exerciseId: string, linkId: string) =>
+    removeLink: ({ workspaceId, exerciseId, linkId }: { workspaceId: string; exerciseId: string; linkId: string }) =>
         httpClient.delete<void>(`/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/links/${linkId}`),
-    uploadImage: (workspaceId: string, exerciseId: string, formData: FormData) =>
+    uploadImage: ({
+        workspaceId,
+        exerciseId,
+        formData,
+    }: {
+        workspaceId: string;
+        exerciseId: string;
+        formData: FormData;
+    }) =>
         httpClient.postFormData<ExerciseGuideImage>(
             `/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/images`,
             formData,
         ),
-    removeImage: (workspaceId: string, exerciseId: string, imageId: string) =>
+    removeImage: ({ workspaceId, exerciseId, imageId }: { workspaceId: string; exerciseId: string; imageId: string }) =>
         httpClient.delete<void>(`/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/images/${imageId}`),
 };

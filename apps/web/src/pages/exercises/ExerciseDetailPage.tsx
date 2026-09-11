@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Check, Pencil } from 'lucide-react';
+import { ArrowLeft, Pencil } from 'lucide-react';
 import { ExerciseGuide } from '@/components/exercises/ExerciseGuide';
 import { ExerciseGuideEditor } from '@/components/exercises/ExerciseGuideEditor';
 import { LoadingState } from '@/components/common/LoadingState';
@@ -58,19 +58,24 @@ export default function ExerciseDetailPage(): JSX.Element {
                         {label}
                     </Badge>
                 </div>
-                <Button
-                    variant={isEditing ? 'secondary' : 'outline'}
-                    className='gap-2'
-                    onClick={() => setEditing(v => !v)}
-                >
-                    {isEditing ? <Check className='h-4 w-4' aria-hidden /> : <Pencil className='h-4 w-4' aria-hidden />}
-                    {isEditing ? 'Done editing' : 'Edit guide'}
-                </Button>
+                {/* While editing, ExerciseGuideEditor renders its own close control: it alone knows
+                    whether there's unsaved guide text or an open link/image draft a close might
+                    otherwise silently discard, so it alone can decide whether closing is safe. */}
+                {!isEditing && (
+                    <Button variant='outline' className='gap-2' onClick={() => setEditing(true)}>
+                        <Pencil className='h-4 w-4' aria-hidden />
+                        Edit guide
+                    </Button>
+                )}
             </div>
 
             <div className='mt-8'>
                 {isEditing ? (
-                    <ExerciseGuideEditor workspaceId={workspaceId} exercise={exercise} />
+                    <ExerciseGuideEditor
+                        workspaceId={workspaceId}
+                        exercise={exercise}
+                        onDone={() => setEditing(false)}
+                    />
                 ) : (
                     <ExerciseGuide exercise={exercise} />
                 )}
