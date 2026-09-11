@@ -9,7 +9,7 @@ const BASE_ENV = {
     WEB_APP_BASE_URL: 'http://localhost:5173',
     API_BASE_URL: 'http://localhost:3000',
     MCP_BASE_URL: 'http://localhost:3100',
-    S3_BUCKET: 'app-uploads',
+    S3_BUCKET: 'wt-app',
     S3_ACCESS_KEY_ID: 'minioadmin',
     S3_SECRET_ACCESS_KEY: 'minioadmin',
 };
@@ -87,7 +87,7 @@ describe('loadEnv', () => {
 
         const env = loadEnv();
 
-        expect(env['S3_BUCKET']).toBe('app-uploads');
+        expect(env['S3_BUCKET']).toBe('wt-app');
         expect(env['S3_REGION']).toBe('us-east-1');
         expect(env['S3_ENDPOINT']).toBeUndefined();
         expect(env['S3_FORCE_PATH_STYLE']).toBe(true);

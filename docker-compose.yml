@@ -4,10 +4,12 @@
 # can wipe it. `DATA_DIR` comes from the root `.env` (see `.env.example`); delete that directory to
 # reset local state.
 
+name: wt-app
+
 services:
     db:
         image: postgres:17
-        container_name: app-postgres
+        container_name: wt-app-postgres
         restart: unless-stopped
         # pg_stat_statements has to be in shared_preload_libraries, which is a server-start setting:
         # `ALTER SYSTEM` plus a restart works until something recreates the container, at which point
@@ -30,7 +32,7 @@ services:
 
     redis:
         image: redis:7-alpine
-        container_name: app-redis
+        container_name: wt-app-redis
         restart: unless-stopped
         command: redis-server --save 60 1
         volumes:
@@ -43,11 +45,11 @@ services:
             timeout: 5s
             retries: 10
 
-    # S3-compatible object storage. Only needed if your app actually stores files - `S3_BUCKET`
-    # being unset is what turns storage off in `apps/api`.
+    # S3-compatible object storage. Exercise guide images live here, so `apps/api` refuses to boot
+    # without `S3_BUCKET` and credentials.
     minio:
         image: minio/minio:latest
-        container_name: app-minio
+        container_name: wt-app-minio
         restart: unless-stopped
         command: server /data --console-address ':9001'
         volumes:
