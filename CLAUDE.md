@@ -131,6 +131,13 @@ tenant's rows. Do both, every time.
 no argument order that produces a query without it. If you find yourself reaching for a raw `eq`,
 stop — that is exactly the pattern the helper exists to make impossible to get wrong.
 
+**Catalog rows are shared, read-only content.** A row whose `workspace_id` is `NULL` (today: the
+exercise catalog) is visible to every workspace. Read it with `scopedToWorkspaceOrGlobal`, which
+admits those rows alongside the caller's own. **Never use that helper on a write.** Every
+`update`/`delete` keeps `scopedToWorkspace`, so a catalog id through a workspace route finds no row
+and returns the same 404 as another tenant's row. Only the seed command (`apps/admin
+seed-exercises`) writes catalog rows.
+
 **A caller who may not see a workspace is told it does not exist**, not that they are forbidden. A
 403 confirms the id names a real workspace, which is itself a leak. `EntityNotFoundError` is the
 right answer for a non-member and for a row in another workspace. `ForbiddenActionError` is only for

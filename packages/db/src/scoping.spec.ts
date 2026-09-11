@@ -1,10 +1,12 @@
 import { randomUUID } from 'node:crypto';
+import { TrackingType } from '@app/domain';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Db } from './client.js';
+import { exercises } from './schema/exercises.js';
 import { items } from './schema/items.js';
 import { workspaces } from './schema/workspaces.js';
-import { scopedToWorkspace } from './scoping.js';
+import { scopedToWorkspace, scopedToWorkspaceOrGlobal } from './scoping.js';
 import { startTestDatabase } from './testing/index.js';
 
 let database: Awaited<ReturnType<typeof startTestDatabase>>;
@@ -70,3 +72,37 @@ async function insertWorkspace(name: string): Promise<string> {
     const [row] = await db.insert(workspaces).values({ id: randomUUID(), name }).returning({ id: workspaces.id });
     return row.id;
 }
+
+describe('scopedToWorkspaceOrGlobal', () => {
+    beforeAll(async () => {
+        await db.insert(exercises).values([
+            { workspaceId, name: 'ours', trackingType: TrackingType.WeightReps },
+            { workspaceId: otherWorkspaceId, name: 'theirs', trackingType: TrackingType.WeightReps },
+            { workspaceId: null, slug: 'shared-row', name: 'shared', trackingType: TrackingType.WeightReps },
+        ]);
+    });
+
+    it("returns the named workspace's rows and the shared rows, never another workspace's", async () => {
+        const rows = await db.select().from(exercises).where(scopedToWorkspaceOrGlobal(exercises, workspaceId));
+
+        expect(rows.map((row) => row.name).sort()).toEqual(['ours', 'shared']);
+    });
+
+    it('ANDs further filters onto the tenant-or-shared filter rather than replacing it', async () => {
+        const rows = await db
+            .select()
+            .from(exercises)
+            .where(scopedToWorkspaceOrGlobal(exercises, workspaceId, eq(exercises.name, 'theirs')));
+
+        expect(rows).toEqual([]);
+    });
+
+    it('ignores undefined filters', async () => {
+        const rows = await db
+            .select()
+            .from(exercises)
+            .where(scopedToWorkspaceOrGlobal(exercises, workspaceId, undefined, eq(exercises.name, 'shared')));
+
+        expect(rows.map((row) => row.name)).toEqual(['shared']);
+    });
+});

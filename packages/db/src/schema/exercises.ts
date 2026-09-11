@@ -1,6 +1,17 @@
 import { TrackingType } from '@app/domain';
 import { sql } from 'drizzle-orm';
-import { foreignKey, index, integer, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+    check,
+    foreignKey,
+    index,
+    integer,
+    pgEnum,
+    pgTable,
+    text,
+    timestamp,
+    uniqueIndex,
+    uuid,
+} from 'drizzle-orm/pg-core';
 import { user } from './auth.js';
 import { workspaces } from './workspaces.js';
 
@@ -11,7 +22,8 @@ export const trackingTypeEnum = pgEnum('tracking_type', [
 ]);
 
 /**
- * An exercise in the workspace's library, and its how-to guide.
+ * The exercise library: catalog exercises shared by every workspace, and each workspace's own
+ * custom ones. `workspace_id IS NULL` marks a catalog row; `slug` is the seed's stable key for it.
  *
  * The `guide_*` fields sit here rather than in a one-to-one child table: they are a fixed, short
  * set read at a glance mid-workout, and a separate table would buy nothing but a join.
@@ -23,7 +35,8 @@ export const exercises = pgTable(
     'exercises',
     {
         id: uuid('id').primaryKey().defaultRandom().notNull(),
-        workspaceId: uuid('workspace_id').notNull(),
+        workspaceId: uuid('workspace_id'),
+        slug: text('slug'),
         createdByUserId: uuid('created_by_user_id'),
         name: text('name').notNull(),
         trackingType: trackingTypeEnum('tracking_type').notNull(),
@@ -42,6 +55,11 @@ export const exercises = pgTable(
     },
     (table) => [
         index('exercises_workspace_id_idx').using('btree', table.workspaceId.asc().nullsLast().op('uuid_ops')),
+        uniqueIndex('exercises_catalog_slug_uidx')
+            .on(table.slug)
+            .where(sql`${table.workspaceId} is null`),
+        // A catalog row always has a slug and a custom row never does, so the two kinds cannot blur.
+        check('exercises_catalog_slug_check', sql`(${table.workspaceId} is null) = (${table.slug} is not null)`),
         foreignKey({
             columns: [table.workspaceId],
             foreignColumns: [workspaces.id],
@@ -55,12 +73,15 @@ export const exercises = pgTable(
     ],
 );
 
-/** An image belonging to an exercise's guide. The bytes live in object storage under `storage_key`. */
+/**
+ * An image belonging to an exercise's guide. The bytes live in object storage under `storage_key`.
+ * `workspace_id` mirrors the parent exercise's, null included, so the same scoping helper reads both.
+ */
 export const exerciseGuideImages = pgTable(
     'exercise_guide_images',
     {
         id: uuid('id').primaryKey().defaultRandom().notNull(),
-        workspaceId: uuid('workspace_id').notNull(),
+        workspaceId: uuid('workspace_id'),
         exerciseId: uuid('exercise_id').notNull(),
         storageKey: text('storage_key').notNull(),
         contentType: text('content_type').notNull(),
@@ -92,12 +113,15 @@ export const exerciseGuideImages = pgTable(
     ],
 );
 
-/** An external reference for an exercise, typically a video. */
+/**
+ * An external reference for an exercise, typically a video.
+ * `workspace_id` mirrors the parent exercise's, null included, so the same scoping helper reads both.
+ */
 export const exerciseLinks = pgTable(
     'exercise_links',
     {
         id: uuid('id').primaryKey().defaultRandom().notNull(),
-        workspaceId: uuid('workspace_id').notNull(),
+        workspaceId: uuid('workspace_id'),
         exerciseId: uuid('exercise_id').notNull(),
         url: text('url').notNull(),
         label: text('label'),

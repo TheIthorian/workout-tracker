@@ -1,4 +1,4 @@
-import { and, eq, type SQL } from 'drizzle-orm';
+import { and, eq, isNull, or, type SQL } from 'drizzle-orm';
 import type { PgColumn } from 'drizzle-orm/pg-core';
 
 /**
@@ -31,4 +31,27 @@ export function scopedToWorkspace<T extends WorkspaceOwnedTable>(
     // The non-null assertion is safe: `and` only returns undefined when given no defined
     // conditions, and the tenant filter is always one.
     return and(eq(table.workspaceId, workspaceId), ...filters)!;
+}
+
+/**
+ * A table whose rows are either owned by one workspace or shared with every workspace. The shape is
+ * the same as `WorkspaceOwnedTable`; the name records that `workspaceId` may be null.
+ */
+export type SharedOrWorkspaceOwnedTable = { workspaceId: PgColumn };
+
+/**
+ * READ-ONLY counterpart of `scopedToWorkspace`: admits rows shared with every workspace
+ * (`workspace_id IS NULL`) alongside the caller's own.
+ *
+ * Never pass this to an `update` or `delete`. A shared row is content every tenant reads and no
+ * tenant may change; a write scoped with this helper would let any workspace member alter it.
+ * Writes keep `scopedToWorkspace`, so a shared row's id through a workspace route finds nothing and
+ * yields the same not-found as a row in another workspace.
+ */
+export function scopedToWorkspaceOrGlobal<T extends SharedOrWorkspaceOwnedTable>(
+    table: T,
+    workspaceId: string,
+    ...filters: Array<SQL | undefined>
+): SQL {
+    return and(or(eq(table.workspaceId, workspaceId), isNull(table.workspaceId)), ...filters)!;
 }
