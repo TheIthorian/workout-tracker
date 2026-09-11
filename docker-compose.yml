@@ -65,3 +65,17 @@ services:
             interval: 5s
             timeout: 5s
             retries: 10
+
+    # One-shot: creates the bucket `apps/api` expects (`S3_BUCKET`) and exits. MinIO does not
+    # auto-create buckets, so a fresh DATA_DIR would otherwise boot the API against a 404.
+    minio-init:
+        image: minio/mc:latest
+        container_name: wt-app-minio-init
+        depends_on:
+            minio:
+                condition: service_healthy
+        entrypoint: >
+            sh -c "
+                mc alias set local http://minio:9000 minioadmin minioadmin &&
+                mc mb --ignore-existing local/wt-app
+            "
