@@ -40,6 +40,7 @@ Tasks 1–7 are additive and leave every existing test green. Task 8 changes the
 ### Task 1: Schema + `scopedToWorkspaceOrGlobal`
 
 **Files:**
+
 - Modify: `packages/db/src/schema/exercises.ts`
 - Create: `packages/db/drizzle/0003_<generated>.sql` (generated)
 - Modify: `packages/db/drizzle/meta/*` (generated)
@@ -48,6 +49,7 @@ Tasks 1–7 are additive and leave every existing test green. Task 8 changes the
 - Modify: `CLAUDE.md` (Multi-tenancy section)
 
 **Interfaces:**
+
 - Produces: `exercises.workspaceId: uuid | null`, `exercises.slug: text | null`, `exerciseGuideImages.workspaceId: uuid | null`, `exerciseLinks.workspaceId: uuid | null`.
 - Produces: `scopedToWorkspaceOrGlobal<T extends SharedOrWorkspaceOwnedTable>(table: T, workspaceId: string, ...filters: Array<SQL | undefined>): SQL` and `type SharedOrWorkspaceOwnedTable = { workspaceId: PgColumn }`, both exported from `@app/db`.
 
@@ -254,10 +256,12 @@ git commit -m "feat(db): allow shared catalog exercises and add the read-only sc
 ### Task 2: `StorageService.fileExists`
 
 **Files:**
+
 - Modify: `packages/storage/src/s3-storage.ts`
 - Modify: `packages/storage/src/s3-storage.spec.ts`
 
 **Interfaces:**
+
 - Produces: `StorageService.fileExists(key: string): Promise<boolean>`.
 
 - [ ] **Step 1: Write the failing test**
@@ -265,17 +269,17 @@ git commit -m "feat(db): allow shared catalog exercises and add the read-only sc
 Add to the `describe('StorageService', …)` block in `packages/storage/src/s3-storage.spec.ts`:
 
 ```ts
-    it('fileExists is true for an uploaded key and false for a missing one', async () => {
-        const key = `exists-${randomBytes(4).toString('hex')}.txt`;
-        await service.uploadFileAtKey({ fileStream: Buffer.from('hi'), key, contentType: 'text/plain' });
+it('fileExists is true for an uploaded key and false for a missing one', async () => {
+    const key = `exists-${randomBytes(4).toString('hex')}.txt`;
+    await service.uploadFileAtKey({ fileStream: Buffer.from('hi'), key, contentType: 'text/plain' });
 
-        expect(await service.fileExists(key)).toBe(true);
-        expect(await service.fileExists(`missing-${key}`)).toBe(false);
-    });
+    expect(await service.fileExists(key)).toBe(true);
+    expect(await service.fileExists(`missing-${key}`)).toBe(false);
+});
 
-    it('fileExists throws (not false) when the bucket itself does not exist', async () => {
-        await expect(wrongBucketService.fileExists('anything')).rejects.toThrow();
-    });
+it('fileExists throws (not false) when the bucket itself does not exist', async () => {
+    await expect(wrongBucketService.fileExists('anything')).rejects.toThrow();
+});
 ```
 
 - [ ] **Step 2: Run to verify it fails**
@@ -325,11 +329,13 @@ git commit -m "feat(storage): add fileExists"
 ### Task 3: `ExercisesService` reads catalog rows, writes stay strict
 
 **Files:**
+
 - Modify: `packages/services/src/exercises.service.ts`
 - Modify: `packages/services/src/exercises.service.spec.ts`
 - Modify: `packages/services/src/testing.ts`
 
 **Interfaces:**
+
 - Consumes: `scopedToWorkspaceOrGlobal` (Task 1).
 - Produces: `ExerciseSummary` gains `isCatalog: boolean` and `slug: string | null`; `seedCatalogExercise(db, { slug, name?, trackingType? }): Promise<string>` in `testing.ts`.
 
@@ -500,10 +506,12 @@ git commit -m "feat(services): exercises read the shared catalog, writes stay wo
 ### Task 4: `ExerciseGuideService` — catalog is read-only, image methods unrouted
 
 **Files:**
+
 - Modify: `packages/services/src/exercise-guide.service.ts`
 - Modify: `packages/services/src/exercise-guide.service.spec.ts`
 
 **Interfaces:**
+
 - No signature changes. `addLink`, `updateLink`, `removeLink`, `addImage`, `removeImage`, `getImage` all keep strict scoping and throw `EntityNotFoundError` for a catalog exercise id.
 
 - [ ] **Step 1: Write the failing tests**
@@ -574,6 +582,7 @@ git commit -m "test(services): pin catalog exercises as read-only through the gu
 ### Task 5: `packages/catalog` — file format schema and loader
 
 **Files:**
+
 - Create: `packages/catalog/package.json`
 - Create: `packages/catalog/tsconfig.json`
 - Create: `packages/catalog/tsconfig.build.json`
@@ -592,11 +601,12 @@ git commit -m "test(services): pin catalog exercises as read-only through the gu
 - Modify: `tsconfig.json` (root; add reference)
 
 **Interfaces:**
+
 - Produces:
-  - `exerciseEntrySchema` (Zod) and `type ExerciseEntry = { name: string; trackingType: TrackingType; notes: string | null; guide: { setup: string | null; execution: string | null; cues: string | null; mistakes: string | null }; links: { url: string; label: string | null }[]; images: { file: string; caption: string | null }[] }`
-  - `type LoadedExercise = { slug: string; directory: string; entry: ExerciseEntry; images: { file: string; caption: string | null; path: string; contentType: string }[] }`
-  - `loadCatalog({ dir }: { dir: string }): Promise<LoadedExercise[]>` — sorted by slug; throws `RequestValidationError` on the first invalid entry.
-  - `CATALOG_SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/`
+    - `exerciseEntrySchema` (Zod) and `type ExerciseEntry = { name: string; trackingType: TrackingType; notes: string | null; guide: { setup: string | null; execution: string | null; cues: string | null; mistakes: string | null }; links: { url: string; label: string | null }[]; images: { file: string; caption: string | null }[] }`
+    - `type LoadedExercise = { slug: string; directory: string; entry: ExerciseEntry; images: { file: string; caption: string | null; path: string; contentType: string }[] }`
+    - `loadCatalog({ dir }: { dir: string }): Promise<LoadedExercise[]>` — sorted by slug; throws `RequestValidationError` on the first invalid entry.
+    - `CATALOG_SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/`
 
 - [ ] **Step 1: Scaffold the package**
 
@@ -777,9 +787,7 @@ describe('loadCatalog', () => {
     });
 
     it('rejects an unknown tracking type, naming the slug', async () => {
-        await expect(loadCatalog({ dir: join(fixtures, 'bad-tracking-type') })).rejects.toThrow(
-            RequestValidationError,
-        );
+        await expect(loadCatalog({ dir: join(fixtures, 'bad-tracking-type') })).rejects.toThrow(RequestValidationError);
         await expect(loadCatalog({ dir: join(fixtures, 'bad-tracking-type') })).rejects.toThrow(/wobble/);
     });
 
@@ -913,7 +921,9 @@ export async function loadCatalog({ dir }: { dir: string }): Promise<LoadedExerc
 
 async function loadEntry({ dir, slug }: { dir: string; slug: string }): Promise<LoadedExercise> {
     if (!CATALOG_SLUG_PATTERN.test(slug)) {
-        throw new RequestValidationError(`Catalog directory "${slug}" is not a valid slug (lowercase, digits, hyphens)`);
+        throw new RequestValidationError(
+            `Catalog directory "${slug}" is not a valid slug (lowercase, digits, hyphens)`,
+        );
     }
 
     const directory = join(dir, slug);
@@ -990,6 +1000,7 @@ git commit -m "feat(catalog): add the exercise content file format and loader"
 ### Task 6: `CatalogSeedService`
 
 **Files:**
+
 - Create: `packages/services/src/catalog-seed.service.ts`
 - Create: `packages/services/src/catalog-seed.service.spec.ts`
 - Modify: `packages/services/src/index.ts`
@@ -997,12 +1008,13 @@ git commit -m "feat(catalog): add the exercise content file format and loader"
 - Modify: `packages/services/tsconfig.json` (add references)
 
 **Interfaces:**
+
 - Consumes: `LoadedExercise` (Task 5), `StorageService.fileExists/uploadFileAtKey/deleteFile` (Task 2), `withTransaction` from `@app/db`.
 - Produces:
-  - `type SeedOutcome = 'created' | 'updated' | 'unchanged'` — as an enum `SeedOutcome { Created = 'created', Updated = 'updated', Unchanged = 'unchanged' }`.
-  - `CatalogSeedService.upsertExercise({ exercise: LoadedExercise }): Promise<{ id: string; outcome: SeedOutcome }>`
-  - `CatalogSeedService.archiveMissing({ presentSlugs: string[] }): Promise<string[]>` — returns the slugs archived.
-  - `catalogImageKey({ slug, sha256, extension }): string` → `catalog/<slug>/<sha256><extension>`.
+    - `type SeedOutcome = 'created' | 'updated' | 'unchanged'` — as an enum `SeedOutcome { Created = 'created', Updated = 'updated', Unchanged = 'unchanged' }`.
+    - `CatalogSeedService.upsertExercise({ exercise: LoadedExercise }): Promise<{ id: string; outcome: SeedOutcome }>`
+    - `CatalogSeedService.archiveMissing({ presentSlugs: string[] }): Promise<string[]>` — returns the slugs archived.
+    - `catalogImageKey({ slug, sha256, extension }): string` → `catalog/<slug>/<sha256><extension>`.
 
 - [ ] **Step 1: Wire the dependencies**
 
@@ -1141,7 +1153,9 @@ describe('upsertExercise', () => {
         });
 
         const links = await db.select().from(exerciseLinks).where(eq(exerciseLinks.exerciseId, result.id));
-        expect(links).toEqual([expect.objectContaining({ workspaceId: null, url: 'https://example.com/a', position: 0 })]);
+        expect(links).toEqual([
+            expect.objectContaining({ workspaceId: null, url: 'https://example.com/a', position: 0 }),
+        ]);
 
         const sha = createHash('sha256').update(PNG_BYTES).digest('hex');
         const images = await db.select().from(exerciseGuideImages).where(eq(exerciseGuideImages.exerciseId, result.id));
@@ -1192,7 +1206,10 @@ describe('upsertExercise', () => {
         const [row] = await db.select().from(exercises).where(eq(exercises.id, created.id));
         expect(row.name).toBe('Low-bar squat');
 
-        const images = await db.select().from(exerciseGuideImages).where(eq(exerciseGuideImages.exerciseId, created.id));
+        const images = await db
+            .select()
+            .from(exerciseGuideImages)
+            .where(eq(exerciseGuideImages.exerciseId, created.id));
         expect(images.map((image) => image.caption)).toEqual(['New caption']);
     });
 
@@ -1344,7 +1361,8 @@ export class CatalogSeedService {
                 const [created] = await tx.insert(exercises).values(desired).returning({ id: exercises.id });
                 const links = linkRows({ exerciseId: created.id, exercise });
                 if (links.length > 0) await tx.insert(exerciseLinks).values(links);
-                if (images.length > 0) await tx.insert(exerciseGuideImages).values(imageRows({ exerciseId: created.id, images }));
+                if (images.length > 0)
+                    await tx.insert(exerciseGuideImages).values(imageRows({ exerciseId: created.id, images }));
 
                 return { id: created.id, outcome: SeedOutcome.Created, staleKeys: [] };
             }
@@ -1403,7 +1421,11 @@ export class CatalogSeedService {
             });
 
             if (!(await this.storage.fileExists(storageKey))) {
-                await this.storage.uploadFileAtKey({ fileStream: bytes, key: storageKey, contentType: image.contentType });
+                await this.storage.uploadFileAtKey({
+                    fileStream: bytes,
+                    key: storageKey,
+                    contentType: image.contentType,
+                });
             }
 
             staged.push({ storageKey, contentType: image.contentType, caption: image.caption, position });
@@ -1566,7 +1588,7 @@ async function syncImages({
 These queries use bare `eq`/`isNull` on `workspace_id` deliberately: this class is the catalog writer and has no tenant. Add this one-line comment above the first such query in `upsertExercise`:
 
 ```ts
-            // Catalog rows have no tenant, so the tenant helpers do not apply: this is the one writer of rows whose workspace_id is null.
+// Catalog rows have no tenant, so the tenant helpers do not apply: this is the one writer of rows whose workspace_id is null.
 ```
 
 Export from `packages/services/src/index.ts`:
@@ -1595,6 +1617,7 @@ git commit -m "feat(services): add CatalogSeedService for publishing catalog exe
 ### Task 7: `apps/admin seed-exercises`
 
 **Files:**
+
 - Create: `apps/admin/src/commands/seed-exercises.ts`
 - Create: `apps/admin/src/commands/seed-exercises.spec.ts`
 - Modify: `apps/admin/src/env.ts`
@@ -1604,6 +1627,7 @@ git commit -m "feat(services): add CatalogSeedService for publishing catalog exe
 - Modify: `apps/admin/.env.example` (if present; else `apps/admin/README.md` env table — check which exists)
 
 **Interfaces:**
+
 - Consumes: `loadCatalog` (Task 5), `CatalogSeedService`, `SeedOutcome` (Task 6), `StorageService`.
 - Produces: `seedExercises({ db, storage, dir }): Promise<SeedReport>` where `type SeedReport = { results: { slug: string; outcome: SeedOutcome }[]; archived: string[] }`; `formatSeedReport(report): string[]`; `getStorageConfig(): StorageServiceConfig` in `env.ts`.
 
@@ -1770,7 +1794,10 @@ describe('seedExercises', () => {
     });
 
     it('writes nothing when any entry fails to load', async () => {
-        const dir = await writeTree({ 'admin-good': entry('Good'), 'admin-bad': { name: 'Bad', trackingType: 'vibes' } });
+        const dir = await writeTree({
+            'admin-good': entry('Good'),
+            'admin-bad': { name: 'Bad', trackingType: 'vibes' },
+        });
 
         await expect(seedExercises({ db, storage, dir })).rejects.toBeInstanceOf(RequestValidationError);
 
@@ -1864,13 +1891,13 @@ type SeedExercisesOptions = { dir: string };
 Add the command after `create-user`:
 
 ```ts
-    program
-        .command('seed-exercises')
-        .description('Publish content/exercises into the shared catalog. Requires the S3_* variables.')
-        .option('--dir <path>', 'Content directory', 'content/exercises')
-        .action(async (options: SeedExercisesOptions) => {
-            await runSeedExercises(options);
-        });
+program
+    .command('seed-exercises')
+    .description('Publish content/exercises into the shared catalog. Requires the S3_* variables.')
+    .option('--dir <path>', 'Content directory', 'content/exercises')
+    .action(async (options: SeedExercisesOptions) => {
+        await runSeedExercises(options);
+    });
 ```
 
 And the runner (after `runCreateUser`):
@@ -1918,6 +1945,7 @@ git commit -m "feat(admin): add seed-exercises command"
 ### Task 8: Contract + API — `isCatalog`, absolute image URLs, image routes removed
 
 **Files:**
+
 - Modify: `packages/api-contract/src/exercise.contract.ts`
 - Modify: `packages/api-contract/src/resource-paths.ts`
 - Modify: `packages/api-contract/src/exercise.contract.spec.ts`
@@ -1935,6 +1963,7 @@ git commit -m "feat(admin): add seed-exercises command"
 - Modify: `.railway/railway.ts`
 
 **Interfaces:**
+
 - Produces: `exerciseResponseSchema` + `isCatalog: boolean`, `slug: string | null`. `exerciseGuideImageResponseSchema.url` is absolute. `CATALOG_IMAGE_BASE_URL` env (required). `CATALOG_IMAGE_BASE_URL` DI token in `apps/api/src/providers.ts`.
 - Removes: `exerciseImageContentPath`, `exerciseImageCaptionSchema`, the three image routes.
 
@@ -1958,19 +1987,19 @@ In `packages/api-contract/src/resource-paths.ts`, delete `exerciseImageContentPa
 In `exercise.contract.spec.ts`, add `isCatalog: false, slug: null` to any fixture that must satisfy `exerciseResponseSchema`, and a case:
 
 ```ts
-    it('requires isCatalog and slug on a response', () => {
-        const result = exerciseResponseSchema.safeParse({
-            id: '11111111-1111-4111-8111-111111111111',
-            name: 'x',
-            trackingType: 'weight_reps',
-            notes: null,
-            archivedAt: null,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-        });
-
-        expect(result.success).toBe(false);
+it('requires isCatalog and slug on a response', () => {
+    const result = exerciseResponseSchema.safeParse({
+        id: '11111111-1111-4111-8111-111111111111',
+        name: 'x',
+        trackingType: 'weight_reps',
+        notes: null,
+        archivedAt: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
     });
+
+    expect(result.success).toBe(false);
+});
 ```
 
 Run `pnpm --filter @app/api-contract test` — PASS.
@@ -2020,7 +2049,7 @@ Rewrite the `S3_*` comment in that file: "The bucket and its credentials are REQ
 `apps/api/test/harness.ts`: after the `MCP_BASE_URL` line add
 
 ```ts
-    process.env['CATALOG_IMAGE_BASE_URL'] ??= TEST_CATALOG_IMAGE_BASE_URL;
+process.env['CATALOG_IMAGE_BASE_URL'] ??= TEST_CATALOG_IMAGE_BASE_URL;
 ```
 
 and export near the other constants:
@@ -2099,7 +2128,12 @@ describe('catalog exercises', () => {
         const imageKey = `catalog/e2e-squat/${randomUUID()}.png`;
         const [row] = await app.db
             .insert(schema.exercises)
-            .values({ workspaceId: null, slug: `e2e-squat-${randomUUID()}`, name: 'E2E Squat', trackingType: 'weight_reps' })
+            .values({
+                workspaceId: null,
+                slug: `e2e-squat-${randomUUID()}`,
+                name: 'E2E Squat',
+                trackingType: 'weight_reps',
+            })
             .returning({ id: schema.exercises.id });
         await app.db.insert(schema.exerciseGuideImages).values({
             workspaceId: null,
@@ -2190,6 +2224,7 @@ git commit -m "feat(api): serve the shared catalog with CDN image urls and drop 
 ### Task 9: Web — catalog badge, read-only catalog, image section removed
 
 **Files:**
+
 - Modify: `apps/web/src/models/exercise.ts`
 - Modify: `apps/web/src/lib/api.ts`
 - Modify: `apps/web/src/hooks/use-exercises.ts`
@@ -2199,6 +2234,7 @@ git commit -m "feat(api): serve the shared catalog with CDN image urls and drop 
 - Modify: `apps/web/src/pages/exercises/ExercisesListPage.tsx`
 
 **Interfaces:**
+
 - Consumes: `isCatalog`, `slug`, absolute `image.url` from Task 8.
 
 - [ ] **Step 1: Model**
@@ -2253,13 +2289,13 @@ In `ExerciseGuideEditor.tsx`:
 `ExerciseDetailPage.tsx`: after the tracking-type badge, render a catalog badge, and guard the edit button:
 
 ```tsx
-                    <div className='mt-2 flex flex-wrap gap-2'>
-                        <Badge variant='secondary' className='gap-1'>
-                            <Icon className='h-3 w-3' aria-hidden />
-                            {label}
-                        </Badge>
-                        {exercise.isCatalog && <Badge variant='outline'>Catalog</Badge>}
-                    </div>
+<div className="mt-2 flex flex-wrap gap-2">
+    <Badge variant="secondary" className="gap-1">
+        <Icon className="h-3 w-3" aria-hidden />
+        {label}
+    </Badge>
+    {exercise.isCatalog && <Badge variant="outline">Catalog</Badge>}
+</div>
 ```
 
 and
@@ -2275,11 +2311,13 @@ Add a sentence to the component doc: "Catalog exercises are read-only here: the 
 In `ExercisesListPage.tsx`'s `ExerciseRow`, before the tracking-type badge:
 
 ```tsx
-                {exercise.isCatalog && (
-                    <Badge variant='outline' className='shrink-0'>
-                        Catalog
-                    </Badge>
-                )}
+{
+    exercise.isCatalog && (
+        <Badge variant="outline" className="shrink-0">
+            Catalog
+        </Badge>
+    );
+}
 ```
 
 Search the list page for any archive control: the current page has none (archive is via the detail editor's PATCH), so nothing else to hide.
@@ -2306,6 +2344,7 @@ git commit -m "feat(web): show catalog exercises read-only and drop guide image 
 ### Task 10: MCP tool descriptions
 
 **Files:**
+
 - Modify: `apps/mcp/src/mcp/tools/exercise.tools.ts`
 - Modify: `apps/mcp/src/mcp/tools/*.spec.ts` (whichever spec asserts on the exercise tool descriptions, if any)
 
@@ -2336,6 +2375,7 @@ git commit -m "docs(mcp): describe catalog exercises as read-only in the exercis
 ### Task 11: Local CDN stand-in, starter content, docs
 
 **Files:**
+
 - Modify: `docker-compose.yml`
 - Create: `content/exercises/README.md`
 - Create: `content/exercises/barbell-back-squat/exercise.json`
@@ -2348,12 +2388,12 @@ git commit -m "docs(mcp): describe catalog exercises as read-only in the exercis
 In `docker-compose.yml`, `minio-init` entrypoint becomes:
 
 ```yaml
-        entrypoint: >
-            sh -c "
-                mc alias set local http://minio:9000 minioadmin minioadmin &&
-                mc mb --ignore-existing local/wt-app &&
-                mc anonymous set download local/wt-app/catalog
-            "
+entrypoint: >
+    sh -c "
+        mc alias set local http://minio:9000 minioadmin minioadmin &&
+        mc mb --ignore-existing local/wt-app &&
+        mc anonymous set download local/wt-app/catalog
+    "
 ```
 
 Update its comment: "One-shot: creates the bucket `apps/api` expects (`S3_BUCKET`) and opens anonymous read on its `catalog/` prefix, which stands in for the production CDN — the browser loads catalog images straight from `http://localhost:9000/wt-app/catalog/...` (`CATALOG_IMAGE_BASE_URL`). The rest of the bucket stays private."

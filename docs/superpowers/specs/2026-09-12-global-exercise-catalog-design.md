@@ -100,9 +100,11 @@ New:
 export type SharedOrWorkspaceOwnedTable = { workspaceId: PgColumn };
 
 /** Read-only: admits rows shared with every workspace (`workspace_id IS NULL`) alongside the caller's own. */
-export function scopedToWorkspaceOrGlobal<
-  T extends SharedOrWorkspaceOwnedTable,
->(table: T, workspaceId: string, ...filters: Array<SQL | undefined>): SQL;
+export function scopedToWorkspaceOrGlobal<T extends SharedOrWorkspaceOwnedTable>(
+    table: T,
+    workspaceId: string,
+    ...filters: Array<SQL | undefined>
+): SQL;
 ```
 
 Produces `(workspace_id = $1 OR workspace_id IS NULL) AND …`. Its docstring says, in the first line,
@@ -158,17 +160,17 @@ content/exercises/
 
 ```json
 {
-  "name": "Barbell back squat",
-  "trackingType": "weight_reps",
-  "notes": null,
-  "guide": {
-    "setup": "…",
-    "execution": "…",
-    "cues": "…",
-    "mistakes": "…"
-  },
-  "links": [{ "url": "https://…", "label": "Form video" }],
-  "images": [{ "file": "01-setup.jpg", "caption": "Bar on the upper back" }]
+    "name": "Barbell back squat",
+    "trackingType": "weight_reps",
+    "notes": null,
+    "guide": {
+        "setup": "…",
+        "execution": "…",
+        "cues": "…",
+        "mistakes": "…"
+    },
+    "links": [{ "url": "https://…", "label": "Form video" }],
+    "images": [{ "file": "01-setup.jpg", "caption": "Bar on the upper back" }]
 }
 ```
 
