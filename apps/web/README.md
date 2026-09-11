@@ -10,7 +10,7 @@ pnpm --filter @app/web dev
 ```
 
 Runs on <http://localhost:8080>. `/api` is proxied to the API (see `vite.config.ts`), so the
-session cookie stays first-party — set `VITE_API_PROXY_TARGET` if your API is not on port 5001.
+session cookie stays first-party — set `VITE_API_PROXY_TARGET` if your API is not on port 3000.
 
 ## Testing and building
 
