@@ -64,10 +64,10 @@ guides are removed. Custom exercises keep links.
 
 ### `exercises`
 
-| Column               | Change                                                          |
-| -------------------- | --------------------------------------------------------------- |
-| `workspace_id`       | now `uuid null`; FK to `workspaces.id` retained (cascade)        |
-| `slug`               | new, `text null`; the seed's upsert key, set only on catalog rows |
+| Column         | Change                                                            |
+| -------------- | ----------------------------------------------------------------- |
+| `workspace_id` | now `uuid null`; FK to `workspaces.id` retained (cascade)         |
+| `slug`         | new, `text null`; the seed's upsert key, set only on catalog rows |
 
 New partial unique index: `exercises_catalog_slug_uidx ON (slug) WHERE workspace_id IS NULL`.
 
@@ -100,11 +100,9 @@ New:
 export type SharedOrWorkspaceOwnedTable = { workspaceId: PgColumn };
 
 /** Read-only: admits rows shared with every workspace (`workspace_id IS NULL`) alongside the caller's own. */
-export function scopedToWorkspaceOrGlobal<T extends SharedOrWorkspaceOwnedTable>(
-    table: T,
-    workspaceId: string,
-    ...filters: Array<SQL | undefined>
-): SQL;
+export function scopedToWorkspaceOrGlobal<
+  T extends SharedOrWorkspaceOwnedTable,
+>(table: T, workspaceId: string, ...filters: Array<SQL | undefined>): SQL;
 ```
 
 Produces `(workspace_id = $1 OR workspace_id IS NULL) AND …`. Its docstring says, in the first line,
@@ -160,17 +158,17 @@ content/exercises/
 
 ```json
 {
-    "name": "Barbell back squat",
-    "trackingType": "weight_reps",
-    "notes": null,
-    "guide": {
-        "setup": "…",
-        "execution": "…",
-        "cues": "…",
-        "mistakes": "…"
-    },
-    "links": [{ "url": "https://…", "label": "Form video" }],
-    "images": [{ "file": "01-setup.jpg", "caption": "Bar on the upper back" }]
+  "name": "Barbell back squat",
+  "trackingType": "weight_reps",
+  "notes": null,
+  "guide": {
+    "setup": "…",
+    "execution": "…",
+    "cues": "…",
+    "mistakes": "…"
+  },
+  "links": [{ "url": "https://…", "label": "Form video" }],
+  "images": [{ "file": "01-setup.jpg", "caption": "Bar on the upper back" }]
 }
 ```
 
@@ -196,10 +194,10 @@ deploy step for `apps/api` on Railway and by hand locally.
 The image response's `url` is `${CATALOG_IMAGE_BASE_URL}/${storage_key}`. Clients never construct a
 path.
 
-| Environment | Bucket                        | `CATALOG_IMAGE_BASE_URL`         |
-| ----------- | ----------------------------- | -------------------------------- |
-| production  | R2, public via custom domain  | `https://cdn.<domain>`           |
-| local       | MinIO, `wt-app`               | `http://localhost:9000/wt-app`   |
+| Environment | Bucket                       | `CATALOG_IMAGE_BASE_URL`       |
+| ----------- | ---------------------------- | ------------------------------ |
+| production  | R2, public via custom domain | `https://cdn.<domain>`         |
+| local       | MinIO, `wt-app`              | `http://localhost:9000/wt-app` |
 
 Locally, `minio-init` runs `mc anonymous set download local/wt-app/catalog` after creating the
 bucket, so the `catalog/` prefix is readable without credentials and the rest of the bucket stays
