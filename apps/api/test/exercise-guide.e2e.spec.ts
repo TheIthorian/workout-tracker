@@ -238,6 +238,26 @@ describe('guide image routes', () => {
         expect(detail.images).toHaveLength(0);
     });
 
+    // `caption` normally arrives before `file` (the web client writes it first). This pins the
+    // server's behaviour for the opposite order too, so a future client bug there fails loudly
+    // rather than silently dropping captions.
+    it('stores the caption even when the field arrives after the file part', async () => {
+        const { cookie, workspaceId } = await signUpUser();
+        const exerciseId = await createExercise({ cookie, workspaceId });
+
+        const response = await postImageCaptionAfterFile({
+            cookie,
+            workspaceId,
+            exerciseId,
+            contentType: 'image/png',
+            content: PNG_BYTES,
+            caption: 'Top position',
+        });
+
+        expect(response.statusCode).toBe(200);
+        expect(JSON.parse(response.body)).toMatchObject({ caption: 'Top position' });
+    });
+
     it('deletes the image, its stored object, and 404s the content route afterwards', async () => {
         const { cookie, workspaceId } = await signUpUser();
         const exerciseId = await createExercise({ cookie, workspaceId });
@@ -456,6 +476,44 @@ function postImage({
         url: `/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/images`,
         headers: { cookie, 'content-type': `multipart/form-data; boundary=${boundary}` },
         payload: multipartBody({ boundary, contentType, content, caption, fileName }),
+    });
+}
+
+/** Like {@link postImage}, but writes the `caption` field after the `file` part instead of before. */
+function postImageCaptionAfterFile({
+    cookie,
+    workspaceId,
+    exerciseId,
+    contentType,
+    content,
+    caption,
+    fileName = 'guide.png',
+}: {
+    cookie: string;
+    workspaceId: string;
+    exerciseId: string;
+    contentType: string;
+    content: Buffer;
+    caption: string;
+    fileName?: string;
+}): ReturnType<TestApp['inject']> {
+    const boundary = `----exercise-guide-${randomUUID()}`;
+
+    return app.inject({
+        method: 'POST',
+        url: `/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/images`,
+        headers: { cookie, 'content-type': `multipart/form-data; boundary=${boundary}` },
+        payload: Buffer.concat([
+            Buffer.from(
+                `--${boundary}\r\n` +
+                    `Content-Disposition: form-data; name="file"; filename="${fileName}"\r\n` +
+                    `Content-Type: ${contentType}\r\n\r\n`,
+            ),
+            content,
+            Buffer.from(
+                `\r\n--${boundary}\r\nContent-Disposition: form-data; name="caption"\r\n\r\n${caption}\r\n--${boundary}--\r\n`,
+            ),
+        ]),
     });
 }
 

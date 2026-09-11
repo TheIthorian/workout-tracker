@@ -247,9 +247,11 @@ export function ExerciseGuideEditor({
             return;
         }
 
+        // `caption` must precede `file`: the server's `request.file()` resolves at the first file
+        // part, so a field appended after it is a race rather than a guaranteed read.
         const formData = new FormData();
-        formData.append('file', file);
         if (imageCaption.trim()) formData.append('caption', imageCaption.trim());
+        formData.append('file', file);
 
         uploadImage.mutate(formData, {
             onSuccess: () => {
