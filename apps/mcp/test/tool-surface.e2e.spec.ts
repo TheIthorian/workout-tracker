@@ -4,12 +4,17 @@ import { connectedClient, createTestApp, seedMcpToken, seedUser, seedWorkspace, 
 
 /** Every wire name this server advertises, in sorted order. */
 const EXPECTED_TOOL_NAMES = [
+    'add_exercise_link',
+    'create_exercise',
     'create_item',
     'delete_item',
     'get_current_user',
+    'get_exercise',
     'get_item',
+    'list_exercises',
     'list_items',
     'list_workspaces',
+    'update_exercise',
     'update_item',
 ];
 

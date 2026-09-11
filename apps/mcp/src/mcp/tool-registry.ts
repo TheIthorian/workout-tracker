@@ -88,6 +88,11 @@ const BEHAVIOR_HINTS: Record<string, ToolBehaviorHints> = {
     CreateItem: CREATE,
     UpdateItem: MUTATE,
     DeleteItem: MUTATE,
+    ListExercises: READ,
+    GetExercise: READ,
+    CreateExercise: CREATE,
+    UpdateExercise: MUTATE,
+    AddExerciseLink: CREATE,
 };
 
 function shouldInsertUnderscore({ value, index }: { value: string; index: number }): boolean {
