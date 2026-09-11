@@ -1,5 +1,10 @@
-import { exerciseImageContentPath, guidSchema, type ExerciseGuideImageResponse } from '@app/api-contract';
-import { EntityNotFoundError, InvalidFormatError } from '@app/errors';
+import {
+    exerciseImageCaptionSchema,
+    exerciseImageContentPath,
+    guidSchema,
+    type ExerciseGuideImageResponse,
+} from '@app/api-contract';
+import { EntityNotFoundError, InvalidFormatError, RequestValidationError } from '@app/errors';
 import {
     CurrentUser,
     RESOURCE_URL_GENERATOR,
@@ -79,11 +84,11 @@ export class ExerciseGuideImagesController {
             throw new InvalidFormatError('Image is too large', 'Images must be 10 MB or smaller.');
         }
 
-        const caption = readCaption(file.fields);
-
         let image: ExerciseGuideImage;
 
         try {
+            const caption = readCaption(file.fields);
+
             image = await this.guides.addImage({
                 userId: currentUser.userId,
                 workspaceId,
@@ -95,7 +100,8 @@ export class ExerciseGuideImagesController {
         } catch (error) {
             // Nothing references the object once the row fails to land, and a caller who may not
             // see the exercise must not be able to leave bytes in the bucket by trying. A failed
-            // cleanup must not replace the error that caused it.
+            // cleanup must not replace the error that caused it. `readCaption` can also throw here
+            // (an over-length caption), so the same cleanup has to cover it too.
             await this.storage.deleteFile(storageKey).catch(() => undefined);
 
             throw error;
@@ -159,11 +165,23 @@ export class ExerciseGuideImagesController {
     }
 }
 
-/** The optional `caption` field posted alongside the file, or null when it is absent or blank. */
+/**
+ * The optional `caption` field posted alongside the file, or null when it is absent or blank.
+ *
+ * @throws RequestValidationError when the field is present but exceeds the contract's length limit.
+ */
 function readCaption(fields: MultipartFields): string | null {
     const caption = fields['caption'];
 
     if (caption === undefined || Array.isArray(caption) || caption.type !== 'field') return null;
 
-    return typeof caption.value === 'string' && caption.value !== '' ? caption.value : null;
+    const result = exerciseImageCaptionSchema.safeParse(typeof caption.value === 'string' ? caption.value : undefined);
+
+    if (!result.success) {
+        throw new RequestValidationError({
+            caption: result.error.issues.map((issue) => issue.message),
+        });
+    }
+
+    return result.data && result.data.length > 0 ? result.data : null;
 }

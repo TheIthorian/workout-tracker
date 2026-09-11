@@ -4,6 +4,9 @@ import { guidSchema, paginatedResponseSchema } from './primitives.js';
 
 const guideFieldSchema = z.string().max(4000);
 
+/** The optional `caption` multipart field on a guide image upload. */
+export const exerciseImageCaptionSchema = z.string().trim().max(200).optional();
+
 export const exerciseGuideImageResponseSchema = z.object({
     id: guidSchema,
     caption: z.string().nullable(),

@@ -258,6 +258,28 @@ describe('guide image routes', () => {
         expect(JSON.parse(response.body)).toMatchObject({ caption: 'Top position' });
     });
 
+    it('rejects a caption over the contract limit and leaves no stored object behind', async () => {
+        const { cookie, workspaceId } = await signUpUser();
+        const exerciseId = await createExercise({ cookie, workspaceId });
+
+        const before = await countStoredObjects();
+
+        const response = await postImage({
+            cookie,
+            workspaceId,
+            exerciseId,
+            contentType: 'image/png',
+            content: PNG_BYTES,
+            caption: 'x'.repeat(201),
+        });
+
+        expect(response.statusCode).toBe(400);
+        expect(await countStoredObjects()).toBe(before);
+
+        const detail = await getDetail({ cookie, workspaceId, exerciseId });
+        expect(detail.images).toHaveLength(0);
+    });
+
     it('deletes the image, its stored object, and 404s the content route afterwards', async () => {
         const { cookie, workspaceId } = await signUpUser();
         const exerciseId = await createExercise({ cookie, workspaceId });
