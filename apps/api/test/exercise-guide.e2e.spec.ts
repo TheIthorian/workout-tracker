@@ -280,6 +280,21 @@ describe('guide image routes', () => {
         expect(detail.images).toHaveLength(0);
     });
 
+    it('rejects a non-multipart body with a 400 problem-details response instead of a 500', async () => {
+        const { cookie, workspaceId } = await signUpUser();
+        const exerciseId = await createExercise({ cookie, workspaceId });
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/images`,
+            headers: { cookie, 'content-type': 'application/json' },
+            payload: { caption: 'not a file' },
+        });
+
+        expect(response.statusCode).toBe(400);
+        expect(JSON.parse(response.body)).toMatchObject({ type: expect.any(String), status: 400 });
+    });
+
     it('deletes the image, its stored object, and 404s the content route afterwards', async () => {
         const { cookie, workspaceId } = await signUpUser();
         const exerciseId = await createExercise({ cookie, workspaceId });

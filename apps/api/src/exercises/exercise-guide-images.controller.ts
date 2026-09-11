@@ -62,6 +62,10 @@ export class ExerciseGuideImagesController {
         // so an unauthorised caller must not be able to drive an upload to the bucket at all.
         await this.guides.requireExercise({ userId: currentUser.userId, workspaceId, exerciseId });
 
+        // `request.file()` on a non-multipart body throws fastify's own generic error rather than
+        // an `@app/errors` instance, which `AppErrorFilter` doesn't know how to shape into a 400.
+        if (!request.isMultipart()) throw new InvalidFormatError('Expected multipart/form-data');
+
         const file = await request.file({ limits: { fileSize: MAX_IMAGE_BYTES } });
 
         if (!file) throw new InvalidFormatError('An image file is required');
