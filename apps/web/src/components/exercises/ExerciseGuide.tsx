@@ -1,4 +1,5 @@
 import { ExternalLink } from 'lucide-react';
+import { exerciseImageContentUrl } from '@/lib/api';
 import type { ExerciseDetail } from '@/models/exercise';
 
 /** One fixed guide section, in the order the guide is always read. */
@@ -16,7 +17,13 @@ type GuideSection = {
  * The edit screen relies on the same fact to show an unsaved live preview: it builds a draft
  * `ExerciseDetail` from its form state and passes it straight in, no network round trip required.
  */
-export function ExerciseGuide({ exercise }: { exercise: ExerciseDetail }): JSX.Element {
+export function ExerciseGuide({
+    workspaceId,
+    exercise,
+}: {
+    workspaceId: string;
+    exercise: ExerciseDetail;
+}): JSX.Element {
     const sections: GuideSection[] = [
         { heading: 'Setup', body: exercise.guideSetup },
         { heading: 'Execution', body: exercise.guideExecution },
@@ -51,22 +58,30 @@ export function ExerciseGuide({ exercise }: { exercise: ExerciseDetail }): JSX.E
                 <div>
                     <h2 className='font-heading text-lg text-foreground'>Images</h2>
                     <div className='mt-2 flex gap-3 overflow-x-auto pb-1'>
-                        {exercise.images.map(image => (
-                            <a
-                                key={image.id}
-                                href={image.url}
-                                target='_blank'
-                                rel='noreferrer'
-                                className='flex-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
-                            >
-                                <img
-                                    src={image.url}
-                                    alt={image.caption ?? `${exercise.name} reference`}
-                                    loading='lazy'
-                                    className='h-36 w-36 rounded-lg border border-border object-cover'
-                                />
-                            </a>
-                        ))}
+                        {exercise.images.map(image => {
+                            const src = exerciseImageContentUrl({
+                                workspaceId,
+                                exerciseId: exercise.id,
+                                imageId: image.id,
+                            });
+
+                            return (
+                                <a
+                                    key={image.id}
+                                    href={src}
+                                    target='_blank'
+                                    rel='noreferrer'
+                                    className='flex-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                                >
+                                    <img
+                                        src={src}
+                                        alt={image.caption ?? `${exercise.name} reference`}
+                                        loading='lazy'
+                                        className='h-36 w-36 rounded-lg border border-border object-cover'
+                                    />
+                                </a>
+                            );
+                        })}
                     </div>
                 </div>
             )}

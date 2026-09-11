@@ -23,6 +23,7 @@ import {
     useUploadExerciseImage,
 } from '@/hooks/use-exercises';
 import { toast } from '@/hooks/use-toast';
+import { exerciseImageContentUrl } from '@/lib/api';
 import type { ExerciseDetail, ExerciseLink } from '@/models/exercise';
 import { ExerciseGuide } from './ExerciseGuide';
 
@@ -329,7 +330,11 @@ export function ExerciseGuideEditor({
                                 {exercise.images.map(image => (
                                     <li key={image.id} className='relative'>
                                         <img
-                                            src={image.url}
+                                            src={exerciseImageContentUrl({
+                                                workspaceId,
+                                                exerciseId: exercise.id,
+                                                imageId: image.id,
+                                            })}
                                             alt={image.caption ?? `${exercise.name} reference`}
                                             className='h-24 w-24 rounded-lg border border-border object-cover'
                                         />
@@ -467,7 +472,7 @@ export function ExerciseGuideEditor({
                 <div className='lg:sticky lg:top-24 lg:self-start'>
                     <p className='mb-2 text-xs text-muted-foreground'>This is how the guide will look once saved.</p>
                     <div className='rounded-2xl border border-dashed border-border bg-card/40 p-4'>
-                        <ExerciseGuide exercise={previewExercise} />
+                        <ExerciseGuide workspaceId={workspaceId} exercise={previewExercise} />
                     </div>
                 </div>
             </div>

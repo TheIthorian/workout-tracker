@@ -7,8 +7,8 @@ import { LoadingState } from '@/components/common/LoadingState';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useExercise } from '@/hooks/use-exercises';
+import { TRACKING_TYPE_META } from '@/models/exercise';
 import NotFoundError from '@/pages/NotFoundError';
-import { TRACKING_TYPE_META } from './ExercisesListPage';
 
 /**
  * One exercise's how-to guide: read it in a few seconds mid-rest, or switch to editing it.
@@ -77,7 +77,7 @@ export default function ExerciseDetailPage(): JSX.Element {
                         onDone={() => setEditing(false)}
                     />
                 ) : (
-                    <ExerciseGuide exercise={exercise} />
+                    <ExerciseGuide workspaceId={workspaceId} exercise={exercise} />
                 )}
             </div>
         </div>
