@@ -283,10 +283,18 @@ describe('MCP tools', () => {
             });
 
             expect(result.isError).toBeFalsy();
-            expect(toolResultBody(result)).toMatchObject({
+            const body = toolResultBody(result) as { routine: { id: string } };
+            expect(body).toMatchObject({
                 status: 400,
                 type: expect.stringMatching(/SetShapeMismatchError$/),
+                routine: { id: expect.any(String) },
             });
+
+            const fetched = await client.callTool({
+                name: 'get_routine',
+                arguments: { routineId: body.routine.id },
+            });
+            expect(toolResultBody(fetched)).toMatchObject({ id: body.routine.id, exercises: [] });
         });
     });
 });

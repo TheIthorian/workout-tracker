@@ -9,6 +9,7 @@ import {
     type RoutineListResponse,
 } from '@app/api-contract';
 import type { ApiClient } from '@app/api-client';
+import { AppError } from '@app/errors';
 import type { Logger } from '@app/logger';
 import type { McpContext, ResourceUrlGenerator } from '@app/nest-common';
 import { defineTool, type McpToolDefinition } from '../tool-definition.js';
@@ -100,7 +101,9 @@ export function buildRoutineTools({
                 "Creates a routine in the token's workspace, optionally with its complete ordered exercise " +
                 'list. Use list_exercises to find exerciseIds first. ' +
                 TARGET_HELP +
-                ' Returns the routine, including webUrl.',
+                ' Returns the routine, including webUrl. If the exercise list is rejected, the routine is ' +
+                'still created (empty) and returned as `routine` alongside the problem - fix the targets ' +
+                'with update_routine rather than calling create_routine again.',
             inputSchema: createRoutineToolArgsSchema,
             handler: async (args) =>
                 runToolCaught({
@@ -112,12 +115,24 @@ export function buildRoutineTools({
                             body: { name: args.name, description: args.description ?? null },
                         });
 
-                        const routine =
-                            args.exercises === undefined || args.exercises === null
-                                ? created
-                                : await putExercises(created.id, args.exercises);
+                        if (args.exercises === undefined || args.exercises === null) {
+                            return serializeToolResult({ body: withLinks(created) });
+                        }
 
-                        return serializeToolResult({ body: withLinks(routine) });
+                        try {
+                            const routine = await putExercises(created.id, args.exercises);
+
+                            return serializeToolResult({ body: withLinks(routine) });
+                        } catch (error) {
+                            if (!(error instanceof AppError)) throw error;
+
+                            logger.warn(
+                                { err: error, toolName: 'create_routine', routineId: created.id },
+                                'Routine created but its exercise list was rejected.',
+                            );
+
+                            return serializeToolResult({ body: { ...error.problem, routine: withLinks(created) } });
+                        }
                     },
                 }),
         }),
