@@ -1,0 +1,13 @@
+{
+    "name": "Barbell back squat",
+    "trackingType": "weight_reps",
+    "notes": null,
+    "guide": {
+        "setup": "Bar on the upper back, hands just outside the shoulders.",
+        "execution": "Sit down between the hips, drive up through the whole foot.",
+        "cues": "Big breath, brace, knees out.",
+        "mistakes": "Heels rising; chest collapsing at the bottom."
+    },
+    "links": [{ "url": "https://example.com/squat", "label": "Form video" }],
+    "images": [{ "file": "01-setup.png", "caption": "Bar position" }]
+}
