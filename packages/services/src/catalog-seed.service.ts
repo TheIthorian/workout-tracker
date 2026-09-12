@@ -4,7 +4,7 @@ import { extname } from 'node:path';
 import type { LoadedExercise } from '@app/catalog';
 import { schema, withTransaction, type Db, type Tx } from '@app/db';
 import type { StorageService } from '@app/storage';
-import { and, eq, inArray, isNull, notInArray } from 'drizzle-orm';
+import { and, eq, isNull, notInArray } from 'drizzle-orm';
 
 const { exerciseGuideImages, exerciseLinks, exercises } = schema;
 
@@ -52,7 +52,8 @@ export class CatalogSeedService {
         const images = await this.stageImages({ exercise });
 
         const { id, outcome, staleKeys } = await withTransaction(this.db, async (tx) => {
-            // Catalog rows have no tenant, so the tenant helpers do not apply: this is the one writer of rows whose workspace_id is null.
+            // Catalog rows have no tenant, so the tenant helpers do not apply: this is the one
+            // writer of rows whose workspace_id is null.
             const [existing] = await tx
                 .select({ id: exercises.id })
                 .from(exercises)
@@ -85,6 +86,15 @@ export class CatalogSeedService {
             const linksChanged = await syncLinks({ tx, exerciseId: existing.id, exercise });
             const { changed: imagesChanged, staleKeys } = await syncImages({ tx, exerciseId: existing.id, images });
 
+            // syncRow already bumped updatedAt when the row itself changed; a links- or
+            // images-only change still needs one, since neither of those touches `exercises`.
+            if (!changed && (linksChanged || imagesChanged)) {
+                await tx
+                    .update(exercises)
+                    .set({ updatedAt: new Date().toISOString() })
+                    .where(eq(exercises.id, existing.id));
+            }
+
             return {
                 id: existing.id,
                 outcome: changed || linksChanged || imagesChanged ? SeedOutcome.Updated : SeedOutcome.Unchanged,
@@ -106,9 +116,10 @@ export class CatalogSeedService {
      * @returns the slugs archived by this call.
      */
     async archiveMissing({ presentSlugs }: { presentSlugs: string[] }): Promise<string[]> {
+        const now = new Date().toISOString();
         const rows = await this.db
             .update(exercises)
-            .set({ archivedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+            .set({ archivedAt: now, updatedAt: now })
             .where(
                 and(
                     isNull(exercises.workspaceId),
@@ -237,9 +248,9 @@ function imageRows({ exerciseId, images }: { exerciseId: string; images: StagedI
 type ImageRow = StagedImage & { workspaceId: null; exerciseId: string };
 
 /**
- * Diffs by storage key: a row whose key is still wanted is updated in place (caption, position),
- * a row whose key is gone is deleted and its key reported so the object can be removed after
- * commit, and a new key is inserted.
+ * Replace-all, the same shape as `syncLinks`: two images can share a storage key (identical
+ * bytes), so a diff keyed on `storageKey` cannot address the second row of such a pair, and would
+ * either miss it or misattribute another row's update to it.
  */
 async function syncImages({
     tx,
@@ -252,48 +263,24 @@ async function syncImages({
 }): Promise<{ changed: boolean; staleKeys: string[] }> {
     const current = await tx
         .select({
-            id: exerciseGuideImages.id,
             storageKey: exerciseGuideImages.storageKey,
             caption: exerciseGuideImages.caption,
             position: exerciseGuideImages.position,
         })
         .from(exerciseGuideImages)
-        .where(eq(exerciseGuideImages.exerciseId, exerciseId));
+        .where(eq(exerciseGuideImages.exerciseId, exerciseId))
+        .orderBy(exerciseGuideImages.position);
+
+    const desired = imageRows({ exerciseId, images });
+    const comparable = desired.map(({ storageKey, caption, position }) => ({ storageKey, caption, position }));
+
+    if (JSON.stringify(current) === JSON.stringify(comparable)) return { changed: false, staleKeys: [] };
 
     const wantedKeys = new Set(images.map((image) => image.storageKey));
-    const stale = current.filter((row) => !wantedKeys.has(row.storageKey));
-    let changed = false;
+    const staleKeys = [...new Set(current.map((row) => row.storageKey))].filter((key) => !wantedKeys.has(key));
 
-    if (stale.length > 0) {
-        await tx.delete(exerciseGuideImages).where(
-            inArray(
-                exerciseGuideImages.id,
-                stale.map((row) => row.id),
-            ),
-        );
-        changed = true;
-    }
+    await tx.delete(exerciseGuideImages).where(eq(exerciseGuideImages.exerciseId, exerciseId));
+    if (desired.length > 0) await tx.insert(exerciseGuideImages).values(desired);
 
-    for (const image of images) {
-        const existing = current.find((row) => row.storageKey === image.storageKey);
-
-        if (!existing) {
-            await tx.insert(exerciseGuideImages).values(imageRows({ exerciseId, images: [image] }));
-            changed = true;
-            continue;
-        }
-
-        if (existing.caption !== image.caption || existing.position !== image.position) {
-            await tx
-                .update(exerciseGuideImages)
-                .set({ caption: image.caption, position: image.position })
-                .where(eq(exerciseGuideImages.id, existing.id));
-            changed = true;
-        }
-    }
-
-    // A key still wanted by another row of this exercise is not stale (two entries, same bytes).
-    const staleKeys = stale.map((row) => row.storageKey).filter((key) => !wantedKeys.has(key));
-
-    return { changed, staleKeys };
+    return { changed: true, staleKeys };
 }
