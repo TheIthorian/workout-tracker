@@ -16,6 +16,9 @@ import NotFoundError from '@/pages/NotFoundError';
  * Loads the exercise once, here, and hands it down to `ExerciseGuide` and `ExerciseGuideEditor` as
  * a prop — neither of those components fetches anything itself, which is what lets `ExerciseGuide`
  * be reused inside a bottom sheet over the live workout screen without a second spinner.
+ *
+ * Catalog exercises are read-only here: the edit control is not rendered rather than disabled,
+ * because there is nothing a member could do to make it work.
  */
 export default function ExerciseDetailPage(): JSX.Element {
     const { workspaceId = '', exerciseId = '' } = useParams<{ workspaceId: string; exerciseId: string }>();
@@ -53,15 +56,18 @@ export default function ExerciseDetailPage(): JSX.Element {
             <div className='flex flex-wrap items-start justify-between gap-4'>
                 <div>
                     <h1 className='font-heading text-3xl text-foreground'>{exercise.name}</h1>
-                    <Badge variant='secondary' className='mt-2 gap-1'>
-                        <Icon className='h-3 w-3' aria-hidden />
-                        {label}
-                    </Badge>
+                    <div className='mt-2 flex flex-wrap gap-2'>
+                        <Badge variant='secondary' className='gap-1'>
+                            <Icon className='h-3 w-3' aria-hidden />
+                            {label}
+                        </Badge>
+                        {exercise.isCatalog && <Badge variant='outline'>Catalog</Badge>}
+                    </div>
                 </div>
                 {/* While editing, ExerciseGuideEditor renders its own close control: it alone knows
                     whether there's unsaved guide text or an open link/image draft a close might
                     otherwise silently discard, so it alone can decide whether closing is safe. */}
-                {!isEditing && (
+                {!isEditing && !exercise.isCatalog && (
                     <Button variant='outline' className='gap-2' onClick={() => setEditing(true)}>
                         <Pencil className='h-4 w-4' aria-hidden />
                         Edit guide
@@ -77,7 +83,7 @@ export default function ExerciseDetailPage(): JSX.Element {
                         onDone={() => setEditing(false)}
                     />
                 ) : (
-                    <ExerciseGuide workspaceId={workspaceId} exercise={exercise} />
+                    <ExerciseGuide exercise={exercise} />
                 )}
             </div>
         </div>

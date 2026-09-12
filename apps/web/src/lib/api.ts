@@ -1,9 +1,7 @@
-import { getApiBaseUrl } from '@/lib/api-base-url';
 import type { LoginRequest, RegisterRequest } from '@/models/auth';
 import type {
     Exercise,
     ExerciseDetail,
-    ExerciseGuideImage,
     ExerciseLink,
     PatchExerciseLinkRequest,
     PatchExerciseRequest,
@@ -70,25 +68,6 @@ export const itemsApi = {
         httpClient.delete<void>(`/api/v1/workspaces/${workspaceId}/items/${itemId}`),
 };
 
-/**
- * The URL an exercise guide image's bytes are served from.
- *
- * Deliberately rebuilt from the API base rather than using the contract's `image.url` field
- * as-is: in production the SPA only ever calls `/api/*` on its own Pages origin (proxied through to
- * the API), so an `<img>` pointed at the API's own absolute host would carry no session cookie.
- */
-export function exerciseImageContentUrl({
-    workspaceId,
-    exerciseId,
-    imageId,
-}: {
-    workspaceId: string;
-    exerciseId: string;
-    imageId: string;
-}): string {
-    return `${getApiBaseUrl()}/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/images/${imageId}/content`;
-}
-
 /** The workspace's exercise library. */
 export const exercisesApi = {
     getAll: (
@@ -129,19 +108,4 @@ export const exercisesApi = {
         ),
     removeLink: ({ workspaceId, exerciseId, linkId }: { workspaceId: string; exerciseId: string; linkId: string }) =>
         httpClient.delete<void>(`/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/links/${linkId}`),
-    uploadImage: ({
-        workspaceId,
-        exerciseId,
-        formData,
-    }: {
-        workspaceId: string;
-        exerciseId: string;
-        formData: FormData;
-    }) =>
-        httpClient.postFormData<ExerciseGuideImage>(
-            `/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/images`,
-            formData,
-        ),
-    removeImage: ({ workspaceId, exerciseId, imageId }: { workspaceId: string; exerciseId: string; imageId: string }) =>
-        httpClient.delete<void>(`/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/images/${imageId}`),
 };

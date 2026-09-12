@@ -1,5 +1,4 @@
 import { ExternalLink } from 'lucide-react';
-import { exerciseImageContentUrl } from '@/lib/api';
 import type { ExerciseDetail } from '@/models/exercise';
 
 /** One fixed guide section, in the order the guide is always read. */
@@ -17,13 +16,7 @@ type GuideSection = {
  * The edit screen relies on the same fact to show an unsaved live preview: it builds a draft
  * `ExerciseDetail` from its form state and passes it straight in, no network round trip required.
  */
-export function ExerciseGuide({
-    workspaceId,
-    exercise,
-}: {
-    workspaceId: string;
-    exercise: ExerciseDetail;
-}): JSX.Element {
+export function ExerciseGuide({ exercise }: { exercise: ExerciseDetail }): JSX.Element {
     const sections: GuideSection[] = [
         { heading: 'Setup', body: exercise.guideSetup },
         { heading: 'Execution', body: exercise.guideExecution },
@@ -59,11 +52,7 @@ export function ExerciseGuide({
                     <h2 className='font-heading text-lg text-foreground'>Images</h2>
                     <div className='mt-2 flex gap-3 overflow-x-auto pb-1'>
                         {exercise.images.map(image => {
-                            const src = exerciseImageContentUrl({
-                                workspaceId,
-                                exerciseId: exercise.id,
-                                imageId: image.id,
-                            });
+                            const src = image.url;
 
                             return (
                                 <a

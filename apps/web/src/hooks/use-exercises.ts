@@ -12,7 +12,6 @@ import { exercisesApi } from '@/lib/api';
 import type {
     Exercise,
     ExerciseDetail,
-    ExerciseGuideImage,
     ExerciseLink,
     PatchExerciseLinkRequest,
     PatchExerciseRequest,
@@ -148,42 +147,6 @@ export function useRemoveExerciseLink({
 
     return useMutation({
         mutationFn: (linkId: string) => exercisesApi.removeLink({ workspaceId, exerciseId, linkId }),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['exercises', workspaceId] });
-        },
-    });
-}
-
-/** Uploads a guide image (as multipart form data) and refreshes the exercise's detail query. */
-export function useUploadExerciseImage({
-    workspaceId,
-    exerciseId,
-}: {
-    workspaceId: string;
-    exerciseId: string;
-}): UseMutationResult<ExerciseGuideImage, Error, FormData> {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: (formData: FormData) => exercisesApi.uploadImage({ workspaceId, exerciseId, formData }),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['exercises', workspaceId] });
-        },
-    });
-}
-
-/** Removes a guide image and refreshes the exercise's detail query. */
-export function useRemoveExerciseImage({
-    workspaceId,
-    exerciseId,
-}: {
-    workspaceId: string;
-    exerciseId: string;
-}): UseMutationResult<void, Error, string> {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: (imageId: string) => exercisesApi.removeImage({ workspaceId, exerciseId, imageId }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['exercises', workspaceId] });
         },

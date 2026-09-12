@@ -24,6 +24,10 @@ export const TRACKING_TYPE_META: Record<TrackingType, { label: string; icon: Luc
 export type Exercise = {
     id: string;
     name: string;
+    /** Set on catalog exercises; null on the workspace's own. */
+    slug: string | null;
+    /** Shared, read-only content: no edit, archive, or link controls apply. */
+    isCatalog: boolean;
     trackingType: TrackingType;
     notes: string | null;
     archivedAt: string | null;
@@ -36,6 +40,7 @@ export type ExerciseGuideImage = {
     id: string;
     caption: string | null;
     position: number;
+    /** Absolute CDN url; needs no session. */
     url: string;
 };
 

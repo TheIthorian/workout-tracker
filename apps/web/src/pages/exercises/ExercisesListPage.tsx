@@ -213,6 +213,11 @@ function ExerciseRow({ exercise, workspaceId }: { exercise: Exercise; workspaceI
                 className='flex min-h-[3.5rem] items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
             >
                 <span className='min-w-0 flex-1 truncate font-medium text-foreground'>{exercise.name}</span>
+                {exercise.isCatalog && (
+                    <Badge variant='outline' className='shrink-0'>
+                        Catalog
+                    </Badge>
+                )}
                 <Badge variant='secondary' className='shrink-0 gap-1 whitespace-nowrap'>
                     <Icon className='h-3 w-3' aria-hidden />
                     {label}
