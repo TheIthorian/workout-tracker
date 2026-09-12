@@ -14,6 +14,15 @@ export {
     type McpAccessTokenListItem,
     type McpAccessTokenCreationResult,
 } from './mcp-access-tokens.service.js';
+export {
+    RoutinesService,
+    type PaginatedRoutines,
+    type RoutineDetail,
+    type RoutineExercise,
+    type RoutineExerciseInput,
+    type RoutineExerciseTargets,
+    type RoutineSummary,
+} from './routines.service.js';
 export { UsersService, type UserProfile, type UserWorkspaceListItem } from './users.service.js';
 export { WorkspaceMembershipService, WorkspaceRole, type Membership } from './workspace-membership.service.js';
 export {

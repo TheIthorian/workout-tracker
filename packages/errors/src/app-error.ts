@@ -161,6 +161,24 @@ export class InvalidOperationError extends AppError {
 }
 
 /**
+ * Thrown when a set, or a routine target, carries measurements that do not fit the exercise's
+ * tracking type — reps against a `distance_time` exercise, and equivalents (HTTP 400).
+ */
+export class SetShapeMismatchError extends AppError {
+    constructor(message: string, detail?: string) {
+        super(
+            message,
+            buildProblem({
+                errorName: 'SetShapeMismatchError',
+                title: message,
+                status: 400,
+                detail,
+            }),
+        );
+    }
+}
+
+/**
  * Thrown when the environment a process booted with is missing or contradictory. Always fatal at
  * startup; the status code exists only because every `AppError` carries one.
  */
