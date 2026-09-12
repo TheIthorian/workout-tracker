@@ -187,8 +187,9 @@ Loads every entry through `@app/catalog`, runs `CatalogSeedService.upsertExercis
 Exits non-zero on the first load error before touching the database, so a typo in one file does not
 half-publish the catalog.
 
-`apps/admin`'s env gains the `S3_*` keys, optional at load and required by this command. It runs as a
-deploy step for `apps/api` on Railway and by hand locally.
+`apps/admin`'s env gains the `S3_*` keys, optional at load and required by this command. It is run
+by hand after `db:migrate`, locally and against production — the same way migrations are applied —
+and is idempotent.
 
 ## Images and the CDN
 
@@ -196,14 +197,18 @@ deploy step for `apps/api` on Railway and by hand locally.
 The image response's `url` is `${CATALOG_IMAGE_BASE_URL}/${storage_key}`. Clients never construct a
 path.
 
-| Environment | Bucket                       | `CATALOG_IMAGE_BASE_URL`       |
-| ----------- | ---------------------------- | ------------------------------ |
-| production  | R2, public via custom domain | `https://cdn.<domain>`         |
-| local       | MinIO, `wt-app`              | `http://localhost:9000/wt-app` |
+| Environment | Bucket                                            | `CATALOG_IMAGE_BASE_URL`       |
+| ----------- | ------------------------------------------------- | ------------------------------ |
+| production  | R2, catalog-only bucket, public via custom domain | `https://cdn.<domain>`         |
+| local       | MinIO, `wt-app`                                   | `http://localhost:9000/wt-app` |
 
 Locally, `minio-init` runs `mc anonymous set download local/wt-app/catalog` after creating the
 bucket, so the `catalog/` prefix is readable without credentials and the rest of the bucket stays
 private. The URL shape is identical in both environments; there is no local-only code path in the API.
+
+R2 public access is granted per bucket, not per prefix, so in production the bucket named by
+`S3_BUCKET` holds catalog objects only. The upload pipeline kept for a later private consumer
+(progress photos) must write to a separate, private bucket when that consumer arrives.
 
 Cache headers are the CDN's responsibility. Content-addressed keys mean a changed image is a new URL,
 so the edge may cache with `immutable`.

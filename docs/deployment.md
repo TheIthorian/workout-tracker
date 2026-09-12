@@ -45,6 +45,20 @@ DATABASE_URL='<railway postgres url>' pnpm --filter @app/db db:migrate
 Never point `db:migrate` at a database you have not backed up. `drizzle-kit generate` writes SQL to
 `packages/db/drizzle/` — read the generated file before applying it, especially any `DROP`.
 
+### Publish the catalog
+
+`apps/admin seed-exercises` publishes `content/exercises/` into the database — build the CLI, then
+run it with `DATABASE_URL` and the `S3_*` variables exported (or in `apps/admin/.env`):
+
+```bash
+pnpm --filter @app/admin build
+DATABASE_URL='<railway postgres url>' S3_ENDPOINT=... S3_BUCKET=... S3_ACCESS_KEY_ID=... S3_SECRET_ACCESS_KEY=... \
+  pnpm --filter @app/admin start seed-exercises
+```
+
+It is idempotent — run it by hand after any deploy that changes `content/exercises/`, the same way
+`db:migrate` is run after a schema change.
+
 ## 4. `apps/api`
 
 ```bash
@@ -54,20 +68,28 @@ railway add --service api
 Its required variables (`apps/api/src/config/load-env.ts` is the authority — an app that boots
 without one of these crashes at startup rather than running half-configured):
 
-| Variable               | Notes                                                    |
-| ---------------------- | -------------------------------------------------------- |
-| `DATABASE_URL`         | From the Postgres service.                               |
-| `AUTH_SECRET`          | The value generated above.                               |
-| `AUTH_BASE_URL`        | The API's own public origin.                             |
-| `AUTH_TRUSTED_ORIGINS` | Comma-separated. Include the web app's origin.           |
-| `AUTH_SECURE_COOKIES`  | `true` behind Railway's TLS-terminating proxy.           |
-| `CORS_ORIGIN`          | The web app's origin.                                    |
-| `WEB_APP_BASE_URL`     | Used to build every `webUrl` in a response.              |
-| `API_BASE_URL`         | Used to build every `resourceUrl`.                       |
-| `MCP_BASE_URL`         | The `apps/mcp` origin. Used to build a token's `mcpUrl`. |
-| `PROBLEM_TYPE_BASE`    | Optional. Base URI for RFC 7807 `type` values.           |
-| `LLM_*`                | Optional. A blank `LLM_API_KEY` disables LLM features.   |
-| `S3_*`                 | `S3_BUCKET` and both credentials are required.           |
+| Variable                 | Notes                                                                                                                        |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`           | From the Postgres service.                                                                                                   |
+| `AUTH_SECRET`            | The value generated above.                                                                                                   |
+| `AUTH_BASE_URL`          | The API's own public origin.                                                                                                 |
+| `AUTH_TRUSTED_ORIGINS`   | Comma-separated. Include the web app's origin.                                                                               |
+| `AUTH_SECURE_COOKIES`    | `true` behind Railway's TLS-terminating proxy.                                                                               |
+| `CORS_ORIGIN`            | The web app's origin.                                                                                                        |
+| `WEB_APP_BASE_URL`       | Used to build every `webUrl` in a response.                                                                                  |
+| `API_BASE_URL`           | Used to build every `resourceUrl`.                                                                                           |
+| `MCP_BASE_URL`           | The `apps/mcp` origin. Used to build a token's `mcpUrl`.                                                                     |
+| `PROBLEM_TYPE_BASE`      | Optional. Base URI for RFC 7807 `type` values.                                                                               |
+| `LLM_*`                  | Optional. A blank `LLM_API_KEY` disables LLM features.                                                                       |
+| `S3_*`                   | `S3_BUCKET` and both credentials are required.                                                                               |
+| `CATALOG_IMAGE_BASE_URL` | Origin the browser loads catalog exercise images from — the public custom domain in front of the catalog bucket (see below). |
+
+### Catalog images
+
+R2 public access is per-bucket, so `S3_BUCKET` must hold only catalog objects. Put a custom domain
+in front of it and set `CATALOG_IMAGE_BASE_URL` to that origin. A future private upload consumer
+(progress photos) needs its own bucket — never the catalog one. The R2 API token needs object read
+and write plus bucket read: the seed calls `HeadBucket` before uploading.
 
 `TZ=UTC` is set in `apps/api/Dockerfile` and must stay set — see the Auth section of `CLAUDE.md`
 for why every process touching the Better Auth tables has to agree on one timezone.
