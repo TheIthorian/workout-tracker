@@ -82,6 +82,47 @@ export const addExerciseLinkToolArgsSchema = z.strictObject({
     label: z.string().max(200).nullish(),
 });
 
+/** One slot in a routine as a tool supplies it. Omitted targets are left unset. */
+export const routineExerciseToolInputSchema = z.strictObject({
+    exerciseId: guidSchema,
+    targetSets: z.number().int().min(1).max(100).nullish(),
+    restSeconds: z.number().int().min(0).max(3600).nullish(),
+    notes: z.string().max(1000).nullish(),
+    targetReps: z.number().int().min(0).max(1000).nullish(),
+    targetWeightKg: z.number().min(0).max(10000).nullish(),
+    targetDurationSeconds: z.number().int().min(0).max(86400).nullish(),
+    targetDistanceM: z.number().min(0).max(1000000).nullish(),
+});
+
+/** `list_routines`. */
+export const listRoutinesToolArgsSchema = z.strictObject({
+    search: z.string().max(200).nullish(),
+    includeArchived: z.boolean().nullish(),
+    page: z.number().int().min(1).nullish(),
+    pageSize: z.number().int().min(1).max(MAX_PAGE_SIZE).nullish(),
+});
+
+/** `get_routine`. */
+export const getRoutineToolArgsSchema = z.strictObject({
+    routineId: guidSchema,
+});
+
+/** `create_routine`. `exercises`, when given, is the complete ordered list. */
+export const createRoutineToolArgsSchema = z.strictObject({
+    name: z.string().min(1).max(200),
+    description: z.string().max(2000).nullish(),
+    exercises: z.array(routineExerciseToolInputSchema).max(50).nullish(),
+});
+
+/** `update_routine`. An omitted key leaves the stored value alone; `exercises` replaces the whole list. */
+export const updateRoutineToolArgsSchema = z.strictObject({
+    routineId: guidSchema,
+    name: z.string().min(1).max(200).nullish(),
+    description: z.string().max(2000).nullish(),
+    archived: z.boolean().nullish(),
+    exercises: z.array(routineExerciseToolInputSchema).max(50).nullish(),
+});
+
 export type GetCurrentUserToolArgs = z.infer<typeof getCurrentUserToolArgsSchema>;
 export type ListWorkspacesToolArgs = z.infer<typeof listWorkspacesToolArgsSchema>;
 export type ListItemsToolArgs = z.infer<typeof listItemsToolArgsSchema>;
@@ -94,3 +135,8 @@ export type GetExerciseToolArgs = z.infer<typeof getExerciseToolArgsSchema>;
 export type CreateExerciseToolArgs = z.infer<typeof createExerciseToolArgsSchema>;
 export type UpdateExerciseToolArgs = z.infer<typeof updateExerciseToolArgsSchema>;
 export type AddExerciseLinkToolArgs = z.infer<typeof addExerciseLinkToolArgsSchema>;
+export type RoutineExerciseToolInput = z.infer<typeof routineExerciseToolInputSchema>;
+export type ListRoutinesToolArgs = z.infer<typeof listRoutinesToolArgsSchema>;
+export type GetRoutineToolArgs = z.infer<typeof getRoutineToolArgsSchema>;
+export type CreateRoutineToolArgs = z.infer<typeof createRoutineToolArgsSchema>;
+export type UpdateRoutineToolArgs = z.infer<typeof updateRoutineToolArgsSchema>;

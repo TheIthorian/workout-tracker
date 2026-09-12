@@ -7,15 +7,19 @@ const EXPECTED_TOOL_NAMES = [
     'add_exercise_link',
     'create_exercise',
     'create_item',
+    'create_routine',
     'delete_item',
     'get_current_user',
     'get_exercise',
     'get_item',
+    'get_routine',
     'list_exercises',
     'list_items',
+    'list_routines',
     'list_workspaces',
     'update_exercise',
     'update_item',
+    'update_routine',
 ];
 
 /**
