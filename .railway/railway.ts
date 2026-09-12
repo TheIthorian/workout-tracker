@@ -68,6 +68,7 @@ export default defineRailway(() => {
             AUTH_SECRET: preserve(),
             AUTH_SECURE_COOKIES: preserve(),
             AUTH_TRUSTED_ORIGINS: preserve(),
+            CATALOG_IMAGE_BASE_URL: preserve(),
             CORS_ORIGIN: preserve(),
             DATABASE_URL: preserve(),
             LLM_API_KEY: preserve(),

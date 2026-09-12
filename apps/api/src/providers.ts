@@ -24,6 +24,9 @@ export const DB = Symbol('DB');
 /** DI token for the configured {@link StorageService}. */
 export const STORAGE_SERVICE = Symbol('STORAGE_SERVICE');
 
+/** DI token for the origin catalog image URLs are built from. */
+export const CATALOG_IMAGE_BASE_URL = Symbol('CATALOG_IMAGE_BASE_URL');
+
 /** DI token for the configured {@link AuthService}. */
 export const AUTH_SERVICE = Symbol('AUTH_SERVICE');
 
@@ -94,6 +97,10 @@ export const infrastructureProviders: Provider[] = [
             });
         },
         inject: [APP_LOGGER],
+    },
+    {
+        provide: CATALOG_IMAGE_BASE_URL,
+        useFactory: (): string => String(loadEnv()['CATALOG_IMAGE_BASE_URL']).replace(/\/+$/, ''),
     },
     {
         provide: USER_PROVISIONING_SERVICE,

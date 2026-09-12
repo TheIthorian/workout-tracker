@@ -2,6 +2,7 @@ import { TrackingType } from '@app/domain';
 import { describe, expect, it } from 'vitest';
 import {
     exerciseListQuerySchema,
+    exerciseResponseSchema,
     patchExerciseRequestSchema,
     postExerciseLinkRequestSchema,
     postExerciseRequestSchema,
@@ -69,5 +70,21 @@ describe('postExerciseLinkRequestSchema', () => {
 
     it('rejects a non-url', () => {
         expect(() => postExerciseLinkRequestSchema.parse({ url: 'not a url' })).toThrow();
+    });
+});
+
+describe('exerciseResponseSchema', () => {
+    it('requires isCatalog and slug on a response', () => {
+        const result = exerciseResponseSchema.safeParse({
+            id: '11111111-1111-4111-8111-111111111111',
+            name: 'x',
+            trackingType: 'weight_reps',
+            notes: null,
+            archivedAt: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+        });
+
+        expect(result.success).toBe(false);
     });
 });

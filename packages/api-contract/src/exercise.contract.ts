@@ -4,14 +4,12 @@ import { guidSchema, paginatedResponseSchema, paginationQuerySchema } from './pr
 
 const guideFieldSchema = z.string().max(4000);
 
-/** The optional `caption` multipart field on a guide image upload. */
-export const exerciseImageCaptionSchema = z.string().trim().max(200).optional();
-
 export const exerciseGuideImageResponseSchema = z.object({
     id: guidSchema,
     caption: z.string().nullable(),
     position: z.number().int(),
-    url: z.string(),
+    /** Absolute; served by the CDN in front of object storage, never by this API. */
+    url: z.url(),
 });
 
 export const exerciseLinkResponseSchema = z.object({
@@ -24,6 +22,10 @@ export const exerciseLinkResponseSchema = z.object({
 export const exerciseResponseSchema = z.object({
     id: guidSchema,
     name: z.string(),
+    /** Set on catalog exercises; the seed's stable key. Null on a workspace's own exercise. */
+    slug: z.string().nullable(),
+    /** True for shared catalog content, which no workspace route may write. */
+    isCatalog: z.boolean(),
     trackingType: z.enum(TrackingType),
     notes: z.string().nullable(),
     archivedAt: z.string().nullable(),

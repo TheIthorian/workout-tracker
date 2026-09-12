@@ -39,6 +39,7 @@
         "zod": "4.4.3"
     },
     "devDependencies": {
+        "@app/domain": "workspace:*",
         "@app/tsconfig": "workspace:*",
         "@aws-sdk/client-s3": "3.1115.0",
         "@nestjs/testing": "11.1.28",

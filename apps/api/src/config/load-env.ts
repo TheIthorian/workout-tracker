@@ -38,6 +38,10 @@ const schema = Joi.object({
     // when a personal access token is created, and this process serves no `/mcp` route to fall back
     // on, so a missing value cannot degrade into a merely-wrong-looking link.
     MCP_BASE_URL: Joi.string().uri().required(),
+    // Origin catalog image URLs are built from: `${CATALOG_IMAGE_BASE_URL}/${storage_key}`. In
+    // production a CDN in front of the bucket; locally MinIO's anonymous-read `catalog/` prefix.
+    // Required: a missing value produces image URLs that look right and 404.
+    CATALOG_IMAGE_BASE_URL: Joi.string().uri().required(),
     // Base URI every problem body's `type` is built from. Set it to this deployment's own origin.
     PROBLEM_TYPE_BASE: Joi.string().default(PROBLEM_TYPE_BASE_DEFAULT),
     // Optional: leaving the key blank is a supported "LLM disabled" deployment, not a

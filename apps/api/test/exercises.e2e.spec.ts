@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto';
+import { schema } from '@app/db';
+import { TrackingType } from '@app/domain';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createTestApp, signIn, type TestApp } from './harness.js';
+import { createTestApp, signIn, TEST_CATALOG_IMAGE_BASE_URL, type TestApp } from './harness.js';
 
 let app: TestApp;
 
@@ -190,5 +192,80 @@ describe('exercise routes', () => {
 
         const body = JSON.parse(listed.body) as { data: { name: string }[] };
         expect(body.data.map((exercise) => exercise.name)).toEqual(['Bench Press']);
+    });
+});
+
+describe('catalog exercises', () => {
+    async function seedCatalog(): Promise<{ id: string; imageKey: string }> {
+        const imageKey = `catalog/e2e-squat/${randomUUID()}.png`;
+        const [row] = await app.db
+            .insert(schema.exercises)
+            .values({
+                workspaceId: null,
+                slug: `e2e-squat-${randomUUID()}`,
+                name: 'E2E Squat',
+                trackingType: TrackingType.WeightReps,
+            })
+            .returning({ id: schema.exercises.id });
+        await app.db.insert(schema.exerciseGuideImages).values({
+            workspaceId: null,
+            exerciseId: row.id,
+            storageKey: imageKey,
+            contentType: 'image/png',
+            position: 0,
+        });
+
+        return { id: row.id, imageKey };
+    }
+
+    it('lists and reads a catalog exercise for any signed-in member, with an absolute CDN image url', async () => {
+        const { cookie, workspaceId } = await signUpUser();
+        const { id, imageKey } = await seedCatalog();
+
+        const list = await app.inject({
+            method: 'GET',
+            url: `/api/v1/workspaces/${workspaceId}/exercises?search=${encodeURIComponent('E2E Squat')}`,
+            headers: { cookie },
+        });
+        const listed = (JSON.parse(list.body) as { data: { id: string; isCatalog: boolean }[] }).data;
+        expect(listed.find((row) => row.id === id)).toMatchObject({ isCatalog: true });
+
+        const detail = await app.inject({
+            method: 'GET',
+            url: `/api/v1/workspaces/${workspaceId}/exercises/${id}`,
+            headers: { cookie },
+        });
+        expect(detail.statusCode).toBe(200);
+        expect(JSON.parse(detail.body)).toMatchObject({
+            isCatalog: true,
+            images: [{ url: `${TEST_CATALOG_IMAGE_BASE_URL}/${imageKey}` }],
+        });
+    });
+
+    it('answers 404 to a PATCH on a catalog exercise through a workspace', async () => {
+        const { cookie, workspaceId } = await signUpUser();
+        const { id } = await seedCatalog();
+
+        const response = await app.inject({
+            method: 'PATCH',
+            url: `/api/v1/workspaces/${workspaceId}/exercises/${id}`,
+            headers: { cookie },
+            payload: { name: 'Vandalised' },
+        });
+
+        expect(response.statusCode).toBe(404);
+    });
+
+    it('marks a created exercise as not catalog', async () => {
+        const { cookie, workspaceId } = await signUpUser();
+
+        const created = await app.inject({
+            method: 'POST',
+            url: `/api/v1/workspaces/${workspaceId}/exercises`,
+            headers: { cookie },
+            payload: { name: 'Mine', trackingType: 'weight_reps' },
+        });
+
+        expect(JSON.parse(created.body)).toMatchObject({ isCatalog: false, slug: null });
     });
 });

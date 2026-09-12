@@ -21,6 +21,9 @@ export const TEST_API_BASE_URL = 'https://api.test';
 /** The MCP origin every `mcpUrl` in a test response is built from. */
 export const TEST_MCP_BASE_URL = 'https://mcp.test';
 
+/** Origin the test app builds catalog image urls from. */
+export const TEST_CATALOG_IMAGE_BASE_URL = 'https://cdn.test';
+
 /** Test auth config. Never used to sign anything real - only a throwaway process shares it. */
 const TEST_AUTH_CONFIG = {
     secret: 'test-secret-value-not-for-production-use',
@@ -83,6 +86,7 @@ export async function createTestApp({
     process.env['WEB_APP_BASE_URL'] ??= TEST_WEB_APP_BASE_URL;
     process.env['API_BASE_URL'] ??= TEST_API_BASE_URL;
     process.env['MCP_BASE_URL'] ??= TEST_MCP_BASE_URL;
+    process.env['CATALOG_IMAGE_BASE_URL'] ??= TEST_CATALOG_IMAGE_BASE_URL;
     // Object storage is required configuration for this app, so the container refuses to boot
     // without it. Only `test/exercise-guide.e2e.spec.ts` talks to storage, and it overrides
     // `STORAGE_SERVICE` with one pointed at its own MinIO container; these placeholders exist so

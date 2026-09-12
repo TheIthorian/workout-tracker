@@ -1,5 +1,4 @@
 import {
-    exerciseImageContentPath,
     exerciseListQuerySchema,
     exerciseWebPath,
     guidSchema,
@@ -23,15 +22,17 @@ import {
 } from '@app/nest-common';
 import type { ExerciseDetail, ExercisesService } from '@app/services';
 import { Controller, Get, HttpCode, Inject, Patch, Post, UseGuards } from '@nestjs/common';
+import { CATALOG_IMAGE_BASE_URL } from '../providers.js';
 import { EXERCISES_SERVICE } from './exercises.providers.js';
 
-/** The workspace's exercise library and each exercise's guide. */
+/** The exercise library a workspace sees: the shared catalog and its own custom exercises. */
 @Controller('v1/workspaces/:workspaceId/exercises')
 @UseGuards(SessionOrMcpPatGuard)
 export class ExercisesController {
     constructor(
         @Inject(EXERCISES_SERVICE) private readonly exercises: ExercisesService,
         @Inject(RESOURCE_URL_GENERATOR) private readonly urls: ResourceUrlGenerator,
+        @Inject(CATALOG_IMAGE_BASE_URL) private readonly catalogImageBaseUrl: string,
     ) {}
 
     /** A page of the workspace's exercises, newest first. */
@@ -61,7 +62,7 @@ export class ExercisesController {
         const exercise = await this.exercises.get({ userId: currentUser.userId, workspaceId, exerciseId });
 
         return {
-            ...toDetailResponse({ exercise, workspaceId, urls: this.urls }),
+            ...toDetailResponse({ exercise, imageBaseUrl: this.catalogImageBaseUrl }),
             webUrl: this.urls.webAppUrl({ path: exerciseWebPath({ workspaceId, exerciseId }) }),
         };
     }
@@ -76,7 +77,7 @@ export class ExercisesController {
     ): Promise<ExerciseDetailResponse> {
         const created = await this.exercises.create({ userId: currentUser.userId, workspaceId, ...body });
 
-        return toDetailResponse({ exercise: created, workspaceId, urls: this.urls });
+        return toDetailResponse({ exercise: created, imageBaseUrl: this.catalogImageBaseUrl });
     }
 
     /** Updates an exercise. An omitted key leaves the stored value alone. */
@@ -94,22 +95,20 @@ export class ExercisesController {
             ...body,
         });
 
-        return toDetailResponse({ exercise: updated, workspaceId, urls: this.urls });
+        return toDetailResponse({ exercise: updated, imageBaseUrl: this.catalogImageBaseUrl });
     }
 }
 
 /**
- * Storage keys never reach the wire: each image is addressed by the guarded content route that
- * streams its bytes (`ExerciseGuideController.getImageContent`).
+ * Storage keys become absolute CDN urls here, and only here: the service returns keys because the
+ * base origin is deployment configuration, which belongs to the app.
  */
 function toDetailResponse({
     exercise,
-    workspaceId,
-    urls,
+    imageBaseUrl,
 }: {
     exercise: ExerciseDetail;
-    workspaceId: string;
-    urls: ResourceUrlGenerator;
+    imageBaseUrl: string;
 }): ExerciseDetailResponse {
     return {
         ...exercise,
@@ -117,9 +116,7 @@ function toDetailResponse({
             id: image.id,
             caption: image.caption,
             position: image.position,
-            url: urls.apiUrl({
-                path: exerciseImageContentPath({ workspaceId, exerciseId: exercise.id, imageId: image.id }),
-            }),
+            url: `${imageBaseUrl}/${image.storageKey}`,
         })),
     };
 }

@@ -10,6 +10,7 @@ import {
 import {
     APP_LOGGER,
     AUTH_SERVICE,
+    CATALOG_IMAGE_BASE_URL,
     DB,
     infrastructureProviders,
     STORAGE_SERVICE,
@@ -47,6 +48,7 @@ import {
         RESOURCE_URL_GENERATOR,
         MCP_TOKEN_SERVICE,
         STORAGE_SERVICE,
+        CATALOG_IMAGE_BASE_URL,
         SessionAuthGuard,
         McpPatAuthGuard,
         SessionOrMcpPatGuard,

@@ -9,6 +9,7 @@ const BASE_ENV = {
     WEB_APP_BASE_URL: 'http://localhost:5173',
     API_BASE_URL: 'http://localhost:3000',
     MCP_BASE_URL: 'http://localhost:3100',
+    CATALOG_IMAGE_BASE_URL: 'http://localhost:9000/wt-app',
     S3_BUCKET: 'wt-app',
     S3_ACCESS_KEY_ID: 'minioadmin',
     S3_SECRET_ACCESS_KEY: 'minioadmin',
@@ -31,6 +32,7 @@ const MANAGED_KEYS = [
     'WEB_APP_BASE_URL',
     'API_BASE_URL',
     'MCP_BASE_URL',
+    'CATALOG_IMAGE_BASE_URL',
 ];
 
 describe('loadEnv', () => {
@@ -48,6 +50,7 @@ describe('loadEnv', () => {
         'WEB_APP_BASE_URL',
         'API_BASE_URL',
         'MCP_BASE_URL',
+        'CATALOG_IMAGE_BASE_URL',
         'S3_BUCKET',
         'S3_ACCESS_KEY_ID',
         'S3_SECRET_ACCESS_KEY',
