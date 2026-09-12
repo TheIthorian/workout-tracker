@@ -35,6 +35,9 @@ importers:
       '@app/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@app/catalog':
+        specifier: workspace:*
+        version: link:../../packages/catalog
       '@app/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -44,6 +47,15 @@ importers:
       '@app/errors':
         specifier: workspace:*
         version: link:../../packages/errors
+      '@app/logger':
+        specifier: workspace:*
+        version: link:../../packages/logger
+      '@app/services':
+        specifier: workspace:*
+        version: link:../../packages/services
+      '@app/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
       commander:
         specifier: 15.0.0
         version: 15.0.0
@@ -57,6 +69,9 @@ importers:
       '@app/tsconfig':
         specifier: workspace:*
         version: link:../../packages/tsconfig
+      '@aws-sdk/client-s3':
+        specifier: 3.1115.0
+        version: 3.1115.0
       '@testcontainers/postgresql':
         specifier: 12.1.0
         version: 12.1.0

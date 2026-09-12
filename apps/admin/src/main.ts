@@ -1,16 +1,21 @@
 import { createDb } from '@app/db';
 import { AppError } from '@app/errors';
+import { createLogger } from '@app/logger';
+import { StorageService } from '@app/storage';
 import { CommanderError, Command } from 'commander';
 import { createUser, formatCreatedUser } from './commands/create-user.js';
 import { formatUserList, listUsers } from './commands/list-users.js';
 import { formatWorkspaceList, listWorkspaces } from './commands/list-workspaces.js';
-import { getAuthConfig, getDatabaseUrl } from './env.js';
+import { formatSeedReport, seedExercises } from './commands/seed-exercises.js';
+import { getAuthConfig, getDatabaseUrl, getStorageConfig } from './env.js';
 
 type CreateUserOptions = {
     email: string;
     password: string;
     displayName?: string;
 };
+
+type SeedExercisesOptions = { dir: string };
 
 /**
  * Builds the CLI's command tree without parsing anything, so tests can drive it directly with
@@ -46,6 +51,14 @@ export function createProgram(): Command {
         .option('--display-name <name>', 'Display name; defaults to the email')
         .action(async (options: CreateUserOptions) => {
             await runCreateUser(options);
+        });
+
+    program
+        .command('seed-exercises')
+        .description('Publish content/exercises into the shared catalog. Requires the S3_* variables.')
+        .option('--dir <path>', 'Content directory', 'content/exercises')
+        .action(async (options: SeedExercisesOptions) => {
+            await runSeedExercises(options);
         });
 
     return program;
@@ -87,6 +100,21 @@ async function runCreateUser(options: CreateUserOptions): Promise<void> {
         });
 
         console.log(formatCreatedUser(result).join('\n'));
+    } finally {
+        await close();
+    }
+}
+
+async function runSeedExercises(options: SeedExercisesOptions): Promise<void> {
+    const storageConfig = getStorageConfig();
+    const storage = new StorageService({
+        config: storageConfig,
+        logger: createLogger({ context: 'admin', config: { level: 'warn', pretty: true, redact: true } }),
+    });
+
+    const { db, close } = createDb({ config: { connectionString: getDatabaseUrl() } });
+    try {
+        console.log(formatSeedReport(await seedExercises({ db, storage, dir: options.dir })).join('\n'));
     } finally {
         await close();
     }

@@ -9,8 +9,12 @@
     "include": ["src"],
     "references": [
         { "path": "../../packages/auth" },
+        { "path": "../../packages/catalog" },
         { "path": "../../packages/db" },
         { "path": "../../packages/env" },
-        { "path": "../../packages/errors" }
+        { "path": "../../packages/errors" },
+        { "path": "../../packages/logger" },
+        { "path": "../../packages/services" },
+        { "path": "../../packages/storage" }
     ]
 }

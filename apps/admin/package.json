@@ -16,15 +16,20 @@
     },
     "dependencies": {
         "@app/auth": "workspace:*",
+        "@app/catalog": "workspace:*",
         "@app/db": "workspace:*",
         "@app/env": "workspace:*",
         "@app/errors": "workspace:*",
+        "@app/logger": "workspace:*",
+        "@app/services": "workspace:*",
+        "@app/storage": "workspace:*",
         "commander": "15.0.0",
         "drizzle-orm": "0.45.2",
         "joi": "18.2.3"
     },
     "devDependencies": {
         "@app/tsconfig": "workspace:*",
+        "@aws-sdk/client-s3": "3.1115.0",
         "@testcontainers/postgresql": "12.1.0",
         "@types/node": "26.2.0",
         "better-auth": "1.7.1",

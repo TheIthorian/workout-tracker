@@ -1,6 +1,7 @@
 import Joi from 'joi';
 import { ConfigurationError } from '@app/errors';
 import { createEnvLoader } from '@app/env';
+import type { StorageServiceConfig } from '@app/storage';
 
 /**
  * This CLI reads a handful of environment variables, so its schema is tiny compared to a full app's
@@ -16,6 +17,14 @@ const schema = Joi.object({
     // run the read-only commands too. `getAuthSecret` below is what makes that one command refuse.
     AUTH_SECRET: Joi.string().optional(),
     AUTH_BASE_URL: Joi.string().uri().optional(),
+    // Optional at the schema level for the same reason as AUTH_SECRET: only `seed-exercises`
+    // needs object storage. `getStorageConfig` is what makes that one command refuse.
+    S3_ENDPOINT: Joi.string().optional(),
+    S3_REGION: Joi.string().default('us-east-1'),
+    S3_BUCKET: Joi.string().optional(),
+    S3_ACCESS_KEY_ID: Joi.string().optional(),
+    S3_SECRET_ACCESS_KEY: Joi.string().optional(),
+    S3_FORCE_PATH_STYLE: Joi.boolean().default(true),
 });
 
 const envLoader = createEnvLoader({ schema });
@@ -55,4 +64,32 @@ export function getAuthConfig(): { secret: string; baseUrl: string } {
     const baseUrl = env['AUTH_BASE_URL'];
 
     return { secret, baseUrl: typeof baseUrl === 'string' && baseUrl.length > 0 ? baseUrl : 'http://localhost:3000' };
+}
+
+/**
+ * The bucket `seed-exercises` uploads catalog images to. Must be the same bucket `apps/api`'s
+ * `S3_BUCKET` names, or the URLs the API hands out point at objects that were never written.
+ *
+ * @throws ConfigurationError when the bucket or its credentials are missing.
+ */
+export function getStorageConfig(): StorageServiceConfig {
+    const env = envLoader.loadEnv();
+    const bucket = env['S3_BUCKET'];
+    const accessKeyId = env['S3_ACCESS_KEY_ID'];
+    const secretAccessKey = env['S3_SECRET_ACCESS_KEY'];
+
+    if (typeof bucket !== 'string' || typeof accessKeyId !== 'string' || typeof secretAccessKey !== 'string') {
+        throw new ConfigurationError('S3_BUCKET, S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY are required.');
+    }
+
+    const endpoint = env['S3_ENDPOINT'];
+
+    return {
+        ...(typeof endpoint === 'string' && endpoint.length > 0 ? { endpoint } : {}),
+        region: String(env['S3_REGION']),
+        bucket,
+        accessKeyId,
+        secretAccessKey,
+        forcePathStyle: Boolean(env['S3_FORCE_PATH_STYLE']),
+    };
 }
