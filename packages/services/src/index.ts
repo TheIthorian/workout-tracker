@@ -1,3 +1,4 @@
+export { CatalogSeedService, SeedOutcome, catalogImageKey } from './catalog-seed.service.js';
 export { ExerciseGuideService } from './exercise-guide.service.js';
 export {
     ExercisesService,
