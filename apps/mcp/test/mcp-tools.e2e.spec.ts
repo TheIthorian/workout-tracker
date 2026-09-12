@@ -269,7 +269,7 @@ describe('MCP tools', () => {
             });
         });
 
-        it('surfaces a tracking-type mismatch as a tool error', async () => {
+        it('returns a tracking-type mismatch as a problem body the model can act on', async () => {
             const { id: plankId } = await seedExercise(app.db, {
                 userId,
                 workspaceId,
@@ -282,7 +282,11 @@ describe('MCP tools', () => {
                 arguments: { name: 'Bad', exercises: [{ exerciseId: plankId, targetReps: 8 }] },
             });
 
-            expect(result.isError).toBe(true);
+            expect(result.isError).toBeFalsy();
+            expect(toolResultBody(result)).toMatchObject({
+                status: 400,
+                type: expect.stringMatching(/SetShapeMismatchError$/),
+            });
         });
     });
 });
