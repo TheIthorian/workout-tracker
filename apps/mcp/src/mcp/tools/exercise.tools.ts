@@ -19,9 +19,10 @@ import { attachExerciseLinks } from './exercise-links.js';
 
 /**
  * The workspace's exercise library and each exercise's guide links, over the same
- * `ExerciseDetailResponse`/`ExerciseLinkResponse` wire shapes `apps/api` serves. Image upload is
- * deliberately not a tool here: multipart has no good shape from a tool call, and an MCP client has
- * no file to send - `apps/web` is the only client that uploads a guide image.
+ * `ExerciseDetailResponse`/`ExerciseLinkResponse` wire shapes `apps/api` serves. Catalog exercises
+ * (`isCatalog: true`) are shared, read-only content; the write tools answer 404 for a catalog id,
+ * the same as for an exercise in another workspace. Guide images are catalog content served from a
+ * CDN — there is no image tool.
  *
  * No tool here takes a `workspaceId`; it comes from the personal access token, same as every other
  * tool in this app - see `item.tools.ts`'s doc comment for why.
@@ -46,10 +47,12 @@ export function buildExerciseTools({
         defineTool({
             methodName: 'ListExercises',
             description:
-                "Lists exercises in the token's workspace, newest first, with optional search and paging. " +
-                "Archived exercises are excluded unless includeArchived is set. Each exercise's trackingType " +
-                '(weight_reps, duration, or distance_time) decides which fields a logged set for it carries. ' +
-                'Each entry includes webUrl, the page for that exercise in the web app.',
+                "Lists the exercises the token's workspace can see — the shared catalog plus its own " +
+                'custom exercises — by name, with optional search and paging. isCatalog marks shared ' +
+                'catalog exercises, which cannot be edited. Archived exercises are excluded unless ' +
+                "includeArchived is set. Each exercise's trackingType (weight_reps, duration, or " +
+                'distance_time) decides which fields a logged set for it carries. Each entry includes ' +
+                'webUrl, the page for that exercise in the web app.',
             inputSchema: listExercisesToolArgsSchema,
             handler: async (args) => {
                 const pagination = paginationQuerySchema.parse({
@@ -76,7 +79,7 @@ export function buildExerciseTools({
                 'Gets an exercise by id, including its full guide (setup, execution, cues, common mistakes), ' +
                 "images, and links. The exercise's trackingType (weight_reps, duration, or distance_time) " +
                 'decides which fields a logged set for it carries. The response includes webUrl, the page for ' +
-                'this exercise in the web app.',
+                'this exercise in the web app. Catalog exercises (isCatalog true) are read-only.',
             inputSchema: getExerciseToolArgsSchema,
             handler: async (args) => {
                 const exercise = await client.get<ExerciseDetailResponse>({ path: `${basePath}/${args.exerciseId}` });
@@ -121,7 +124,8 @@ export function buildExerciseTools({
                 'Updates an exercise. Omitted fields keep their stored value; pass an empty string for a guide ' +
                 'field to clear it. trackingType (weight_reps, duration, or distance_time) decides which fields ' +
                 'a logged set for this exercise carries, so only change it if the exercise is genuinely tracked ' +
-                'differently now. Set archived to true or false to archive or restore the exercise.',
+                'differently now. Set archived to true or false to archive or restore the exercise. Not ' +
+                'applicable to catalog exercises, which answer not-found.',
             inputSchema: updateExerciseToolArgsSchema,
             handler: async (args) =>
                 runToolCaught({
@@ -142,7 +146,8 @@ export function buildExerciseTools({
             description:
                 "Appends an external link (for example, a demonstration video) to an exercise's guide. This " +
                 "exercise's trackingType (weight_reps, duration, or distance_time) is unaffected by this tool " +
-                'and still decides which fields a logged set for it carries.',
+                'and still decides which fields a logged set for it carries. Not applicable to catalog ' +
+                'exercises, which answer not-found.',
             inputSchema: addExerciseLinkToolArgsSchema,
             handler: async (args) =>
                 runToolCaught({
