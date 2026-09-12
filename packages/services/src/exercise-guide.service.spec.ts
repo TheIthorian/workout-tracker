@@ -1,12 +1,12 @@
 import { randomUUID } from 'node:crypto';
-import type { Db } from '@app/db';
+import { schema, type Db } from '@app/db';
 import { startTestDatabase } from '@app/db/testing';
 import { TrackingType } from '@app/domain';
 import { EntityNotFoundError } from '@app/errors';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ExerciseGuideService } from './exercise-guide.service.js';
 import { ExercisesService } from './exercises.service.js';
-import { seedUser, seedWorkspace } from './testing.js';
+import { seedCatalogExercise, seedUser, seedWorkspace } from './testing.js';
 import { WorkspaceMembershipService } from './workspace-membership.service.js';
 
 let database: Awaited<ReturnType<typeof startTestDatabase>>;
@@ -271,5 +271,36 @@ describe('cross-exercise boundary within the same workspace', () => {
 
         const detail = await exercises.get({ userId, workspaceId, exerciseId });
         expect(detail.images.map((entry) => entry.id)).toContain(image.id);
+    });
+});
+
+describe('catalog exercises are read-only', () => {
+    it('refuses to attach a link or image to a catalog exercise', async () => {
+        const catalogId = await seedCatalogExercise(db, { slug: `catalog-${randomUUID()}` });
+
+        await expect(
+            guides.addLink({ userId, workspaceId, exerciseId: catalogId, url: 'https://example.com' }),
+        ).rejects.toBeInstanceOf(EntityNotFoundError);
+        await expect(
+            guides.addImage({
+                userId,
+                workspaceId,
+                exerciseId: catalogId,
+                storageKey: 'never-written.png',
+                contentType: 'image/png',
+            }),
+        ).rejects.toBeInstanceOf(EntityNotFoundError);
+    });
+
+    it('refuses to remove a catalog link through a workspace', async () => {
+        const catalogId = await seedCatalogExercise(db, { slug: `catalog-${randomUUID()}` });
+        const [link] = await db
+            .insert(schema.exerciseLinks)
+            .values({ workspaceId: null, exerciseId: catalogId, url: 'https://example.com/keep', position: 0 })
+            .returning({ id: schema.exerciseLinks.id });
+
+        await expect(
+            guides.removeLink({ userId, workspaceId, exerciseId: catalogId, linkId: link.id }),
+        ).rejects.toBeInstanceOf(EntityNotFoundError);
     });
 });

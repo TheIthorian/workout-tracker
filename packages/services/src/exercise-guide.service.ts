@@ -7,7 +7,8 @@ import type { WorkspaceMembershipService } from './workspace-membership.service.
 const { exerciseGuideImages, exerciseLinks, exercises } = schema;
 
 /**
- * Writes to an exercise's guide attachments — its external links and its image records.
+ * Writes to a custom exercise's guide attachments — its external links and its image records.
+ * Catalog exercises are never written here; their slug-keyed rows come from `CatalogSeedService`.
  *
  * Deliberately holds no storage client. `removeImage` returns the deleted row's storage key so the
  * caller can delete the object; keeping the side effect outside means this class can be tested
@@ -119,7 +120,12 @@ export class ExerciseGuideService {
         if (deleted.length === 0) throw new EntityNotFoundError('Exercise link not found');
     }
 
-    /** Records an already-uploaded image against the exercise's guide. */
+    /**
+     * Records an already-uploaded image against the exercise's guide.
+     *
+     * Not reachable from any route: exercise guide images are catalog content served from a CDN.
+     * Kept for the next image-bearing feature.
+     */
     async addImage({
         userId,
         workspaceId,
@@ -149,6 +155,9 @@ export class ExerciseGuideService {
 
     /**
      * One image record, including the storage key its bytes live under.
+     *
+     * Not reachable from any route: exercise guide images are catalog content served from a CDN.
+     * Kept for the next image-bearing feature.
      *
      * @throws EntityNotFoundError when the caller is not a member, or the image is not on this
      * exercise in this workspace.
@@ -185,6 +194,9 @@ export class ExerciseGuideService {
 
     /**
      * Deletes an image record.
+     *
+     * Not reachable from any route: exercise guide images are catalog content served from a CDN.
+     * Kept for the next image-bearing feature.
      *
      * @returns the storage key of the deleted row, so the caller can remove the stored object.
      */
