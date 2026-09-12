@@ -66,8 +66,11 @@ services:
             timeout: 5s
             retries: 10
 
-    # One-shot: creates the bucket `apps/api` expects (`S3_BUCKET`) and exits. MinIO does not
-    # auto-create buckets, so a fresh DATA_DIR would otherwise boot the API against a 404.
+    # One-shot: creates the bucket `apps/api` expects (`S3_BUCKET`) and opens anonymous read on its
+    # `catalog/` prefix, which stands in for the production CDN — the browser loads catalog images
+    # straight from `http://localhost:9000/wt-app/catalog/...` (`CATALOG_IMAGE_BASE_URL`). The rest
+    # of the bucket stays private. MinIO does not auto-create buckets, so a fresh DATA_DIR would
+    # otherwise boot the API against a 404.
     minio-init:
         image: minio/mc:latest
         container_name: wt-app-minio-init
@@ -77,5 +80,6 @@ services:
         entrypoint: >
             sh -c "
                 mc alias set local http://minio:9000 minioadmin minioadmin &&
-                mc mb --ignore-existing local/wt-app
+                mc mb --ignore-existing local/wt-app &&
+                mc anonymous set download local/wt-app/catalog
             "

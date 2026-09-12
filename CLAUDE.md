@@ -37,6 +37,7 @@ packages/
   env/              # Typed environment loader with fail-fast validation
   db/               # Drizzle schema, client, transactions, workspace-scoping helpers
   domain/           # Pure logic, no I/O
+  catalog/          # Exercise content file format and loader (reads the filesystem, nothing else)
   services/         # Business logic as plain classes, no framework
   auth/             # Better Auth wiring, sign-in lockout, MCP token issuing
   storage/          # S3/MinIO access
@@ -44,6 +45,7 @@ packages/
   nest-common/      # Zod validation pipe, exception filter, guards, interceptors
   api-contract/     # Zod schemas for every request and response — the keystone package
   api-client/       # Generic bearer-token HTTP client for apps/api, used by apps/mcp
+content/exercises/    # Catalog exercises as JSON + images, published by apps/admin seed-exercises
 ```
 
 Apps are thin composition layers; any code that could live in a package does. `api-contract` is the
@@ -237,6 +239,9 @@ a contract error, not a convenience.
 
 A small CLI for one-off operational tasks. Keep it narrow — check that a new command actually
 belongs here rather than in the API before adding it.
+
+`seed-exercises` publishes `content/exercises/` into the shared catalog; it is the only writer of
+catalog rows.
 
 ### apps/web
 

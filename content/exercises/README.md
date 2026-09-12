@@ -1,0 +1,9 @@
+# Exercise catalog
+
+Each directory is one catalog exercise; its name is the slug. `exercise.json` holds the text and
+lists the images and links; images live under `images/`. The format is validated by
+`packages/catalog` (see `exerciseEntrySchema`).
+
+Publish with `pnpm --filter @app/admin start seed-exercises` against the target database and
+bucket (`DATABASE_URL`, `S3_*`). Runs are idempotent; removing a directory archives its exercise
+rather than deleting it, because past sessions reference it.

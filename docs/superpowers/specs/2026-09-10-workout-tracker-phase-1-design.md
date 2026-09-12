@@ -36,8 +36,9 @@ Bodyweight movements are `weight_reps` with a zero or omitted load.
 
 ### Exercise library
 
-The library starts empty and grows as it is used; an exercise can be created inline from workout
-mode the first time it is needed. There is no seeded catalog to maintain or dedupe against.
+The library is the shared catalog — first-party exercises and guides published from
+`content/exercises/` — plus each workspace's own custom exercises, created inline when a movement
+is missing. See `2026-09-12-global-exercise-catalog-design.md`.
 
 ## Decisions
 
@@ -76,9 +77,9 @@ screen.
 
 ## Data Model
 
-All tables are workspace-owned, carry `workspace_id`, and are read and written through
-`scopedToWorkspace`. Naming is `snake_case`. Drizzle authors the schema in
-`packages/db/src/schema/`; generated SQL is committed.
+All tables carry `workspace_id`; the exercise tables allow it to be null for shared catalog rows
+and are read with `scopedToWorkspaceOrGlobal`. Naming is `snake_case`. Drizzle authors the schema
+in `packages/db/src/schema/`; generated SQL is committed.
 
 Enums are TypeScript enums (per the repository conventions), mirrored as `pgEnum` and read directly
 by Zod via `z.enum(...)`.
@@ -87,20 +88,21 @@ by Zod via `z.enum(...)`.
 
 The library, and the guide.
 
-| Column                      | Type             | Notes                                          |
-| --------------------------- | ---------------- | ---------------------------------------------- |
-| `id`                        | uuid pk          |                                                |
-| `workspace_id`              | uuid             | FK → `workspaces.id`, on delete cascade        |
-| `created_by_user_id`        | uuid null        | FK → `user.id`, on delete set null             |
-| `name`                      | text             |                                                |
-| `tracking_type`             | enum             | `weight_reps` \| `duration` \| `distance_time` |
-| `notes`                     | text null        |                                                |
-| `guide_setup`               | text null        |                                                |
-| `guide_execution`           | text null        |                                                |
-| `guide_cues`                | text null        |                                                |
-| `guide_mistakes`            | text null        |                                                |
-| `archived_at`               | timestamptz null |                                                |
-| `created_at` / `updated_at` | timestamptz      |                                                |
+| Column                      | Type             | Notes                                                       |
+| --------------------------- | ---------------- | ----------------------------------------------------------- |
+| `id`                        | uuid pk          |                                                             |
+| `workspace_id`              | uuid null        | FK → `workspaces.id`, on delete cascade; null = catalog row |
+| `created_by_user_id`        | uuid null        | FK → `user.id`, on delete set null                          |
+| `name`                      | text             |                                                             |
+| `tracking_type`             | enum             | `weight_reps` \| `duration` \| `distance_time`              |
+| `notes`                     | text null        |                                                             |
+| `slug`                      | text null        | seed key; set only on catalog rows                          |
+| `guide_setup`               | text null        |                                                             |
+| `guide_execution`           | text null        |                                                             |
+| `guide_cues`                | text null        |                                                             |
+| `guide_mistakes`            | text null        |                                                             |
+| `archived_at`               | timestamptz null |                                                             |
+| `created_at` / `updated_at` | timestamptz      |                                                             |
 
 The four `guide_*` fields sit on the exercise rather than in a one-to-one child table. Structure
 matters more than richness here: a fixed set of short fields can be laid out for a five-second
@@ -171,7 +173,6 @@ Routes live under `/api/v1/workspaces/:workspaceId/…`. Every request and respo
 in `packages/api-contract` before the controller is written.
 
 - `exercises` — list (with search), create, read, update, archive
-- `exercises/:id/images` — upload, delete
 - `exercises/:id/links` — create, update, delete
 - `exercises/:id/history` — recent sets for this exercise; backs the last-time prefill and, later,
   progress charts
