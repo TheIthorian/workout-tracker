@@ -35,7 +35,7 @@ export class ExercisesController {
         @Inject(CATALOG_IMAGE_BASE_URL) private readonly catalogImageBaseUrl: string,
     ) {}
 
-    /** A page of the workspace's exercises, newest first. */
+    /** A page of the workspace's exercises, by name. */
     @Get()
     async listExercises(
         @CurrentUser() currentUser: CurrentUserContext,

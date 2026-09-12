@@ -88,9 +88,7 @@ export async function createTestApp({
     process.env['MCP_BASE_URL'] ??= TEST_MCP_BASE_URL;
     process.env['CATALOG_IMAGE_BASE_URL'] ??= TEST_CATALOG_IMAGE_BASE_URL;
     // Object storage is required configuration for this app, so the container refuses to boot
-    // without it. Only `test/exercise-guide.e2e.spec.ts` talks to storage, and it overrides
-    // `STORAGE_SERVICE` with one pointed at its own MinIO container; these placeholders exist so
-    // every other suite can boot without one.
+    // without it; no suite talks to storage, so placeholders are enough.
     process.env['S3_BUCKET'] ??= 'test-bucket';
     process.env['S3_ACCESS_KEY_ID'] ??= 'test-access-key';
     process.env['S3_SECRET_ACCESS_KEY'] ??= 'test-secret-key';

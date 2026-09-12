@@ -302,5 +302,7 @@ describe('catalog exercises are read-only', () => {
         await expect(
             guides.removeLink({ userId, workspaceId, exerciseId: catalogId, linkId: link.id }),
         ).rejects.toBeInstanceOf(EntityNotFoundError);
+
+        expect((await exercises.get({ userId, workspaceId, exerciseId: catalogId })).links).toHaveLength(1);
     });
 });

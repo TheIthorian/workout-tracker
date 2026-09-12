@@ -65,7 +65,7 @@ export default function ExerciseDetailPage(): JSX.Element {
                     </div>
                 </div>
                 {/* While editing, ExerciseGuideEditor renders its own close control: it alone knows
-                    whether there's unsaved guide text or an open link/image draft a close might
+                    whether there's unsaved guide text or an open link draft a close might
                     otherwise silently discard, so it alone can decide whether closing is safe. */}
                 {!isEditing && !exercise.isCatalog && (
                     <Button variant='outline' className='gap-2' onClick={() => setEditing(true)}>

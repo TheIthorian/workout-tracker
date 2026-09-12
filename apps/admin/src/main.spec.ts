@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { existsSync } from 'node:fs';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { schema, type Db } from '@app/db';
 import { startTestDatabase } from '@app/db/testing';
@@ -111,6 +112,19 @@ describe('create-user', () => {
 
     it('requires an email and a password', async () => {
         await expect(run(['create-user', '--email', 'missing-password@example.com'])).rejects.toThrow();
+    });
+});
+
+describe('seed-exercises', () => {
+    // `pnpm --filter @app/admin start seed-exercises` runs with cwd `apps/admin`, so the default
+    // must be resolved relative to the module rather than left as a bare relative path that would
+    // land in `apps/admin/content/exercises` and fail.
+    it('defaults --dir to the repository content directory, and it exists', () => {
+        const seedCommand = createProgram().commands.find((command) => command.name() === 'seed-exercises');
+        const dirOption = seedCommand?.options.find((option) => option.long === '--dir');
+
+        expect(dirOption?.defaultValue).toMatch(/\/content\/exercises$/);
+        expect(existsSync(String(dirOption?.defaultValue))).toBe(true);
     });
 });
 

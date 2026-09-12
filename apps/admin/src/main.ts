@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import { createDb } from '@app/db';
 import { AppError } from '@app/errors';
 import { createLogger } from '@app/logger';
@@ -16,6 +17,11 @@ type CreateUserOptions = {
 };
 
 type SeedExercisesOptions = { dir: string };
+
+// This CLI is started from `apps/admin` (`pnpm --filter @app/admin start`), not the repo root, so a
+// relative default would resolve against the wrong cwd. `dist/main.js` -> apps/admin -> apps ->
+// repo root; the same three levels hold from `src/` under vitest.
+const DEFAULT_CONTENT_DIR = resolve(__dirname, '../../../content/exercises');
 
 /**
  * Builds the CLI's command tree without parsing anything, so tests can drive it directly with
@@ -56,7 +62,7 @@ export function createProgram(): Command {
     program
         .command('seed-exercises')
         .description('Publish content/exercises into the shared catalog. Requires the S3_* variables.')
-        .option('--dir <path>', 'Content directory', 'content/exercises')
+        .option('--dir <path>', "Content directory (default: the repository's content/exercises)", DEFAULT_CONTENT_DIR)
         .action(async (options: SeedExercisesOptions) => {
             await runSeedExercises(options);
         });

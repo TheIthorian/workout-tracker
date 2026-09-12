@@ -2,6 +2,12 @@ import Joi from 'joi';
 import { ConfigurationError } from '@app/errors';
 import { createEnvLoader } from '@app/env';
 import type { StorageServiceConfig } from '@app/storage';
+import { loadDotenv } from './load-dotenv.js';
+
+// Populates `process.env` from this app's own `.env` before the schema below validates it, so a
+// local file is enough to start the CLI. Never overrides a variable the environment already set,
+// and is inert under vitest - see `loadDotenv`'s doc for why both of those matter.
+loadDotenv();
 
 /**
  * This CLI reads a handful of environment variables, so its schema is tiny compared to a full app's
