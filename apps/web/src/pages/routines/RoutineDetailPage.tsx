@@ -103,7 +103,7 @@ export default function RoutineDetailPage(): JSX.Element {
     };
 
     // A double-tap before the first add resolves would otherwise fire two mutations against the
-    // same routine; the picker also disables its rows on `isAdding`, this is the belt to that braces.
+    // same routine; the picker also disables its rows on `isAdding`, this is the belt and braces.
     const handlePick = (exercise: Exercise): void => {
         if (addExercise.isPending) return;
 
@@ -136,13 +136,26 @@ export default function RoutineDetailPage(): JSX.Element {
 
     const handleRemove = (): void => {
         if (!selected) return;
-        removeExercise.mutate(selected.id, { onSuccess: () => setSelectedId(null) });
+        removeExercise.mutate(selected.id, {
+            onSuccess: () => setSelectedId(null),
+            onError: (error) =>
+                toast({ title: 'Could not remove', description: error.message, variant: 'destructive' }),
+        });
     };
 
     // Reordering replaces every slot server-side, so the ids in `updated` are new — the previous
     // selection has to be carried over by position, not by id, or the panel just goes blank.
     // Returning the promise (and rethrowing on failure) lets the list roll the drag back on reject.
     const handleReorder = async (orderedIds: string[]): Promise<void> => {
+        const isSaving =
+            updateExercise.isPending || removeExercise.isPending || addExercise.isPending || replaceExercises.isPending;
+
+        if (isSaving) {
+            // A patch, add, or remove already in flight would be overwritten by this PUT's stale
+            // cached targets; reject with no toast so the list just snaps the drag back silently.
+            throw new Error('Routine reorder skipped: another change is already in progress');
+        }
+
         const byId = new Map(routine.exercises.map((slot) => [slot.id, slot]));
         const requests = orderedIds.flatMap((id) => {
             const slot = byId.get(id);

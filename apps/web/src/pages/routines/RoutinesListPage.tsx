@@ -59,6 +59,8 @@ export default function RoutinesListPage(): JSX.Element {
                     setCreateOpen(false);
                     navigate(`/workspaces/${workspaceId}/routines/${created.id}`);
                 },
+                onError: (error) =>
+                    toast({ title: 'Could not create routine', description: error.message, variant: 'destructive' }),
             },
         );
     };
