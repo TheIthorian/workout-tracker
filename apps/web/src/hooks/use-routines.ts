@@ -84,41 +84,6 @@ export function useUpdateRoutine({
     });
 }
 
-/**
- * The slot mutations all resolve to the whole routine, so each one writes that straight into the
- * detail query (no refetch flash) and then invalidates the list for its `exerciseCount`.
- */
-function useRoutineSlotMutation<TVariables>({
-    workspaceId,
-    routineId,
-    mutationFn,
-}: {
-    workspaceId: string;
-    routineId: string;
-    mutationFn: (variables: TVariables) => Promise<RoutineDetail>;
-}): UseMutationResult<RoutineDetail, Error, TVariables> {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn,
-        onSuccess: (routine) => {
-            queryClient.setQueryData<RoutineDetail & { webUrl: string }>(
-                ['routines', workspaceId, routineId],
-                (previous) => (previous ? { ...previous, ...routine } : previous),
-            );
-            // Only the list queries (their third key element is the `{ search }` object): the
-            // detail query was just written above and must not be refetched over.
-            queryClient.invalidateQueries({
-                queryKey: ['routines', workspaceId],
-                predicate: (query) => query.queryKey.length === 3 && typeof query.queryKey[2] === 'object',
-            });
-        },
-        onError: () => {
-            queryClient.invalidateQueries({ queryKey: ['routines', workspaceId, routineId] });
-        },
-    });
-}
-
 /** Appends a slot to the routine. */
 export function useAddRoutineExercise({
     workspaceId,
@@ -179,5 +144,40 @@ export function useReplaceRoutineExercises({
         routineId,
         mutationFn: (exercises: SaveRoutineExerciseRequest[]) =>
             routinesApi.replaceExercises({ workspaceId, routineId, exercises }),
+    });
+}
+
+/**
+ * The slot mutations all resolve to the whole routine, so each one writes that straight into the
+ * detail query (no refetch flash) and then invalidates the list for its `exerciseCount`.
+ */
+function useRoutineSlotMutation<TVariables>({
+    workspaceId,
+    routineId,
+    mutationFn,
+}: {
+    workspaceId: string;
+    routineId: string;
+    mutationFn: (variables: TVariables) => Promise<RoutineDetail>;
+}): UseMutationResult<RoutineDetail, Error, TVariables> {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn,
+        onSuccess: (routine) => {
+            queryClient.setQueryData<RoutineDetail & { webUrl: string }>(
+                ['routines', workspaceId, routineId],
+                (previous) => (previous ? { ...previous, ...routine } : previous),
+            );
+            // Only the list queries (their third key element is the `{ search }` object): the
+            // detail query was just written above and must not be refetched over.
+            queryClient.invalidateQueries({
+                queryKey: ['routines', workspaceId],
+                predicate: (query) => query.queryKey.length === 3 && typeof query.queryKey[2] === 'object',
+            });
+        },
+        onError: () => {
+            queryClient.invalidateQueries({ queryKey: ['routines', workspaceId, routineId] });
+        },
     });
 }
