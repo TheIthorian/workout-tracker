@@ -1,0 +1,13 @@
+{
+    "name": "Leg curl",
+    "trackingType": "weight_reps",
+    "notes": "Seated or lying machine hamstring curl.",
+    "guide": {
+        "setup": "Align the knee joint with the machine pivot and place the pad securely above the ankles.",
+        "execution": "Curl the pad through a controlled range, squeeze briefly, then return slowly until the knees are nearly straight.",
+        "cues": "Keep the hips pinned. Start each rep with the hamstrings. Control the return.",
+        "mistakes": "Lifting the hips; snapping knees straight; using momentum; setting the pad too low on the calves."
+    },
+    "links": [],
+    "images": []
+}

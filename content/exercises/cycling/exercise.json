@@ -1,0 +1,13 @@
+{
+    "name": "Cycling",
+    "trackingType": "distance_time",
+    "notes": "Indoor or outdoor ride tracked by distance and elapsed time.",
+    "guide": {
+        "setup": "Set the saddle so the knee has a slight bend at the bottom of the pedal stroke, with relaxed hands on the bars.",
+        "execution": "Pedal smoothly at a sustainable cadence and shift resistance or gears to match the planned effort.",
+        "cues": "Relax the shoulders. Keep a steady cadence. Breathe rhythmically.",
+        "mistakes": "A saddle that is too low; gripping the bars tightly; grinding a hard gear; starting too fast."
+    },
+    "links": [],
+    "images": []
+}

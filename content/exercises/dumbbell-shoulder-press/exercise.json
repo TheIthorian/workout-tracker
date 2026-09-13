@@ -1,0 +1,13 @@
+{
+    "name": "Dumbbell shoulder press",
+    "trackingType": "weight_reps",
+    "notes": "Seated or standing dumbbell overhead press. Record the load of one dumbbell.",
+    "guide": {
+        "setup": "Hold dumbbells at shoulder level with forearms near vertical and ribs stacked over the hips.",
+        "execution": "Press overhead until the arms are straight, then lower the dumbbells with control to shoulder height.",
+        "cues": "Keep ribs down. Press up and slightly in. Keep the head neutral.",
+        "mistakes": "Arching the lower back; flaring elbows excessively; dropping too quickly; forcing painful range."
+    },
+    "links": [],
+    "images": []
+}

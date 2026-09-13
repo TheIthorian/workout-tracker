@@ -1,0 +1,13 @@
+{
+    "name": "Dumbbell biceps curl",
+    "trackingType": "weight_reps",
+    "notes": "Standing curl. Record the load of one dumbbell.",
+    "guide": {
+        "setup": "Stand tall holding dumbbells at the sides with palms forward and elbows close to the ribs.",
+        "execution": "Curl toward the shoulders while keeping the upper arms still, then lower slowly to full elbow extension.",
+        "cues": "Keep ribs down. Move at the elbow. Control the lowering phase.",
+        "mistakes": "Swinging the hips; elbows drifting forward; shortening the bottom range; bending the wrists back."
+    },
+    "links": [],
+    "images": []
+}

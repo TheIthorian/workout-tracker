@@ -4,6 +4,11 @@ Each directory is one catalog exercise; its name is the slug. `exercise.json` ho
 lists the images and links; images live under `images/`. The format is validated by
 `packages/catalog` (see `exerciseEntrySchema`).
 
+The starter library covers common strength, bodyweight, core, and cardio movements. Use
+`weight_reps` for loaded and bodyweight strength work, `duration` for static holds, and
+`distance_time` for cardio. Keep an entry focused on one movement; use `notes` to clarify equipment
+or how to record a single-dumbbell or alternating movement.
+
 Publish with `pnpm --filter @app/admin start seed-exercises` against the target database and
 bucket (`DATABASE_URL`, `S3_*`). Runs are idempotent; removing a directory archives its exercise
 rather than deleting it, because past sessions reference it.

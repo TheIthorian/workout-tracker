@@ -1,0 +1,13 @@
+{
+    "name": "Barbell overhead press",
+    "trackingType": "weight_reps",
+    "notes": "Standing strict press.",
+    "guide": {
+        "setup": "Stand tall with the bar at the upper chest, forearms vertical, glutes squeezed, and hands just outside the shoulders.",
+        "execution": "Brace, press the bar overhead, and move the head through once it clears the forehead. Lower under control.",
+        "cues": "Squeeze the glutes. Keep the bar close. Finish with biceps beside the ears.",
+        "mistakes": "Leaning back; flaring the ribs; pressing around the body; using leg drive on strict reps."
+    },
+    "links": [],
+    "images": []
+}

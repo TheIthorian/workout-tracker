@@ -1,0 +1,13 @@
+{
+    "name": "Barbell row",
+    "trackingType": "weight_reps",
+    "notes": "Bent-over row from a braced hinge position.",
+    "guide": {
+        "setup": "Hold the bar just outside the legs, hinge until the torso is roughly 30 to 45 degrees from the floor, and brace.",
+        "execution": "Pull the bar toward the lower ribs, pause, and lower without changing the torso angle.",
+        "cues": "Keep the neck long. Pull elbows toward the hips. Let the back move the bar.",
+        "mistakes": "Standing up each rep; shrugging; bouncing the torso; rounding the lower back."
+    },
+    "links": [],
+    "images": []
+}
