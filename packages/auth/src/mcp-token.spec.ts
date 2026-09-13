@@ -155,7 +155,7 @@ describe('extractMcpTokenFromPath', () => {
     });
 
     it('returns null for an unrelated path', () => {
-        expect(extractMcpTokenFromPath('/api/items')).toBeNull();
+        expect(extractMcpTokenFromPath('/api/exercises')).toBeNull();
     });
 
     it('matches the mcp segment case-insensitively', () => {

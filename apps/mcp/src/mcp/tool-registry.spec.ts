@@ -24,7 +24,7 @@ describe('toSnakeCase', () => {
 
 describe('buildToolName', () => {
     it('snake-cases the declared name', () => {
-        expect(buildToolName('ListItems')).toBe('list_items');
+        expect(buildToolName('ListExercises')).toBe('list_exercises');
         expect(buildToolName('GetCurrentUser')).toBe('get_current_user');
     });
 });
@@ -42,9 +42,8 @@ describe('toolBehaviorHints', () => {
     // A create is not idempotent (calling it twice makes two rows) but is not destructive either;
     // an update is the reverse. Clients use both hints to decide whether to retry a timed-out call.
     it('separates create from destructive mutation', () => {
-        expect(toolBehaviorHints('CreateItem')).toMatchObject({ destructiveHint: false, idempotentHint: false });
-        expect(toolBehaviorHints('UpdateItem')).toMatchObject({ destructiveHint: true, idempotentHint: false });
-        expect(toolBehaviorHints('DeleteItem')).toMatchObject({ destructiveHint: true, readOnlyHint: false });
+        expect(toolBehaviorHints('CreateExercise')).toMatchObject({ destructiveHint: false, idempotentHint: false });
+        expect(toolBehaviorHints('UpdateExercise')).toMatchObject({ destructiveHint: true, idempotentHint: false });
     });
 
     // A tool nobody has added an entry for must default to the safe assumption rather than silently

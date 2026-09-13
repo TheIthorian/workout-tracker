@@ -6,20 +6,24 @@ import { LoadingState } from '@/components/common/LoadingState';
 import { ExercisePickerSheet } from '@/components/routines/ExercisePickerSheet';
 import { RestTimer } from '@/components/sessions/RestTimer';
 import { SessionExerciseCard } from '@/components/sessions/SessionExerciseCard';
+import { SetEditDialog } from '@/components/sessions/SetEditDialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useExercise } from '@/hooks/use-exercises';
 import {
     useAddSessionExercise,
+    useAbandonSession,
     useCompleteSession,
     useLogSet,
+    useRemoveSessionSet,
     useReorderSessionExercises,
     useSession,
     useUpdateSessionExercise,
+    useUpdateSessionSet,
 } from '@/hooks/use-sessions';
 import { toast } from '@/hooks/use-toast';
-import type { SessionExercise } from '@/models/session';
+import type { PatchSetRequest, SessionExercise, SessionSet } from '@/models/session';
 import NotFoundError from '@/pages/NotFoundError';
 
 /** The focused, interruption-tolerant workout screen for an active session. */
@@ -29,6 +33,9 @@ export default function SessionDetailPage(): JSX.Element {
     const [isPickerOpen, setPickerOpen] = useState(false);
     const [guideExerciseId, setGuideExerciseId] = useState<string | null>(null);
     const [isCompleteOpen, setCompleteOpen] = useState(false);
+    const [isAbandonOpen, setAbandonOpen] = useState(false);
+    const [setToEdit, setSetToEdit] = useState<SetSelection | null>(null);
+    const [setToDelete, setSetToDelete] = useState<SetSelection | null>(null);
     const { data: session, isLoading, isError } = useSession({ workspaceId, sessionId });
     const { data: guideExercise, isLoading: isGuideLoading } = useExercise({
         workspaceId,
@@ -39,6 +46,9 @@ export default function SessionDetailPage(): JSX.Element {
     const reorderExercises = useReorderSessionExercises({ workspaceId });
     const logSet = useLogSet({ workspaceId });
     const complete = useCompleteSession({ workspaceId });
+    const abandon = useAbandonSession({ workspaceId });
+    const updateSet = useUpdateSessionSet({ workspaceId });
+    const removeSet = useRemoveSessionSet({ workspaceId });
 
     if (isLoading) {
         return (
@@ -84,6 +94,42 @@ export default function SessionDetailPage(): JSX.Element {
             },
         );
     };
+    const handleAbandon = (): void => {
+        abandon.mutate(sessionId, {
+            onSuccess: () => {
+                setAbandonOpen(false);
+                toast({ title: 'Workout abandoned' });
+                navigate(`/workspaces/${workspaceId}/today`);
+            },
+            onError: error => toast({ title: 'Could not abandon workout', description: error.message, variant: 'destructive' }),
+        });
+    };
+    const handleUpdateSet = (data: PatchSetRequest): void => {
+        if (!setToEdit) return;
+        updateSet.mutate(
+            {
+                sessionId,
+                variables: { sessionExerciseId: setToEdit.exercise.id, setId: setToEdit.set.id, data },
+            },
+            {
+                onSuccess: () => setSetToEdit(null),
+                onError: error => toast({ title: 'Could not update set', description: error.message, variant: 'destructive' }),
+            },
+        );
+    };
+    const handleRemoveSet = (): void => {
+        if (!setToDelete) return;
+        removeSet.mutate(
+            {
+                sessionId,
+                variables: { sessionExerciseId: setToDelete.exercise.id, setId: setToDelete.set.id },
+            },
+            {
+                onSuccess: () => setSetToDelete(null),
+                onError: error => toast({ title: 'Could not delete set', description: error.message, variant: 'destructive' }),
+            },
+        );
+    };
 
     return (
         <div className='mx-auto max-w-3xl px-4 py-6 md:px-8 md:py-10'>
@@ -96,10 +142,15 @@ export default function SessionDetailPage(): JSX.Element {
                     </p>
                 </div>
                 {!isComplete && (
-                    <Button onClick={() => setCompleteOpen(true)} disabled={!session.state.canComplete} className='gap-2'>
-                        <CheckCircle2 className='h-4 w-4' aria-hidden />
-                        Finish workout
-                    </Button>
+                    <div className='flex gap-2'>
+                        <Button variant='ghost' onClick={() => setAbandonOpen(true)} disabled={abandon.isPending}>
+                            Abandon
+                        </Button>
+                        <Button onClick={() => setCompleteOpen(true)} disabled={!session.state.canComplete} className='gap-2'>
+                            <CheckCircle2 className='h-4 w-4' aria-hidden />
+                            Finish workout
+                        </Button>
+                    </div>
                 )}
             </div>
 
@@ -117,6 +168,7 @@ export default function SessionDetailPage(): JSX.Element {
                     {session.exercises.map((exercise, index) => (
                         <SessionExerciseCard
                             key={exercise.id}
+                            workspaceId={workspaceId}
                             exercise={exercise}
                             isCurrent={session.state.currentSessionExerciseId === exercise.id && !isComplete}
                             isReadOnly={isComplete}
@@ -144,6 +196,9 @@ export default function SessionDetailPage(): JSX.Element {
                             }
                             onMove={direction => handleMove(exercise, direction)}
                             onOpenGuide={() => setGuideExerciseId(exercise.exercise.id)}
+                            onEditSet={set => setSetToEdit({ exercise, set })}
+                            onRemoveSet={set => setSetToDelete({ exercise, set })}
+                            isSetMutating={updateSet.isPending || removeSet.isPending}
                         />
                     ))}
                     {!isComplete && (
@@ -189,6 +244,45 @@ export default function SessionDetailPage(): JSX.Element {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+            <AlertDialog open={isAbandonOpen} onOpenChange={setAbandonOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Abandon this workout?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This deletes the active session and its recorded sets. Completed workouts stay in history.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Keep workout</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleAbandon} disabled={abandon.isPending} className='bg-destructive text-destructive-foreground hover:bg-destructive/90'>
+                            {abandon.isPending ? 'Abandoning…' : 'Abandon workout'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            <AlertDialog open={setToDelete !== null} onOpenChange={open => !open && setSetToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete this set?</AlertDialogTitle>
+                        <AlertDialogDescription>The remaining sets will be renumbered automatically.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Keep set</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleRemoveSet} disabled={removeSet.isPending} className='bg-destructive text-destructive-foreground hover:bg-destructive/90'>
+                            {removeSet.isPending ? 'Deleting…' : 'Delete set'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            <SetEditDialog
+                exercise={setToEdit?.exercise ?? null}
+                set={setToEdit?.set ?? null}
+                isSaving={updateSet.isPending}
+                onOpenChange={open => !open && setSetToEdit(null)}
+                onSave={handleUpdateSet}
+            />
         </div>
     );
 }
+
+type SetSelection = { exercise: SessionExercise; set: SessionSet };

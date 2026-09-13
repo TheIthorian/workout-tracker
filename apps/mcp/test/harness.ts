@@ -5,7 +5,6 @@ import { startTestDatabase } from '@app/db/testing';
 import { TrackingType } from '@app/domain';
 import {
     ExercisesService,
-    ItemsService,
     McpAccessTokensService,
     RoutinesService,
     WorkspaceMembershipService,
@@ -142,19 +141,6 @@ export async function seedMcpToken(
     const { token } = await service.createToken({ userId, workspaceId, name: 'test' });
 
     return token;
-}
-
-/**
- * Creates an item through the real service, so a read-tool test has something to read that was
- * written the way production writes it.
- */
-export async function seedItem(
-    db: Db,
-    { userId, workspaceId, name }: { userId: string; workspaceId: string; name: string },
-): Promise<{ id: string }> {
-    const service = new ItemsService({ db, membership: new WorkspaceMembershipService({ db }) });
-
-    return service.create({ userId, workspaceId, name });
 }
 
 /**

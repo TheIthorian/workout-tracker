@@ -90,11 +90,6 @@ const MCP_TOKEN_ROUTES: { method: string; path: string }[] = [
     { method: 'GET', path: '/api/v1/me' },
     { method: 'GET', path: '/api/v1/workspaces' },
     { method: 'GET', path: '/api/v1/workspaces/:workspaceId' },
-    { method: 'GET', path: '/api/v1/workspaces/:workspaceId/items' },
-    { method: 'GET', path: '/api/v1/workspaces/:workspaceId/items/:itemId' },
-    { method: 'POST', path: '/api/v1/workspaces/:workspaceId/items' },
-    { method: 'PATCH', path: '/api/v1/workspaces/:workspaceId/items/:itemId' },
-    { method: 'DELETE', path: '/api/v1/workspaces/:workspaceId/items/:itemId' },
     // ListExercises
     { method: 'GET', path: '/api/v1/workspaces/:workspaceId/exercises' },
     // GetExercise

@@ -6,7 +6,6 @@ import { APP_LOGGER } from '../providers.js';
 import { loadEnv } from '../config/load-env.js';
 import { buildServerInstructions } from './mcp-server.js';
 import { buildExerciseTools } from './tools/exercise.tools.js';
-import { buildItemTools } from './tools/item.tools.js';
 import { buildRoutineTools } from './tools/routine.tools.js';
 import { buildSessionTools } from './tools/session.tools.js';
 import { buildWorkoutSessionTools } from './tools/workout-session.tools.js';
@@ -46,7 +45,6 @@ export const mcpProviders: Provider[] = [
 
                 return [
                     ...buildSessionTools({ context, client }),
-                    ...buildItemTools({ context, client, logger, urls }),
                     ...buildExerciseTools({ context, client, logger, urls }),
                     ...buildRoutineTools({ context, client, logger, urls }),
                     ...buildWorkoutSessionTools({ context, client, logger, urls }),

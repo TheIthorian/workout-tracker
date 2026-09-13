@@ -5,7 +5,6 @@ import {
     connectedClient,
     createTestApp,
     seedExercise,
-    seedItem,
     seedMcpToken,
     seedRoutine,
     seedUser,
@@ -71,70 +70,6 @@ describe('MCP tools', () => {
         });
 
         expect(response.statusCode).toBe(401);
-    });
-
-    describe('item tools', () => {
-        it('creates an item and returns it with both links attached', async () => {
-            const result = await client.callTool({
-                name: 'create_item',
-                arguments: { name: 'Widget', description: 'A widget' },
-            });
-
-            expect(toolResultBody(result)).toMatchObject({
-                name: 'Widget',
-                description: 'A widget',
-                webUrl: expect.stringContaining(`${TEST_WEB_APP_BASE_URL}/workspaces/${workspaceId}/items/`),
-            });
-        });
-
-        it('lists the workspace items with links on every entry', async () => {
-            await seedItem(app.db, { userId, workspaceId, name: 'Listed' });
-
-            const body = toolResultBody(await client.callTool({ name: 'list_items', arguments: {} })) as {
-                data: { name: string; webUrl: string }[];
-            };
-
-            expect(body.data.map((item) => item.name)).toContain('Listed');
-            expect(body.data.every((item) => item.webUrl.startsWith(TEST_WEB_APP_BASE_URL))).toBe(true);
-        });
-
-        it('reads one item back by id', async () => {
-            const { id } = await seedItem(app.db, { userId, workspaceId, name: 'Readable' });
-
-            const result = await client.callTool({ name: 'get_item', arguments: { itemId: id } });
-
-            expect(toolResultBody(result)).toMatchObject({ id, name: 'Readable' });
-        });
-
-        // An omitted field keeps its stored value; the model must be able to rename without also
-        // having to resend a description it never saw.
-        it('updates only the fields it is given', async () => {
-            const { id } = await seedItem(app.db, { userId, workspaceId, name: 'Before' });
-
-            const result = await client.callTool({ name: 'update_item', arguments: { itemId: id, name: 'After' } });
-
-            expect(toolResultBody(result)).toMatchObject({ id, name: 'After' });
-        });
-
-        it('deletes an item, after which reading it is an error', async () => {
-            const { id } = await seedItem(app.db, { userId, workspaceId, name: 'Doomed' });
-
-            await client.callTool({ name: 'delete_item', arguments: { itemId: id } });
-
-            const result = await client.callTool({ name: 'get_item', arguments: { itemId: id } });
-            expect(result.isError).toBe(true);
-        });
-
-        // The pin is the point: a token issued for one workspace must not read another's rows even
-        // though its owner is a member of both.
-        it('cannot reach an item in another workspace the same user owns', async () => {
-            const other = await seedWorkspace(app.db, { name: 'Other', ownerId: userId });
-            const { id } = await seedItem(app.db, { userId, workspaceId: other.id, name: 'Elsewhere' });
-
-            const result = await client.callTool({ name: 'get_item', arguments: { itemId: id } });
-
-            expect(result.isError).toBe(true);
-        });
     });
 
     describe('exercise tools', () => {

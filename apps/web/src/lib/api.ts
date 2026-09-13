@@ -8,7 +8,6 @@ import type {
     SaveExerciseLinkRequest,
     SaveExerciseRequest,
 } from '@/models/exercise';
-import type { Item, PatchItemRequest, SaveItemRequest } from '@/models/item';
 import type { McpAccessTokenCreated, McpAccessTokenListItem } from '@/models/mcp';
 import type { PaginatedResponse } from '@/models/pagination';
 import type {
@@ -19,6 +18,8 @@ import type {
     SessionDetail,
     SessionSummary,
     StartSessionRequest,
+    PatchSetRequest,
+    ExerciseHistoryResponse,
 } from '@/models/session';
 import type {
     PatchRoutineExerciseRequest,
@@ -68,23 +69,6 @@ export const mcpAccessTokensApi = {
     revoke: (tokenId: string) => httpClient.delete<void>(`/api/v1/me/mcp-access-tokens/${tokenId}`),
 };
 
-/**
- * The example resource. It is the one feature slice this template ships end to end — contract,
- * controller, service, table, and these calls — so a new project has a working shape to copy.
- */
-export const itemsApi = {
-    getAll: (workspaceId: string, params?: { page?: number; pageSize?: number }) =>
-        httpClient.get<PaginatedResponse<Item>>(`/api/v1/workspaces/${workspaceId}/items`, { params }),
-    getById: (workspaceId: string, itemId: string) =>
-        httpClient.get<Item>(`/api/v1/workspaces/${workspaceId}/items/${itemId}`),
-    create: (workspaceId: string, data: SaveItemRequest) =>
-        httpClient.post<Item>(`/api/v1/workspaces/${workspaceId}/items`, data),
-    update: (workspaceId: string, itemId: string, data: PatchItemRequest) =>
-        httpClient.patch<Item>(`/api/v1/workspaces/${workspaceId}/items/${itemId}`, data),
-    remove: (workspaceId: string, itemId: string) =>
-        httpClient.delete<void>(`/api/v1/workspaces/${workspaceId}/items/${itemId}`),
-};
-
 /** The workspace's exercise library. */
 export const exercisesApi = {
     getAll: (
@@ -125,6 +109,10 @@ export const exercisesApi = {
         ),
     removeLink: ({ workspaceId, exerciseId, linkId }: { workspaceId: string; exerciseId: string; linkId: string }) =>
         httpClient.delete<void>(`/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/links/${linkId}`),
+    getHistory: (workspaceId: string, exerciseId: string, limit = 10) =>
+        httpClient.get<ExerciseHistoryResponse>(`/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/history`, {
+            params: { limit },
+        }),
 };
 
 /** The workspace's routines. Every mutation returns the whole routine, so callers refresh from one shape. */
@@ -222,4 +210,21 @@ export const sessionsApi = {
             `/api/v1/workspaces/${workspaceId}/sessions/${sessionId}/exercises/${sessionExerciseId}/sets`,
             data,
         ),
+    updateSet: (
+        workspaceId: string,
+        sessionId: string,
+        sessionExerciseId: string,
+        setId: string,
+        data: PatchSetRequest,
+    ) =>
+        httpClient.patch<SessionDetail>(
+            `/api/v1/workspaces/${workspaceId}/sessions/${sessionId}/exercises/${sessionExerciseId}/sets/${setId}`,
+            data,
+        ),
+    removeSet: (workspaceId: string, sessionId: string, sessionExerciseId: string, setId: string) =>
+        httpClient.delete<SessionDetail>(
+            `/api/v1/workspaces/${workspaceId}/sessions/${sessionId}/exercises/${sessionExerciseId}/sets/${setId}`,
+        ),
+    abandon: (workspaceId: string, sessionId: string) =>
+        httpClient.delete<void>(`/api/v1/workspaces/${workspaceId}/sessions/${sessionId}`),
 };

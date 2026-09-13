@@ -7,24 +7,19 @@ const EXPECTED_TOOL_NAMES = [
     'add_exercise_link',
     'complete_session',
     'create_exercise',
-    'create_item',
     'create_routine',
-    'delete_item',
     'get_active_session',
     'get_current_user',
     'get_exercise',
-    'get_item',
     'get_routine',
     'get_session',
     'list_exercises',
-    'list_items',
     'list_routines',
     'list_sessions',
     'list_workspaces',
     'log_set',
     'start_session',
     'update_exercise',
-    'update_item',
     'update_routine',
 ];
 
@@ -70,17 +65,20 @@ describe('MCP tool surface', () => {
     it('marks only the genuinely required arguments as required', async () => {
         const { tools } = await client.listTools();
 
-        expect(tools.find((tool) => tool.name === 'update_item')?.inputSchema.required).toEqual(['itemId']);
-        expect(tools.find((tool) => tool.name === 'create_item')?.inputSchema.required).toEqual(['name']);
-        expect(tools.find((tool) => tool.name === 'list_items')?.inputSchema.required ?? []).toEqual([]);
+        expect(tools.find((tool) => tool.name === 'update_exercise')?.inputSchema.required).toEqual(['exerciseId']);
+        expect(tools.find((tool) => tool.name === 'create_exercise')?.inputSchema.required).toEqual([
+            'name',
+            'trackingType',
+        ]);
+        expect(tools.find((tool) => tool.name === 'list_exercises')?.inputSchema.required ?? []).toEqual([]);
     });
 
     it('carries the behaviour hints for every tool', async () => {
         const { tools } = await client.listTools();
 
-        expect(tools.find((tool) => tool.name === 'list_items')?.annotations?.readOnlyHint).toBe(true);
-        expect(tools.find((tool) => tool.name === 'create_item')?.annotations?.destructiveHint).toBe(false);
-        expect(tools.find((tool) => tool.name === 'delete_item')?.annotations?.destructiveHint).toBe(true);
+        expect(tools.find((tool) => tool.name === 'list_exercises')?.annotations?.readOnlyHint).toBe(true);
+        expect(tools.find((tool) => tool.name === 'create_exercise')?.annotations?.destructiveHint).toBe(false);
+        expect(tools.find((tool) => tool.name === 'update_exercise')?.annotations?.destructiveHint).toBe(true);
     });
 
     // The workspace comes from the token, and exposing it as an argument would be a contract error,

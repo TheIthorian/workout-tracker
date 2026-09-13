@@ -5,28 +5,29 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { TrackingType } from '@/models/exercise';
-import type { LogSetRequest, SessionExercise } from '@/models/session';
+import type { LogSetRequest, SessionExercise, SessionSet } from '@/models/session';
 
 type SetLogFormProps = {
     exercise: SessionExercise;
+    previousSet: SessionSet | null;
     isPending: boolean;
     onLog: (data: LogSetRequest) => void;
 };
 
 /** The one-tap logging form, with only the fields valid for the exercise's tracking type. */
-export function SetLogForm({ exercise, isPending, onLog }: SetLogFormProps): JSX.Element {
-    const [weightKg, setWeightKg] = useState(exercise.targetWeightKg?.toString() ?? '');
-    const [reps, setReps] = useState(exercise.targetReps?.toString() ?? '');
-    const [durationSeconds, setDurationSeconds] = useState(exercise.targetDurationSeconds?.toString() ?? '');
-    const [distanceM, setDistanceM] = useState(exercise.targetDistanceM?.toString() ?? '');
+export function SetLogForm({ exercise, previousSet, isPending, onLog }: SetLogFormProps): JSX.Element {
+    const [weightKg, setWeightKg] = useState(numberDraft(previousSet?.weightKg ?? exercise.targetWeightKg));
+    const [reps, setReps] = useState(numberDraft(previousSet?.reps ?? exercise.targetReps));
+    const [durationSeconds, setDurationSeconds] = useState(numberDraft(previousSet?.durationSeconds ?? exercise.targetDurationSeconds));
+    const [distanceM, setDistanceM] = useState(numberDraft(previousSet?.distanceM ?? exercise.targetDistanceM));
     const [isWarmup, setWarmup] = useState(false);
     const [rpe, setRpe] = useState('');
 
     useEffect(() => {
-        setWeightKg(exercise.targetWeightKg?.toString() ?? '');
-        setReps(exercise.targetReps?.toString() ?? '');
-        setDurationSeconds(exercise.targetDurationSeconds?.toString() ?? '');
-        setDistanceM(exercise.targetDistanceM?.toString() ?? '');
+        setWeightKg(numberDraft(previousSet?.weightKg ?? exercise.targetWeightKg));
+        setReps(numberDraft(previousSet?.reps ?? exercise.targetReps));
+        setDurationSeconds(numberDraft(previousSet?.durationSeconds ?? exercise.targetDurationSeconds));
+        setDistanceM(numberDraft(previousSet?.distanceM ?? exercise.targetDistanceM));
         setWarmup(false);
         setRpe('');
     }, [
@@ -35,6 +36,10 @@ export function SetLogForm({ exercise, isPending, onLog }: SetLogFormProps): JSX
         exercise.targetDurationSeconds,
         exercise.targetReps,
         exercise.targetWeightKg,
+        previousSet?.distanceM,
+        previousSet?.durationSeconds,
+        previousSet?.reps,
+        previousSet?.weightKg,
     ]);
 
     const log = (): void => {
@@ -132,4 +137,9 @@ function optionalNumber(value: string): number | null {
 /** Converts a required number input to an API value. */
 function requiredNumber(value: string): number | null {
     return optionalNumber(value);
+}
+
+/** Makes a nullable stored measurement suitable for a controlled numeric input. */
+function numberDraft(value: number | null | undefined): string {
+    return value?.toString() ?? '';
 }

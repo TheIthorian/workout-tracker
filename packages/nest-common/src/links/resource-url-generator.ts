@@ -59,7 +59,7 @@ export class ResourceUrlGenerator {
     /**
      * Absolute url for a page in the web app.
      *
-     * @param path root-relative page path, e.g. `/items/{id}`.
+     * @param path root-relative page path, e.g. `/exercises/{id}`.
      */
     webAppUrl({ path }: { path: string }): string {
         return `${this.webAppBaseUrl}${withLeadingSlash(path)}`;
@@ -68,7 +68,7 @@ export class ResourceUrlGenerator {
     /**
      * Absolute url for a route on this API, under the `/api/v1` prefix every route sits behind.
      *
-     * @param path route path WITHOUT that prefix, e.g. `/items/{id}`.
+     * @param path route path WITHOUT that prefix, e.g. `/exercises/{id}`.
      */
     apiUrl({ path }: { path: string }): string {
         return `${this.apiBaseUrl}${API_PREFIX}${withLeadingSlash(path)}`;

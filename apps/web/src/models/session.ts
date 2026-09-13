@@ -72,6 +72,17 @@ export type LogSetRequest = {
     durationSeconds?: number | null;
     distanceM?: number | null;
 };
+export type PatchSetRequest = Partial<LogSetRequest>;
+export type ExerciseHistoryEntry = {
+    sessionId: string;
+    sessionName: string;
+    startedAt: string;
+    completedAt: string;
+    sessionExerciseId: string;
+    trackingType: TrackingType;
+    sets: SessionSet[];
+};
+export type ExerciseHistoryResponse = { data: ExerciseHistoryEntry[] };
 export type AddSessionExerciseRequest = {
     exerciseId: string;
     targetSets?: number;

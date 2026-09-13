@@ -18,6 +18,7 @@ import type {
     SaveExerciseLinkRequest,
     SaveExerciseRequest,
 } from '@/models/exercise';
+import type { ExerciseHistoryResponse } from '@/models/session';
 import type { PaginatedResponse } from '@/models/pagination';
 
 /**
@@ -56,6 +57,21 @@ export function useExercise({
     return useQuery({
         queryKey: ['exercises', workspaceId, exerciseId],
         queryFn: () => exercisesApi.getById(workspaceId, exerciseId),
+        enabled: Boolean(workspaceId && exerciseId),
+    });
+}
+
+/** Gets recent completed appearances of an exercise for set prefills and in-workout reference. */
+export function useExerciseHistory({
+    workspaceId,
+    exerciseId,
+}: {
+    workspaceId: string;
+    exerciseId: string;
+}): UseQueryResult<ExerciseHistoryResponse, Error> {
+    return useQuery({
+        queryKey: ['exercises', workspaceId, exerciseId, 'history'],
+        queryFn: () => exercisesApi.getHistory(workspaceId, exerciseId),
         enabled: Boolean(workspaceId && exerciseId),
     });
 }

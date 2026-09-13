@@ -38,7 +38,7 @@ describe('MCP token auth on REST routes', () => {
     it('serves the token workspace', async () => {
         const response = await app.inject({
             method: 'GET',
-            url: `/api/v1/workspaces/${workspaceId}/items`,
+            url: `/api/v1/workspaces/${workspaceId}/exercises`,
             headers: { authorization: `Bearer ${token}` },
         });
 
@@ -49,7 +49,7 @@ describe('MCP token auth on REST routes', () => {
     it('refuses another workspace the same user owns, with 404', async () => {
         const response = await app.inject({
             method: 'GET',
-            url: `/api/v1/workspaces/${otherWorkspaceId}/items`,
+            url: `/api/v1/workspaces/${otherWorkspaceId}/exercises`,
             headers: { authorization: `Bearer ${token}` },
         });
 
@@ -70,7 +70,7 @@ describe('MCP token auth on REST routes', () => {
     it('still rejects a garbage token', async () => {
         const response = await app.inject({
             method: 'GET',
-            url: `/api/v1/workspaces/${workspaceId}/items`,
+            url: `/api/v1/workspaces/${workspaceId}/exercises`,
             headers: { authorization: 'Bearer not-a-token' },
         });
 

@@ -6,13 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is **node-app-base**, a template repository for building TypeScript applications. It is not an
-application in its own right: it is the scaffolding an application starts from, and much of what is
-here exists to demonstrate a pattern rather than to serve a user.
-
-The one worked example is an **Item** — a workspace-owned resource that runs end to end through
-every layer (contract schema → controller → service → table → migration → MCP tool → web page).
-Copy its shape for real resources, then delete it.
+This is a Phase 1 workout tracker built as a TypeScript monorepo. Its core user-facing concepts are
+exercises, routines, and workout sessions.
 
 **Workspaces are the unit of multi-tenancy.** A workspace has members with roles (`member`,
 `admin`, `owner`). Nearly every query in the system must be scoped to one workspace, and a query
@@ -332,7 +327,7 @@ output in review.
   (`startTestDatabase` in `@app/db/testing`, which applies the committed migrations); never mock the
   database layer. A mocked DB layer cannot tell you whether a query actually matches the schema.
 - **Test the tenancy boundary explicitly.** Every workspace-scoped service and route needs a test
-  proving a caller in workspace A cannot read or write workspace B's rows, and that the refusal is a 404. `packages/services/src/items.service.spec.ts` is the pattern.
+  proving a caller in workspace A cannot read or write workspace B's rows, and that the refusal is a 404.
 - **No I/O in `packages/domain`** — its unit tests run with no database and no network by
   construction; if a domain test needs either, the logic has drifted into the wrong package.
 - **Libraries never read `process.env`.** A package under `packages/` must receive its

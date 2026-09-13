@@ -25,7 +25,7 @@ import { attachExerciseLinks } from './exercise-links.js';
  * CDN — there is no image tool.
  *
  * No tool here takes a `workspaceId`; it comes from the personal access token, same as every other
- * tool in this app - see `item.tools.ts`'s doc comment for why.
+ * tool in this app.
  */
 export function buildExerciseTools({
     context,
@@ -171,8 +171,7 @@ export function buildExerciseTools({
  * stored value rather than being overwritten with null.
  *
  * An empty or whitespace-only guide field is the one way to clear it - the alternative would be a
- * caller with no way to remove guide text at all, the same convention `item.tools.ts` uses for
- * `description`.
+ * caller with no way to remove guide text at all.
  */
 function buildExercisePatch(args: UpdateExerciseToolArgs): Record<string, unknown> {
     const patch: Record<string, unknown> = {};

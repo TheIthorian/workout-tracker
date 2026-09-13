@@ -2,7 +2,6 @@ export * from './primitives.js';
 export * from './auth.contract.js';
 export * from './workspace.contract.js';
 export * from './user.contract.js';
-export * from './item.contract.js';
 export * from './exercise.contract.js';
 export * from './routine.contract.js';
 export * from './session.contract.js';

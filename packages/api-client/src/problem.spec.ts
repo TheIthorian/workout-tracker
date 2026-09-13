@@ -6,9 +6,9 @@ describe('toAppError', () => {
     it('carries the API problem body through verbatim', () => {
         const problem = {
             type: 'https://example.com/errors/EntityNotFoundError',
-            title: 'Item not found',
+            title: 'Exercise not found',
             status: 404,
-            detail: 'no item',
+            detail: 'no exercise',
         };
         const error = toAppError({ status: 404, body: problem });
 

@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Pencil } from 'lucide-react';
 import { ExerciseGuide } from '@/components/exercises/ExerciseGuide';
 import { ExerciseGuideEditor } from '@/components/exercises/ExerciseGuideEditor';
 import { LoadingState } from '@/components/common/LoadingState';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useExercise } from '@/hooks/use-exercises';
+import { useExercise, useExerciseHistory } from '@/hooks/use-exercises';
 import { TRACKING_TYPE_META } from '@/models/exercise';
+import type { SessionSet } from '@/models/session';
 import NotFoundError from '@/pages/NotFoundError';
 
 /**
@@ -27,6 +28,7 @@ export default function ExerciseDetailPage(): JSX.Element {
     const [isEditing, setEditing] = useState(false);
 
     const { data: exercise, isLoading, isError } = useExercise({ workspaceId, exerciseId });
+    const { data: history, isLoading: isHistoryLoading } = useExerciseHistory({ workspaceId, exerciseId });
 
     if (isLoading) {
         return (
@@ -86,6 +88,50 @@ export default function ExerciseDetailPage(): JSX.Element {
                     <ExerciseGuide exercise={exercise} />
                 )}
             </div>
+
+            <section className='mt-10 border-t border-border pt-8' aria-labelledby='exercise-history-heading'>
+                <h2 id='exercise-history-heading' className='font-heading text-xl'>
+                    Recent workouts
+                </h2>
+                {isHistoryLoading ? (
+                    <p className='mt-3 text-sm text-muted-foreground'>Loading workout history…</p>
+                ) : (history?.data.length ?? 0) === 0 ? (
+                    <p className='mt-3 text-sm text-muted-foreground'>No completed workouts for this exercise yet.</p>
+                ) : (
+                    <ul className='mt-4 space-y-3'>
+                        {history?.data.map((appearance) => (
+                            <li key={appearance.sessionExerciseId} className='rounded-xl border border-border bg-card p-4'>
+                                <div className='flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1'>
+                                    <Link
+                                        className='font-medium hover:underline'
+                                        to={`/workspaces/${workspaceId}/sessions/${appearance.sessionId}`}
+                                    >
+                                        {appearance.sessionName}
+                                    </Link>
+                                    <time className='text-xs text-muted-foreground' dateTime={appearance.completedAt}>
+                                        {new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(
+                                            new Date(appearance.completedAt),
+                                        )}
+                                    </time>
+                                </div>
+                                <p className='mt-2 text-sm text-muted-foreground'>
+                                    {appearance.sets.length === 0
+                                        ? 'No sets recorded'
+                                        : appearance.sets.map((set) => describeSet({ trackingType: appearance.trackingType, set })).join(' · ')}
+                                </p>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </section>
         </div>
     );
+}
+
+/** Formats a historical set according to the measurements its tracking type records. */
+function describeSet({ trackingType, set }: { trackingType: keyof typeof TRACKING_TYPE_META; set: SessionSet }): string {
+    const warmup = set.isWarmup ? 'Warm-up ' : '';
+    if (trackingType === 'weight_reps') return `${warmup}${set.weightKg ?? '—'} kg × ${set.reps ?? '—'}`;
+    if (trackingType === 'duration') return `${warmup}${set.durationSeconds ?? '—'} sec`;
+    return `${warmup}${set.distanceM ?? '—'} m in ${set.durationSeconds ?? '—'} sec`;
 }

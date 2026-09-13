@@ -29,7 +29,7 @@ const TARGET_HELP =
  * replacement — simpler for a model than diffing slot by slot.
  *
  * No tool here takes a `workspaceId`; it comes from the personal access token, same as every other
- * tool in this app - see `item.tools.ts`'s doc comment for why.
+ * tool in this app.
  */
 export function buildRoutineTools({
     context,
@@ -179,7 +179,7 @@ export function buildRoutineTools({
 
 /**
  * Builds the PATCH body from only the keys the caller actually sent, so an omitted field keeps its
- * stored value. An empty description clears it, the same convention `item.tools.ts` uses.
+ * stored value. An empty description clears it.
  */
 function buildRoutinePatch(args: {
     name?: string | null;

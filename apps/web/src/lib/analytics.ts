@@ -13,8 +13,6 @@ export const analyticsEvents = {
     userRegistered: 'user_registered',
     workspaceCreated: 'workspace_created',
     workspaceSwitched: 'workspace_switched',
-    itemCreated: 'item_created',
-    itemDeleted: 'item_deleted',
     mcpAccessTokenCreated: 'mcp_access_token_created',
     mcpAccessTokenRevoked: 'mcp_access_token_revoked',
 } as const;

@@ -16,6 +16,7 @@ import type {
     AddSessionExerciseRequest,
     LogSetRequest,
     PatchSessionExerciseRequest,
+    PatchSetRequest,
     SessionDetail,
     SessionSummary,
     StartSessionRequest,
@@ -121,6 +122,46 @@ export function useCompleteSession({ workspaceId }: { workspaceId: string }): Us
     });
 }
 
+/** Corrects a recorded set in an active or completed workout. */
+export function useUpdateSessionSet({ workspaceId }: { workspaceId: string }): UseMutationResult<
+    SessionDetail,
+    Error,
+    SessionAction<{ sessionExerciseId: string; setId: string; data: PatchSetRequest }>
+> {
+    return useSessionMutation({
+        workspaceId,
+        mutationFn: ({ sessionId, variables }) =>
+            sessionsApi.updateSet(workspaceId, sessionId, variables.sessionExerciseId, variables.setId, variables.data),
+    });
+}
+
+/** Deletes a mistaken set and lets the API renumber the remaining entries. */
+export function useRemoveSessionSet({ workspaceId }: { workspaceId: string }): UseMutationResult<
+    SessionDetail,
+    Error,
+    SessionAction<{ sessionExerciseId: string; setId: string }>
+> {
+    return useSessionMutation({
+        workspaceId,
+        mutationFn: ({ sessionId, variables }) =>
+            sessionsApi.removeSet(workspaceId, sessionId, variables.sessionExerciseId, variables.setId),
+    });
+}
+
+/** Permanently abandons an active workout. */
+export function useAbandonSession({ workspaceId }: { workspaceId: string }): UseMutationResult<void, Error, string> {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: sessionId => sessionsApi.abandon(workspaceId, sessionId),
+        onSuccess: (_result, sessionId) => {
+            queryClient.removeQueries({ queryKey: sessionKey({ workspaceId, sessionId }) });
+            queryClient.setQueryData<ActiveSessionResponse>(['sessions', workspaceId, 'active'], { session: null });
+            queryClient.invalidateQueries({ queryKey: ['sessions', workspaceId, 'list'] });
+        },
+    });
+}
+
 /**
  * Logs a set with a local response immediately, then replaces it with the server aggregate.
  * A rejected request restores the exact prior aggregate and refetches, so a delayed response never
@@ -210,6 +251,11 @@ function writeSession({
     queryClient.setQueryData<SessionDetail>(sessionKey({ workspaceId, sessionId: session.id }), session);
     queryClient.setQueryData<ActiveSessionResponse>(['sessions', workspaceId, 'active'], { session: session.completedAt ? null : session });
     queryClient.invalidateQueries({ queryKey: ['sessions', workspaceId, 'list'] });
+    for (const exercise of session.exercises) {
+        queryClient.invalidateQueries({
+            queryKey: ['exercises', workspaceId, exercise.exercise.id, 'history'],
+        });
+    }
 }
 
 /** Builds the stable detail-query key shared by reads, optimistic updates, and mutations. */

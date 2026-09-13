@@ -1,5 +1,5 @@
 import { sessionExerciseStatus, SessionExerciseStatus } from '@app/domain';
-import { ArrowDown, ArrowUp, BookOpen, CheckCircle2, MoreHorizontal, SkipForward } from 'lucide-react';
+import { ArrowDown, ArrowUp, BookOpen, CheckCircle2, MoreHorizontal, Pencil, SkipForward, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,9 +9,11 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SetLogForm } from '@/components/sessions/SetLogForm';
+import { useExerciseHistory } from '@/hooks/use-exercises';
 import { formatSessionClock, formatSessionNumber, type LogSetRequest, type SessionExercise } from '@/models/session';
 
 type SessionExerciseCardProps = {
+    workspaceId: string;
     exercise: SessionExercise;
     isCurrent: boolean;
     isReadOnly: boolean;
@@ -23,10 +25,14 @@ type SessionExerciseCardProps = {
     onSkip: () => void;
     onMove: (direction: 'up' | 'down') => void;
     onOpenGuide: () => void;
+    onEditSet: (set: SessionExercise['sets'][number]) => void;
+    onRemoveSet: (set: SessionExercise['sets'][number]) => void;
+    isSetMutating: boolean;
 };
 
 /** One exercise in workout mode: recorded sets first, then the next-set input and compact controls. */
 export function SessionExerciseCard({
+    workspaceId,
     exercise,
     isCurrent,
     isReadOnly,
@@ -38,7 +44,12 @@ export function SessionExerciseCard({
     onSkip,
     onMove,
     onOpenGuide,
+    onEditSet,
+    onRemoveSet,
+    isSetMutating,
 }: SessionExerciseCardProps): JSX.Element {
+    const { data: history } = useExerciseHistory({ workspaceId, exerciseId: exercise.exercise.id });
+    const previousSet = latestWorkingSet(history?.data ?? []);
     const status = sessionExerciseStatus(exercise);
     const workingSets = exercise.sets.filter(set => !set.isWarmup).length;
     const isSkipped = status === SessionExerciseStatus.Skipped;
@@ -69,6 +80,11 @@ export function SessionExerciseCard({
                             ? ` · ${formatSessionClock(exercise.restSeconds)} rest`
                             : ''}
                     </p>
+                    {previousSet && !isReadOnly && (
+                        <p className='mt-1 text-xs text-muted-foreground'>
+                            Prefilled from your last workout: {describeSet({ exercise, set: previousSet })}
+                        </p>
+                    )}
                 </div>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -108,6 +124,28 @@ export function SessionExerciseCard({
                             </span>
                             <span className='min-w-0 flex-1 font-medium'>{describeSet({ exercise, set })}</span>
                             {set.rpe !== null && <span className='text-xs text-muted-foreground'>RPE {set.rpe}</span>}
+                            <span className='flex shrink-0 gap-1'>
+                                <Button
+                                    variant='ghost'
+                                    size='icon'
+                                    className='h-8 w-8'
+                                    aria-label={`Edit set ${set.setIndex}`}
+                                    disabled={isSetMutating}
+                                    onClick={() => onEditSet(set)}
+                                >
+                                    <Pencil className='h-3.5 w-3.5' aria-hidden />
+                                </Button>
+                                <Button
+                                    variant='ghost'
+                                    size='icon'
+                                    className='h-8 w-8 text-destructive hover:text-destructive'
+                                    aria-label={`Delete set ${set.setIndex}`}
+                                    disabled={isSetMutating}
+                                    onClick={() => onRemoveSet(set)}
+                                >
+                                    <Trash2 className='h-3.5 w-3.5' aria-hidden />
+                                </Button>
+                            </span>
                         </li>
                     ))}
                 </ol>
@@ -115,11 +153,20 @@ export function SessionExerciseCard({
 
             {!isDone && !isSkipped && !isReadOnly && (
                 <div className='mt-4'>
-                    <SetLogForm exercise={exercise} isPending={isLogging} onLog={onLog} />
+                    <SetLogForm exercise={exercise} previousSet={previousSet} isPending={isLogging} onLog={onLog} />
                 </div>
             )}
         </article>
     );
+}
+
+/** Finds the latest non-warm-up set from a newest-first list of completed workout appearances. */
+function latestWorkingSet(history: ReadonlyArray<{ sets: SessionExercise['sets'] }>): SessionExercise['sets'][number] | null {
+    for (const appearance of history) {
+        const set = [...appearance.sets].reverse().find(candidate => !candidate.isWarmup);
+        if (set) return set;
+    }
+    return null;
 }
 
 /** Formats a stored set using the fields that its tracking type allows. */

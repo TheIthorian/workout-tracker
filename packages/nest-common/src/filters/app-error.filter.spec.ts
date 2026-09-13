@@ -8,13 +8,13 @@ describe('AppErrorFilter', () => {
     it('serialises an AppError as its problem body with the problem status', () => {
         const { filter, host, reply } = makeFilter();
 
-        filter.catch(new EntityNotFoundError('Item not found'), host);
+        filter.catch(new EntityNotFoundError('Exercise not found'), host);
 
         expect(reply.status).toHaveBeenCalledWith(404);
         expect(reply.header).toHaveBeenCalledWith('content-type', 'application/json');
         expect(reply.send).toHaveBeenCalledWith({
             type: `${PROBLEM_TYPE_BASE}/EntityNotFoundError`,
-            title: 'Item not found',
+            title: 'Exercise not found',
             status: 404,
         });
     });
@@ -79,7 +79,7 @@ describe('AppErrorFilter', () => {
     it('writes normally when the reply has not been sent', () => {
         const { filter, host, reply } = makeFilter({ sent: false });
 
-        filter.catch(new EntityNotFoundError('Item not found'), host);
+        filter.catch(new EntityNotFoundError('Exercise not found'), host);
 
         expect(reply.status).toHaveBeenCalledWith(404);
     });
@@ -143,7 +143,7 @@ function makeFilter(options: { sent?: boolean } = {}): {
     const host = {
         switchToHttp: () => ({
             getResponse: () => reply,
-            getRequest: () => ({ method: 'GET', url: '/api/v1/items' }),
+            getRequest: () => ({ method: 'GET', url: '/api/v1/exercises' }),
         }),
     } as unknown as ArgumentsHost;
 

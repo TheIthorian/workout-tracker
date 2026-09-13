@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { loginRequestSchema, signupRequestSchema } from './auth.contract.js';
-import { patchItemRequestSchema, postItemRequestSchema } from './item.contract.js';
 import { postMcpAccessTokenRequestSchema } from './mcp-token.contract.js';
 import { patchUserRequestSchema, userResponseSchema } from './user.contract.js';
 import {
@@ -79,22 +78,6 @@ describe('workspace contracts', () => {
                 members: [{ userId: GUID, displayName: 'Ada', email: 'a@b.com', role: WorkspaceRole.Owner }],
             }).success,
         ).toBe(true);
-    });
-});
-
-describe('item contracts', () => {
-    it('requires a non-empty name on create', () => {
-        expect(postItemRequestSchema.safeParse({ name: '' }).success).toBe(false);
-        expect(postItemRequestSchema.safeParse({ name: 'Widget' }).success).toBe(true);
-    });
-
-    it('rejects an empty patch body', () => {
-        expect(patchItemRequestSchema.safeParse({}).success).toBe(false);
-        expect(patchItemRequestSchema.safeParse({ name: 'Renamed' }).success).toBe(true);
-    });
-
-    it('allows clearing the description with an explicit null', () => {
-        expect(patchItemRequestSchema.safeParse({ description: null }).success).toBe(true);
     });
 });
 

@@ -43,6 +43,13 @@
             "when": 1789290687522,
             "tag": "0005_lonely_nocturne",
             "breakpoints": true
+        },
+        {
+            "idx": 6,
+            "version": "7",
+            "when": 1789292840807,
+            "tag": "0006_gorgeous_korg",
+            "breakpoints": true
         }
     ]
 }

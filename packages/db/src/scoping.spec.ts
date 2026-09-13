@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Db } from './client.js';
 import { exercises } from './schema/exercises.js';
-import { items } from './schema/items.js';
+import { routines } from './schema/routines.js';
 import { workspaces } from './schema/workspaces.js';
 import { scopedToWorkspace, scopedToWorkspaceOrGlobal } from './scoping.js';
 import { startTestDatabase } from './testing/index.js';
@@ -20,7 +20,7 @@ beforeAll(async () => {
 
     [workspaceId, otherWorkspaceId] = await Promise.all([insertWorkspace('Ours'), insertWorkspace('Theirs')]);
 
-    await db.insert(items).values([
+    await db.insert(routines).values([
         { workspaceId, name: 'ours-a' },
         { workspaceId, name: 'ours-b' },
         { workspaceId: otherWorkspaceId, name: 'theirs' },
@@ -33,7 +33,7 @@ afterAll(async () => {
 
 describe('scopedToWorkspace', () => {
     it('returns only the named workspace rows', async () => {
-        const rows = await db.select().from(items).where(scopedToWorkspace(items, workspaceId));
+        const rows = await db.select().from(routines).where(scopedToWorkspace(routines, workspaceId));
 
         expect(rows.map((row) => row.name).sort()).toEqual(['ours-a', 'ours-b']);
     });
@@ -43,8 +43,8 @@ describe('scopedToWorkspace', () => {
         // dropped or overwritten, this would return it.
         const rows = await db
             .select()
-            .from(items)
-            .where(scopedToWorkspace(items, workspaceId, eq(items.name, 'theirs')));
+            .from(routines)
+            .where(scopedToWorkspace(routines, workspaceId, eq(routines.name, 'theirs')));
 
         expect(rows).toEqual([]);
     });
@@ -52,19 +52,19 @@ describe('scopedToWorkspace', () => {
     it('ignores undefined filters, so a conditional filter can be inlined', async () => {
         const rows = await db
             .select()
-            .from(items)
-            .where(scopedToWorkspace(items, workspaceId, undefined));
+            .from(routines)
+            .where(scopedToWorkspace(routines, workspaceId, undefined));
 
         expect(rows).toHaveLength(2);
     });
 
     it('scopes a delete as well as a select', async () => {
         const doomedWorkspaceId = await insertWorkspace('Doomed');
-        await db.insert(items).values({ workspaceId: doomedWorkspaceId, name: 'doomed' });
+        await db.insert(routines).values({ workspaceId: doomedWorkspaceId, name: 'doomed' });
 
-        await db.delete(items).where(scopedToWorkspace(items, doomedWorkspaceId));
+        await db.delete(routines).where(scopedToWorkspace(routines, doomedWorkspaceId));
 
-        expect(await db.select().from(items).where(scopedToWorkspace(items, workspaceId))).toHaveLength(2);
+        expect(await db.select().from(routines).where(scopedToWorkspace(routines, workspaceId))).toHaveLength(2);
     });
 });
 

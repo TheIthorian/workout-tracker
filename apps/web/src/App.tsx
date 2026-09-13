@@ -14,16 +14,11 @@ import { WorkspaceRedirect } from '@/components/WorkspaceRedirect';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { WorkspaceProvider } from '@/contexts/WorkspaceContext';
 
-// The item list is the landing route for a signed-in user, so it stays a static import:
-// splitting it would only add a second round trip in front of the page people actually see.
-import ItemsListPage from './pages/items/ItemsListPage';
-
 // Every other page loads on demand, so they stay out of the entry chunk.
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const Settings = lazy(() => import('./pages/Settings'));
 const SettingsRedirectPage = lazy(() => import('./pages/SettingsRedirectPage'));
-const ItemDetailPage = lazy(() => import('./pages/items/ItemDetailPage'));
 const RoutinesListPage = lazy(() => import('./pages/routines/RoutinesListPage'));
 const RoutineDetailPage = lazy(() => import('./pages/routines/RoutineDetailPage'));
 const ExercisesListPage = lazy(() => import('./pages/exercises/ExercisesListPage'));
@@ -103,7 +98,6 @@ const App = () => (
                                             >
                                                 <Route index element={<TodayPage />} />
                                                 <Route path='today' element={<TodayPage />} />
-                                                <Route path='items/:itemId' element={<ItemDetailPage />} />
                                                 <Route path='routines' element={<RoutinesListPage />} />
                                                 <Route path='routines/:routineId' element={<RoutineDetailPage />} />
                                                 <Route path='exercises' element={<ExercisesListPage />} />

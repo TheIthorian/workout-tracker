@@ -91,11 +91,11 @@ describe('problem bodies', () => {
     });
 
     it('builds the EntityNotFound problem body', () => {
-        expect(new EntityNotFoundError('Item not found', 'No item with that id').problem).toEqual({
+        expect(new EntityNotFoundError('Exercise not found', 'No exercise with that id').problem).toEqual({
             type: `${PROBLEM_TYPE_BASE}/EntityNotFoundError`,
-            title: 'Item not found',
+            title: 'Exercise not found',
             status: 404,
-            detail: 'No item with that id',
+            detail: 'No exercise with that id',
         });
     });
 

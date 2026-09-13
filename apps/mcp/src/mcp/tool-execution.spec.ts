@@ -58,7 +58,7 @@ describe('serializeToolResult', () => {
 describe('runToolCaught', () => {
     it('returns the action result untouched when nothing throws', async () => {
         const result = await runToolCaught({
-            toolName: 'create_item',
+            toolName: 'create_exercise',
             logger,
             action: async () => serializeToolResult({ body: { id: 'i1' } }),
         });
@@ -71,16 +71,16 @@ describe('runToolCaught', () => {
     // `isError: true` result instead.
     it('serializes an AppError as the successful result body', async () => {
         const result = await runToolCaught({
-            toolName: 'create_item',
+            toolName: 'create_exercise',
             logger,
             action: async (): Promise<ToolCallResult> => {
-                throw new EntityNotFoundError('Item not found');
+                throw new EntityNotFoundError('Exercise not found');
             },
         });
 
         expect(parseBody(result)).toEqual({
             type: `${PROBLEM_TYPE_BASE}/EntityNotFoundError`,
-            title: 'Item not found',
+            title: 'Exercise not found',
             status: 404,
         });
     });
@@ -89,7 +89,7 @@ describe('runToolCaught', () => {
     // only part telling the model WHICH field was wrong - survives.
     it('keeps the field-keyed errors dictionary of a validation error', async () => {
         const result = await runToolCaught({
-            toolName: 'create_item',
+            toolName: 'create_exercise',
             logger,
             action: async (): Promise<ToolCallResult> => {
                 throw new RequestValidationError({ name: ['Name is required'] });
@@ -104,7 +104,7 @@ describe('runToolCaught', () => {
 
     it('turns an unexpected error into the 500 problem body, naming the tool', async () => {
         const result = await runToolCaught({
-            toolName: 'update_item',
+            toolName: 'update_exercise',
             logger,
             action: async (): Promise<ToolCallResult> => {
                 throw new Error('socket hang up');
@@ -115,7 +115,7 @@ describe('runToolCaught', () => {
             type: `${PROBLEM_TYPE_BASE}/McpToolExecutionError`,
             title: 'MCP tool execution failed',
             status: 500,
-            detail: 'update_item failed: socket hang up',
+            detail: 'update_exercise failed: socket hang up',
         });
     });
 
@@ -124,7 +124,7 @@ describe('runToolCaught', () => {
         const spyLogger = { ...logger, warn: vi.fn(), error } as unknown as typeof logger;
 
         await runToolCaught({
-            toolName: 'update_item',
+            toolName: 'update_exercise',
             logger: spyLogger,
             action: async (): Promise<ToolCallResult> => {
                 throw new Error('socket hang up');

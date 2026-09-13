@@ -18,10 +18,10 @@ describe('ApiClient', () => {
             return new Response(JSON.stringify({ id: 'r1' }), { status: 200 });
         });
 
-        await expect(client.get<{ id: string }>({ path: '/items/i1' })).resolves.toEqual({
+        await expect(client.get<{ id: string }>({ path: '/exercises/e1' })).resolves.toEqual({
             id: 'r1',
         });
-        expect(seen?.url).toBe('https://api.test/api/v1/items/i1');
+        expect(seen?.url).toBe('https://api.test/api/v1/exercises/e1');
         expect(seen?.auth).toBe('Bearer tok');
     });
 
@@ -32,9 +32,9 @@ describe('ApiClient', () => {
             return new Response('[]', { status: 200 });
         });
 
-        await client.get({ path: '/items', query: { page: 2, search: undefined, sort: 'name' } });
+        await client.get({ path: '/exercises', query: { page: 2, search: undefined, sort: 'name' } });
 
-        expect(seen).toBe('https://api.test/api/v1/items?page=2&sort=name');
+        expect(seen).toBe('https://api.test/api/v1/exercises?page=2&sort=name');
     });
 
     // The mapped error must be the API's own problem body, not a locally reconstructed subclass -
@@ -46,7 +46,7 @@ describe('ApiClient', () => {
             () => new Response(JSON.stringify({ title: 'Not Found', detail: 'gone', status: 404 }), { status: 404 }),
         );
 
-        const failure = client.get({ path: '/items/i1' });
+        const failure = client.get({ path: '/exercises/e1' });
 
         await expect(failure).rejects.toBeInstanceOf(AppError);
         await expect(failure).rejects.toMatchObject({
@@ -60,7 +60,7 @@ describe('ApiClient', () => {
     it('still reports the real status when the error body is not JSON', async () => {
         const client = clientWith(() => new Response('<html>not found</html>', { status: 404 }));
 
-        const failure = client.get({ path: '/items/i1' });
+        const failure = client.get({ path: '/exercises/e1' });
 
         await expect(failure).rejects.toBeInstanceOf(AppError);
         await expect(failure).rejects.toMatchObject({ statusCode: 404 });
@@ -69,7 +69,7 @@ describe('ApiClient', () => {
     it('returns undefined for 204', async () => {
         const client = clientWith(() => new Response(null, { status: 204 }));
 
-        await expect(client.delete_({ path: '/items/i1' })).resolves.toBeUndefined();
+        await expect(client.delete_({ path: '/exercises/e1' })).resolves.toBeUndefined();
     });
 
     // Nest's default success status for a void-returning `@Delete()` handler with no explicit
@@ -78,6 +78,6 @@ describe('ApiClient', () => {
     it('returns undefined for a 200 with an empty body', async () => {
         const client = clientWith(() => new Response('', { status: 200 }));
 
-        await expect(client.delete_({ path: '/items/i1' })).resolves.toBeUndefined();
+        await expect(client.delete_({ path: '/exercises/e1' })).resolves.toBeUndefined();
     });
 });

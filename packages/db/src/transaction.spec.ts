@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto';
+import { TrackingType } from '@app/domain';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Db } from './client.js';
-import { items } from './schema/items.js';
+import { exercises } from './schema/exercises.js';
 import { workspaces } from './schema/workspaces.js';
 import { startTestDatabase } from './testing/index.js';
 import { withTransaction } from './transaction.js';
@@ -46,18 +47,23 @@ describe('withTransaction', () => {
 
     it('rolls back both inserts when the second violates a foreign key', async () => {
         const workspaceId = randomUUID();
-        const itemId = randomUUID();
+        const exerciseId = randomUUID();
 
         await expect(
             withTransaction(db, async (tx) => {
                 await tx.insert(workspaces).values({ id: workspaceId, name: 'Doomed' });
                 // A workspace that does not exist, so the FK rejects this insert.
-                await tx.insert(items).values({ id: itemId, workspaceId: randomUUID(), name: 'Orphan' });
+                await tx.insert(exercises).values({
+                    id: exerciseId,
+                    workspaceId: randomUUID(),
+                    name: 'Orphan',
+                    trackingType: TrackingType.WeightReps,
+                });
             }),
         ).rejects.toThrow();
 
         expect(await db.select().from(workspaces).where(eq(workspaces.id, workspaceId))).toHaveLength(0);
-        expect(await db.select().from(items).where(eq(items.id, itemId))).toHaveLength(0);
+        expect(await db.select().from(exercises).where(eq(exercises.id, exerciseId))).toHaveLength(0);
     });
 
     it('participates in the outer transaction rather than opening a nested one', async () => {

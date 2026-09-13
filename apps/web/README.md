@@ -1,7 +1,7 @@
 # Web
 
 The Vite + React SPA. Ships the shadcn/ui component set, Tailwind, a theme provider, cookie-session
-auth against `apps/api`, workspace switching, and one example resource (`items`) wired end to end.
+auth against `apps/api`, workspace switching, exercise management, routines, and workout sessions.
 
 ## Development
 
@@ -32,5 +32,3 @@ keeps the session cookie same-origin in production.
 - `src/constants.ts` — set `APP_NAME`.
 - `index.html` — title and social metadata.
 - `wrangler.toml` — Pages project name and `API_ORIGIN`.
-- `src/pages/items/`, `src/models/item.ts`, `itemsApi` in `src/lib/api.ts` — the example resource
-  to rename or replace.
