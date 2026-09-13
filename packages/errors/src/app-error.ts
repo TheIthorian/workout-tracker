@@ -178,6 +178,21 @@ export class SetShapeMismatchError extends AppError {
     }
 }
 
+/** Thrown when the workspace already has a workout session in progress (HTTP 409). */
+export class ActiveSessionExistsError extends AppError {
+    constructor(detail?: string) {
+        super(
+            'An active session already exists',
+            buildProblem({
+                errorName: 'ActiveSessionExistsError',
+                title: 'An active session already exists',
+                status: 409,
+                detail,
+            }),
+        );
+    }
+}
+
 /**
  * Thrown when the environment a process booted with is missing or contradictory. Always fatal at
  * startup; the status code exists only because every `AppError` carries one.

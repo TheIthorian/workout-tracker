@@ -9,6 +9,7 @@ import { buildExerciseTools } from './tools/exercise.tools.js';
 import { buildItemTools } from './tools/item.tools.js';
 import { buildRoutineTools } from './tools/routine.tools.js';
 import { buildSessionTools } from './tools/session.tools.js';
+import { buildWorkoutSessionTools } from './tools/workout-session.tools.js';
 import type { McpToolDefinition } from './tool-definition.js';
 
 /** Builds every tool the server advertises, bound to one request's workspace-scoped context. */
@@ -48,6 +49,7 @@ export const mcpProviders: Provider[] = [
                     ...buildItemTools({ context, client, logger, urls }),
                     ...buildExerciseTools({ context, client, logger, urls }),
                     ...buildRoutineTools({ context, client, logger, urls }),
+                    ...buildWorkoutSessionTools({ context, client, logger, urls }),
                 ];
             };
         },

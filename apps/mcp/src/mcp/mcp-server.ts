@@ -38,12 +38,13 @@ export function createMcpServer({
  */
 export function buildServerInstructions({ webAppBaseUrl }: { webAppBaseUrl: string }): string {
     return (
-        'Workout tracker assistant. Use these tools to read and manage the exercise library and routines ' +
-        '(workout templates) in a workspace. ' +
+        'Workout tracker assistant. Use these tools to read and manage the exercise library, routines ' +
+        '(workout templates), and workout sessions in a workspace. Start a session from a routine, log its ' +
+        'sets, and complete it when finished; only one session may be active at a time. ' +
         'This server is scoped to one workspace by the MCP URL token, so do not pass workspaceId to tools. ' +
-        "Exercise and routine responses carry a webUrl for that resource's page in the web app; link to " +
+        "Exercise, routine, and session responses carry a webUrl for that resource's page in the web app; link to " +
         `that rather than quoting a bare id. The pattern is ${webAppBaseUrl}/workspaces/{workspaceId}/exercises/{exerciseId} ` +
-        `and ${webAppBaseUrl}/workspaces/{workspaceId}/routines/{routineId}, and list_workspaces returns the ` +
+        `${webAppBaseUrl}/workspaces/{workspaceId}/routines/{routineId}, and ${webAppBaseUrl}/workspaces/{workspaceId}/sessions/{sessionId}, and list_workspaces returns the ` +
         'workspaceId this token is scoped to.'
     );
 }

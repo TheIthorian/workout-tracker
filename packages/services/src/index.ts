@@ -1,5 +1,6 @@
 export { CatalogSeedService, SeedOutcome, catalogImageKey } from './catalog-seed.service.js';
 export { ExerciseGuideService } from './exercise-guide.service.js';
+export { ExerciseHistoryService, type ExerciseHistory, type ExerciseHistoryEntry } from './exercise-history.service.js';
 export {
     ExercisesService,
     type ExerciseDetail,
@@ -23,6 +24,17 @@ export {
     type RoutineExerciseTargets,
     type RoutineSummary,
 } from './routines.service.js';
+export {
+    WorkoutSessionsService,
+    type PaginatedSessions,
+    type SessionDetail,
+    type SessionExercise,
+    type SessionExerciseInput,
+    type SessionExerciseTargets,
+    type SessionSet,
+    type SessionSummary,
+    type SetInput,
+} from './workout-sessions.service.js';
 export { UsersService, type UserProfile, type UserWorkspaceListItem } from './users.service.js';
 export { WorkspaceMembershipService, WorkspaceRole, type Membership } from './workspace-membership.service.js';
 export {

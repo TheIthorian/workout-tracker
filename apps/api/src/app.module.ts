@@ -6,6 +6,7 @@ import { InfrastructureModule } from './infrastructure.module.js';
 import { ItemsModule } from './items/items.module.js';
 import { MeModule } from './me/me.module.js';
 import { RoutinesModule } from './routines/routines.module.js';
+import { SessionsModule } from './sessions/sessions.module.js';
 import { WorkspacesModule } from './workspaces/workspaces.module.js';
 
 /**
@@ -30,6 +31,7 @@ import { WorkspacesModule } from './workspaces/workspaces.module.js';
         ItemsModule,
         ExercisesModule,
         RoutinesModule,
+        SessionsModule,
     ],
     controllers: [HealthController],
 })

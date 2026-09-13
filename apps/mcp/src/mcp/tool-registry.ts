@@ -97,6 +97,12 @@ const BEHAVIOR_HINTS: Record<string, ToolBehaviorHints> = {
     GetRoutine: READ,
     CreateRoutine: CREATE,
     UpdateRoutine: MUTATE,
+    ListSessions: READ,
+    GetActiveSession: READ,
+    GetSession: READ,
+    StartSession: CREATE,
+    LogSet: CREATE,
+    CompleteSession: MUTATE,
 };
 
 function shouldInsertUnderscore({ value, index }: { value: string; index: number }): boolean {

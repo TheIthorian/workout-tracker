@@ -123,6 +123,42 @@ export const updateRoutineToolArgsSchema = z.strictObject({
     exercises: z.array(routineExerciseToolInputSchema).max(50).nullish(),
 });
 
+/** `list_sessions`. */
+export const listSessionsToolArgsSchema = z.strictObject({
+    page: z.number().int().min(1).nullish(),
+    pageSize: z.number().int().min(1).max(MAX_PAGE_SIZE).nullish(),
+});
+
+/** `get_active_session` takes no arguments. */
+export const getActiveSessionToolArgsSchema = z.strictObject({});
+
+/** `get_session`. */
+export const getSessionToolArgsSchema = z.strictObject({ sessionId: guidSchema });
+
+/** `start_session`. */
+export const startSessionToolArgsSchema = z.strictObject({
+    routineId: guidSchema.nullish(),
+    name: z.string().min(1).max(200).nullish(),
+});
+
+/** `log_set`. */
+export const logSetToolArgsSchema = z.strictObject({
+    sessionId: guidSchema,
+    sessionExerciseId: guidSchema,
+    isWarmup: z.boolean().nullish(),
+    rpe: z.number().min(0).max(10).nullish(),
+    weightKg: z.number().min(0).max(10000).nullish(),
+    reps: z.number().int().min(0).max(1000).nullish(),
+    durationSeconds: z.number().int().min(0).max(86400).nullish(),
+    distanceM: z.number().min(0).max(1000000).nullish(),
+});
+
+/** `complete_session`. */
+export const completeSessionToolArgsSchema = z.strictObject({
+    sessionId: guidSchema,
+    notes: z.string().max(4000).nullish(),
+});
+
 export type GetCurrentUserToolArgs = z.infer<typeof getCurrentUserToolArgsSchema>;
 export type ListWorkspacesToolArgs = z.infer<typeof listWorkspacesToolArgsSchema>;
 export type ListItemsToolArgs = z.infer<typeof listItemsToolArgsSchema>;
@@ -140,3 +176,9 @@ export type ListRoutinesToolArgs = z.infer<typeof listRoutinesToolArgsSchema>;
 export type GetRoutineToolArgs = z.infer<typeof getRoutineToolArgsSchema>;
 export type CreateRoutineToolArgs = z.infer<typeof createRoutineToolArgsSchema>;
 export type UpdateRoutineToolArgs = z.infer<typeof updateRoutineToolArgsSchema>;
+export type ListSessionsToolArgs = z.infer<typeof listSessionsToolArgsSchema>;
+export type GetActiveSessionToolArgs = z.infer<typeof getActiveSessionToolArgsSchema>;
+export type GetSessionToolArgs = z.infer<typeof getSessionToolArgsSchema>;
+export type StartSessionToolArgs = z.infer<typeof startSessionToolArgsSchema>;
+export type LogSetToolArgs = z.infer<typeof logSetToolArgsSchema>;
+export type CompleteSessionToolArgs = z.infer<typeof completeSessionToolArgsSchema>;

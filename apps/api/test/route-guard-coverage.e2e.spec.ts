@@ -117,6 +117,21 @@ const MCP_TOKEN_ROUTES: { method: string; path: string }[] = [
     // CreateRoutine / UpdateRoutine send the whole exercise list here. The per-slot routes
     // (routine-exercises.controller.ts) are session-only: no tool edits one slot at a time.
     { method: 'PUT', path: '/api/v1/workspaces/:workspaceId/routines/:routineId/exercises' },
+    // ListSessions
+    { method: 'GET', path: '/api/v1/workspaces/:workspaceId/sessions' },
+    // GetActiveSession
+    { method: 'GET', path: '/api/v1/workspaces/:workspaceId/sessions/active' },
+    // GetSession
+    { method: 'GET', path: '/api/v1/workspaces/:workspaceId/sessions/:sessionId' },
+    // StartSession
+    { method: 'POST', path: '/api/v1/workspaces/:workspaceId/sessions' },
+    // CompleteSession
+    { method: 'POST', path: '/api/v1/workspaces/:workspaceId/sessions/:sessionId/complete' },
+    // LogSet
+    {
+        method: 'POST',
+        path: '/api/v1/workspaces/:workspaceId/sessions/:sessionId/exercises/:sessionExerciseId/sets',
+    },
 ];
 
 /**

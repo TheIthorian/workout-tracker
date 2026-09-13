@@ -37,3 +37,13 @@ export function routineWebPath({ workspaceId, routineId }: { workspaceId: string
 export function routineApiPath({ workspaceId, routineId }: { workspaceId: string; routineId: string }): string {
     return `/workspaces/${workspaceId}/routines/${routineId}`;
 }
+
+/** The session page in the SPA. */
+export function sessionWebPath({ workspaceId, sessionId }: { workspaceId: string; sessionId: string }): string {
+    return `/workspaces/${workspaceId}/sessions/${sessionId}`;
+}
+
+/** The session REST path without the API version prefix. */
+export function sessionApiPath({ workspaceId, sessionId }: { workspaceId: string; sessionId: string }): string {
+    return `/workspaces/${workspaceId}/sessions/${sessionId}`;
+}

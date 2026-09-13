@@ -5,3 +5,4 @@ export * from './mcp.js';
 export * from './items.js';
 export * from './exercises.js';
 export * from './routines.js';
+export * from './sessions.js';
