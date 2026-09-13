@@ -7,6 +7,7 @@ import {
     ExercisesService,
     ItemsService,
     McpAccessTokensService,
+    RoutinesService,
     WorkspaceMembershipService,
     WorkspaceRole,
 } from '@app/services';
@@ -172,6 +173,19 @@ export async function seedExercise(
     const service = new ExercisesService({ db, membership: new WorkspaceMembershipService({ db }) });
 
     return service.create({ userId, workspaceId, name, trackingType });
+}
+
+/**
+ * Creates a routine through the real service, so a read-tool test has something to read that was
+ * written the way production writes it.
+ */
+export async function seedRoutine(
+    db: Db,
+    { userId, workspaceId, name }: { userId: string; workspaceId: string; name: string },
+): Promise<{ id: string }> {
+    const service = new RoutinesService({ db, membership: new WorkspaceMembershipService({ db }) });
+
+    return service.create({ userId, workspaceId, name });
 }
 
 /** An MCP client connected through the real HTTP transport to `/mcp/{token}`. */

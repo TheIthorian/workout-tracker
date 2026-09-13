@@ -7,6 +7,7 @@ import {
     seedExercise,
     seedItem,
     seedMcpToken,
+    seedRoutine,
     seedUser,
     seedWorkspace,
     TEST_WEB_APP_BASE_URL,
@@ -295,6 +296,17 @@ describe('MCP tools', () => {
                 arguments: { routineId: body.routine.id },
             });
             expect(toolResultBody(fetched)).toMatchObject({ id: body.routine.id, exercises: [] });
+        });
+
+        // The pin is the point: a token issued for one workspace must not read another's rows even
+        // though its owner is a member of both.
+        it('cannot reach a routine in another workspace the same user owns', async () => {
+            const other = await seedWorkspace(app.db, { name: 'Other Routines', ownerId: userId });
+            const { id } = await seedRoutine(app.db, { userId, workspaceId: other.id, name: 'Elsewhere Routine' });
+
+            const result = await client.callTool({ name: 'get_routine', arguments: { routineId: id } });
+
+            expect(result.isError).toBe(true);
         });
     });
 });

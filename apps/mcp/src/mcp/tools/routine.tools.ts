@@ -47,10 +47,13 @@ export function buildRoutineTools({
     const withLinks = <T extends { id: string }>(routine: T): T & { webUrl: string; resourceUrl: string } =>
         attachRoutineLinks({ urls, routine, workspaceId: context.workspaceId });
 
-    const putExercises = async (
-        routineId: string,
-        exercises: RoutineExerciseToolInput[],
-    ): Promise<RoutineDetailResponse> =>
+    const putExercises = async ({
+        routineId,
+        exercises,
+    }: {
+        routineId: string;
+        exercises: RoutineExerciseToolInput[];
+    }): Promise<RoutineDetailResponse> =>
         client.put<RoutineDetailResponse>({
             path: `${basePath}/${routineId}/exercises`,
             body: { exercises: exercises.map(toSlotBody) },
@@ -112,7 +115,7 @@ export function buildRoutineTools({
                     action: async () => {
                         const created = await client.post<RoutineDetailResponse>({
                             path: basePath,
-                            body: { name: args.name, description: args.description ?? null },
+                            body: { name: args.name, description: normalizeDescription(args.description) },
                         });
 
                         if (args.exercises === undefined || args.exercises === null) {
@@ -120,7 +123,7 @@ export function buildRoutineTools({
                         }
 
                         try {
-                            const routine = await putExercises(created.id, args.exercises);
+                            const routine = await putExercises({ routineId: created.id, exercises: args.exercises });
 
                             return serializeToolResult({ body: withLinks(routine) });
                         } catch (error) {
@@ -162,7 +165,7 @@ export function buildRoutineTools({
                         }
 
                         if (args.exercises !== undefined && args.exercises !== null) {
-                            routine = await putExercises(args.routineId, args.exercises);
+                            routine = await putExercises({ routineId: args.routineId, exercises: args.exercises });
                         }
 
                         routine ??= await client.get<RoutineDetailResponse>({ path: `${basePath}/${args.routineId}` });
@@ -187,7 +190,7 @@ function buildRoutinePatch(args: {
 
     if (args.name !== undefined && args.name !== null) patch['name'] = args.name;
     if (args.description !== undefined && args.description !== null) {
-        patch['description'] = args.description.trim() === '' ? null : args.description;
+        patch['description'] = normalizeDescription(args.description);
     }
     if (args.archived !== undefined && args.archived !== null) patch['archived'] = args.archived;
 
@@ -197,4 +200,13 @@ function buildRoutinePatch(args: {
 /** Drops nullish keys so the API's own defaults (targetSets 3) apply, rather than sending nulls. */
 function toSlotBody(input: RoutineExerciseToolInput): Record<string, unknown> {
     return Object.fromEntries(Object.entries(input).filter(([, value]) => value !== undefined && value !== null));
+}
+
+/** Trims a description and turns an empty result into `null`; a missing one is `null` too. */
+function normalizeDescription(description: string | null | undefined): string | null {
+    if (description === undefined || description === null) return null;
+
+    const trimmed = description.trim();
+
+    return trimmed === '' ? null : trimmed;
 }
