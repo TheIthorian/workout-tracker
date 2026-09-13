@@ -106,6 +106,17 @@ const MCP_TOKEN_ROUTES: { method: string; path: string }[] = [
     // AddExerciseLink. No UpdateExerciseLink/RemoveExerciseLink tool exists, so patching or
     // deleting a link stays session-only (exercise-guide.controller.ts) rather than joining this map.
     { method: 'POST', path: '/api/v1/workspaces/:workspaceId/exercises/:exerciseId/links' },
+    // ListRoutines
+    { method: 'GET', path: '/api/v1/workspaces/:workspaceId/routines' },
+    // GetRoutine
+    { method: 'GET', path: '/api/v1/workspaces/:workspaceId/routines/:routineId' },
+    // CreateRoutine
+    { method: 'POST', path: '/api/v1/workspaces/:workspaceId/routines' },
+    // UpdateRoutine
+    { method: 'PATCH', path: '/api/v1/workspaces/:workspaceId/routines/:routineId' },
+    // CreateRoutine / UpdateRoutine send the whole exercise list here. The per-slot routes
+    // (routine-exercises.controller.ts) are session-only: no tool edits one slot at a time.
+    { method: 'PUT', path: '/api/v1/workspaces/:workspaceId/routines/:routineId/exercises' },
 ];
 
 /**

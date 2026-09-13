@@ -11,6 +11,14 @@ import type {
 import type { Item, PatchItemRequest, SaveItemRequest } from '@/models/item';
 import type { McpAccessTokenCreated, McpAccessTokenListItem } from '@/models/mcp';
 import type { PaginatedResponse } from '@/models/pagination';
+import type {
+    PatchRoutineExerciseRequest,
+    PatchRoutineRequest,
+    RoutineDetail,
+    Routine,
+    SaveRoutineExerciseRequest,
+    SaveRoutineRequest,
+} from '@/models/routine';
 import type { PatchUserRequest, UserResponse } from '@/models/user';
 import type {
     PostWorkspaceMemberRequest,
@@ -108,4 +116,66 @@ export const exercisesApi = {
         ),
     removeLink: ({ workspaceId, exerciseId, linkId }: { workspaceId: string; exerciseId: string; linkId: string }) =>
         httpClient.delete<void>(`/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/links/${linkId}`),
+};
+
+/** The workspace's routines. Every mutation returns the whole routine, so callers refresh from one shape. */
+export const routinesApi = {
+    getAll: (
+        workspaceId: string,
+        params?: { search?: string; includeArchived?: boolean; page?: number; pageSize?: number },
+    ) => httpClient.get<PaginatedResponse<Routine>>(`/api/v1/workspaces/${workspaceId}/routines`, { params }),
+    getById: (workspaceId: string, routineId: string) =>
+        httpClient.get<RoutineDetail & { webUrl: string }>(`/api/v1/workspaces/${workspaceId}/routines/${routineId}`),
+    create: (workspaceId: string, data: SaveRoutineRequest) =>
+        httpClient.post<RoutineDetail>(`/api/v1/workspaces/${workspaceId}/routines`, data),
+    update: (workspaceId: string, routineId: string, data: PatchRoutineRequest) =>
+        httpClient.patch<RoutineDetail>(`/api/v1/workspaces/${workspaceId}/routines/${routineId}`, data),
+    addExercise: ({
+        workspaceId,
+        routineId,
+        data,
+    }: {
+        workspaceId: string;
+        routineId: string;
+        data: SaveRoutineExerciseRequest;
+    }) => httpClient.post<RoutineDetail>(`/api/v1/workspaces/${workspaceId}/routines/${routineId}/exercises`, data),
+    updateExercise: ({
+        workspaceId,
+        routineId,
+        routineExerciseId,
+        data,
+    }: {
+        workspaceId: string;
+        routineId: string;
+        routineExerciseId: string;
+        data: PatchRoutineExerciseRequest;
+    }) =>
+        httpClient.patch<RoutineDetail>(
+            `/api/v1/workspaces/${workspaceId}/routines/${routineId}/exercises/${routineExerciseId}`,
+            data,
+        ),
+    removeExercise: ({
+        workspaceId,
+        routineId,
+        routineExerciseId,
+    }: {
+        workspaceId: string;
+        routineId: string;
+        routineExerciseId: string;
+    }) =>
+        httpClient.delete<RoutineDetail>(
+            `/api/v1/workspaces/${workspaceId}/routines/${routineId}/exercises/${routineExerciseId}`,
+        ),
+    replaceExercises: ({
+        workspaceId,
+        routineId,
+        exercises,
+    }: {
+        workspaceId: string;
+        routineId: string;
+        exercises: SaveRoutineExerciseRequest[];
+    }) =>
+        httpClient.put<RoutineDetail>(`/api/v1/workspaces/${workspaceId}/routines/${routineId}/exercises`, {
+            exercises,
+        }),
 };

@@ -1,11 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { TrackingType } from '@app/domain';
 import {
     connectedClient,
     createTestApp,
     seedExercise,
     seedItem,
     seedMcpToken,
+    seedRoutine,
     seedUser,
     seedWorkspace,
     TEST_WEB_APP_BASE_URL,
@@ -203,6 +205,106 @@ describe('MCP tools', () => {
             const { id } = await seedExercise(app.db, { userId, workspaceId: other.id, name: 'Elsewhere Exercise' });
 
             const result = await client.callTool({ name: 'get_exercise', arguments: { exerciseId: id } });
+
+            expect(result.isError).toBe(true);
+        });
+    });
+
+    describe('routine tools', () => {
+        it('creates a routine with an exercise list and returns it with both links attached', async () => {
+            const { id: benchId } = await seedExercise(app.db, { userId, workspaceId, name: 'Bench' });
+
+            const result = await client.callTool({
+                name: 'create_routine',
+                arguments: {
+                    name: 'Push Day',
+                    exercises: [{ exerciseId: benchId, targetSets: 4, targetReps: 8, targetWeightKg: 60 }],
+                },
+            });
+
+            expect(result.isError).toBeFalsy();
+            expect(toolResultBody(result)).toMatchObject({
+                name: 'Push Day',
+                exerciseCount: 1,
+                exercises: [{ position: 0, targetSets: 4, targetReps: 8, exercise: { id: benchId, name: 'Bench' } }],
+                webUrl: expect.stringContaining(`${TEST_WEB_APP_BASE_URL}/workspaces/${workspaceId}/routines/`),
+            });
+        });
+
+        it('lists routines with links on every entry', async () => {
+            await client.callTool({ name: 'create_routine', arguments: { name: 'Listed Routine' } });
+
+            const body = toolResultBody(await client.callTool({ name: 'list_routines', arguments: {} })) as {
+                data: { name: string; webUrl: string }[];
+            };
+
+            expect(body.data.map((routine) => routine.name)).toContain('Listed Routine');
+            expect(body.data.every((routine) => routine.webUrl.startsWith(TEST_WEB_APP_BASE_URL))).toBe(true);
+        });
+
+        it('reads one routine back and replaces its exercise list on update', async () => {
+            const { id: plankId } = await seedExercise(app.db, {
+                userId,
+                workspaceId,
+                name: 'Plank',
+                trackingType: TrackingType.Duration,
+            });
+            const created = toolResultBody(
+                await client.callTool({ name: 'create_routine', arguments: { name: 'Core' } }),
+            ) as { id: string };
+
+            const fetched = await client.callTool({ name: 'get_routine', arguments: { routineId: created.id } });
+            expect(toolResultBody(fetched)).toMatchObject({ id: created.id, name: 'Core', exercises: [] });
+
+            const updated = await client.callTool({
+                name: 'update_routine',
+                arguments: {
+                    routineId: created.id,
+                    name: 'Core Day',
+                    exercises: [{ exerciseId: plankId, targetDurationSeconds: 60 }],
+                },
+            });
+            expect(toolResultBody(updated)).toMatchObject({
+                name: 'Core Day',
+                exercises: [{ targetSets: 3, targetDurationSeconds: 60, exercise: { name: 'Plank' } }],
+            });
+        });
+
+        it('returns a tracking-type mismatch as a problem body the model can act on', async () => {
+            const { id: plankId } = await seedExercise(app.db, {
+                userId,
+                workspaceId,
+                name: 'Plank Two',
+                trackingType: TrackingType.Duration,
+            });
+
+            const result = await client.callTool({
+                name: 'create_routine',
+                arguments: { name: 'Bad', exercises: [{ exerciseId: plankId, targetReps: 8 }] },
+            });
+
+            expect(result.isError).toBeFalsy();
+            const body = toolResultBody(result) as { routine: { id: string } };
+            expect(body).toMatchObject({
+                status: 400,
+                type: expect.stringMatching(/SetShapeMismatchError$/),
+                routine: { id: expect.any(String) },
+            });
+
+            const fetched = await client.callTool({
+                name: 'get_routine',
+                arguments: { routineId: body.routine.id },
+            });
+            expect(toolResultBody(fetched)).toMatchObject({ id: body.routine.id, exercises: [] });
+        });
+
+        // The pin is the point: a token issued for one workspace must not read another's rows even
+        // though its owner is a member of both.
+        it('cannot reach a routine in another workspace the same user owns', async () => {
+            const other = await seedWorkspace(app.db, { name: 'Other Routines', ownerId: userId });
+            const { id } = await seedRoutine(app.db, { userId, workspaceId: other.id, name: 'Elsewhere Routine' });
+
+            const result = await client.callTool({ name: 'get_routine', arguments: { routineId: id } });
 
             expect(result.isError).toBe(true);
         });

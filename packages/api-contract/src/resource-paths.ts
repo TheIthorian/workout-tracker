@@ -27,3 +27,13 @@ export function exerciseWebPath({ workspaceId, exerciseId }: { workspaceId: stri
 export function exerciseApiPath({ workspaceId, exerciseId }: { workspaceId: string; exerciseId: string }): string {
     return `/workspaces/${workspaceId}/exercises/${exerciseId}`;
 }
+
+/** The routine's editor page in the SPA. */
+export function routineWebPath({ workspaceId, routineId }: { workspaceId: string; routineId: string }): string {
+    return `/workspaces/${workspaceId}/routines/${routineId}`;
+}
+
+/** The routine's own REST route, without the `/api/v1` prefix the generator adds. */
+export function routineApiPath({ workspaceId, routineId }: { workspaceId: string; routineId: string }): string {
+    return `/workspaces/${workspaceId}/routines/${routineId}`;
+}

@@ -5,6 +5,7 @@ import { HealthController } from './health/health.controller.js';
 import { InfrastructureModule } from './infrastructure.module.js';
 import { ItemsModule } from './items/items.module.js';
 import { MeModule } from './me/me.module.js';
+import { RoutinesModule } from './routines/routines.module.js';
 import { WorkspacesModule } from './workspaces/workspaces.module.js';
 
 /**
@@ -21,7 +22,15 @@ import { WorkspacesModule } from './workspaces/workspaces.module.js';
  * instead, on the instances both `createApp` and `test/harness.ts` build.
  */
 @Module({
-    imports: [InfrastructureModule, AuthModule, MeModule, WorkspacesModule, ItemsModule, ExercisesModule],
+    imports: [
+        InfrastructureModule,
+        AuthModule,
+        MeModule,
+        WorkspacesModule,
+        ItemsModule,
+        ExercisesModule,
+        RoutinesModule,
+    ],
     controllers: [HealthController],
 })
 export class AppModule {}
