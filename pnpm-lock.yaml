@@ -305,6 +305,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@app/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@hookform/resolvers':
         specifier: 3.10.0
         version: 3.10.0(react-hook-form@7.61.1(react@18.3.1))

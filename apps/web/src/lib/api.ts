@@ -12,6 +12,15 @@ import type { Item, PatchItemRequest, SaveItemRequest } from '@/models/item';
 import type { McpAccessTokenCreated, McpAccessTokenListItem } from '@/models/mcp';
 import type { PaginatedResponse } from '@/models/pagination';
 import type {
+    ActiveSessionResponse,
+    AddSessionExerciseRequest,
+    LogSetRequest,
+    PatchSessionExerciseRequest,
+    SessionDetail,
+    SessionSummary,
+    StartSessionRequest,
+} from '@/models/session';
+import type {
     PatchRoutineExerciseRequest,
     PatchRoutineRequest,
     RoutineDetail,
@@ -178,4 +187,39 @@ export const routinesApi = {
         httpClient.put<RoutineDetail>(`/api/v1/workspaces/${workspaceId}/routines/${routineId}/exercises`, {
             exercises,
         }),
+};
+
+/** The mutable workout-session aggregate. Each successful mutation returns its updated detail. */
+export const sessionsApi = {
+    getAll: (workspaceId: string, params?: { page?: number; pageSize?: number }) =>
+        httpClient.get<PaginatedResponse<SessionSummary>>(`/api/v1/workspaces/${workspaceId}/sessions`, { params }),
+    getActive: (workspaceId: string) =>
+        httpClient.get<ActiveSessionResponse>(`/api/v1/workspaces/${workspaceId}/sessions/active`),
+    getById: (workspaceId: string, sessionId: string) =>
+        httpClient.get<SessionDetail & { webUrl: string }>(`/api/v1/workspaces/${workspaceId}/sessions/${sessionId}`),
+    start: (workspaceId: string, data: StartSessionRequest = {}) =>
+        httpClient.post<SessionDetail>(`/api/v1/workspaces/${workspaceId}/sessions`, data),
+    complete: (workspaceId: string, sessionId: string, notes?: string | null) =>
+        httpClient.post<SessionDetail>(`/api/v1/workspaces/${workspaceId}/sessions/${sessionId}/complete`, { notes }),
+    addExercise: (workspaceId: string, sessionId: string, data: AddSessionExerciseRequest) =>
+        httpClient.post<SessionDetail>(`/api/v1/workspaces/${workspaceId}/sessions/${sessionId}/exercises`, data),
+    updateExercise: (
+        workspaceId: string,
+        sessionId: string,
+        sessionExerciseId: string,
+        data: PatchSessionExerciseRequest,
+    ) =>
+        httpClient.patch<SessionDetail>(
+            `/api/v1/workspaces/${workspaceId}/sessions/${sessionId}/exercises/${sessionExerciseId}`,
+            data,
+        ),
+    reorderExercises: (workspaceId: string, sessionId: string, sessionExerciseIds: string[]) =>
+        httpClient.put<SessionDetail>(`/api/v1/workspaces/${workspaceId}/sessions/${sessionId}/exercises/order`, {
+            sessionExerciseIds,
+        }),
+    logSet: (workspaceId: string, sessionId: string, sessionExerciseId: string, data: LogSetRequest) =>
+        httpClient.post<SessionDetail>(
+            `/api/v1/workspaces/${workspaceId}/sessions/${sessionId}/exercises/${sessionExerciseId}/sets`,
+            data,
+        ),
 };

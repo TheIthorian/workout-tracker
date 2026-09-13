@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Archive, ArchiveRestore, ArrowLeft, Pencil, Plus } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowLeft, Pencil, Play, Plus } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { LoadingState } from '@/components/common/LoadingState';
 import { ExercisePickerSheet } from '@/components/routines/ExercisePickerSheet';
@@ -29,6 +29,7 @@ import {
     useUpdateRoutine,
     useUpdateRoutineExercise,
 } from '@/hooks/use-routines';
+import { useStartSession } from '@/hooks/use-sessions';
 import { toast } from '@/hooks/use-toast';
 import type { Exercise } from '@/models/exercise';
 import type { PatchRoutineExerciseRequest, RoutineExercise, SaveRoutineExerciseRequest } from '@/models/routine';
@@ -56,6 +57,7 @@ export default function RoutineDetailPage(): JSX.Element {
     const updateExercise = useUpdateRoutineExercise({ workspaceId, routineId });
     const removeExercise = useRemoveRoutineExercise({ workspaceId, routineId });
     const replaceExercises = useReplaceRoutineExercises({ workspaceId, routineId });
+    const startSession = useStartSession({ workspaceId });
 
     if (isLoading) {
         return (
@@ -98,6 +100,17 @@ export default function RoutineDetailPage(): JSX.Element {
                         description: error.message,
                         variant: 'destructive',
                     }),
+            },
+        );
+    };
+
+    const startWorkout = (): void => {
+        startSession.mutate(
+            { routineId },
+            {
+                onSuccess: session => navigate(`/workspaces/${workspaceId}/sessions/${session.id}`),
+                onError: error =>
+                    toast({ title: 'Could not start workout', description: error.message, variant: 'destructive' }),
             },
         );
     };
@@ -205,6 +218,10 @@ export default function RoutineDetailPage(): JSX.Element {
                     )}
                 </div>
                 <div className='flex gap-2'>
+                    <Button onClick={startWorkout} disabled={isArchived || startSession.isPending} className='gap-2'>
+                        <Play className='h-4 w-4' aria-hidden />
+                        {startSession.isPending ? 'Starting…' : 'Start workout'}
+                    </Button>
                     <Button variant='outline' className='gap-2' onClick={openDetails}>
                         <Pencil className='h-4 w-4' aria-hidden />
                         Edit

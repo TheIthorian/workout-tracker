@@ -48,6 +48,7 @@ export default defineConfig(({ mode }) => {
         resolve: {
             alias: {
                 '@': path.resolve(__dirname, './src'),
+                '@app/domain': path.resolve(__dirname, '../../packages/domain/src/index.ts'),
             },
         },
     };

@@ -28,6 +28,9 @@ const RoutinesListPage = lazy(() => import('./pages/routines/RoutinesListPage'))
 const RoutineDetailPage = lazy(() => import('./pages/routines/RoutineDetailPage'));
 const ExercisesListPage = lazy(() => import('./pages/exercises/ExercisesListPage'));
 const ExerciseDetailPage = lazy(() => import('./pages/exercises/ExerciseDetailPage'));
+const TodayPage = lazy(() => import('./pages/TodayPage'));
+const HistoryPage = lazy(() => import('./pages/HistoryPage'));
+const SessionDetailPage = lazy(() => import('./pages/sessions/SessionDetailPage'));
 const NotFoundError = lazy(() => import('./pages/NotFoundError'));
 const ForbiddenError = lazy(() => import('./pages/ForbiddenError'));
 
@@ -98,12 +101,15 @@ const App = () => (
                                                     </ProtectedRoute>
                                                 }
                                             >
-                                                <Route index element={<ItemsListPage />} />
+                                                <Route index element={<TodayPage />} />
+                                                <Route path='today' element={<TodayPage />} />
                                                 <Route path='items/:itemId' element={<ItemDetailPage />} />
                                                 <Route path='routines' element={<RoutinesListPage />} />
                                                 <Route path='routines/:routineId' element={<RoutineDetailPage />} />
                                                 <Route path='exercises' element={<ExercisesListPage />} />
                                                 <Route path='exercises/:exerciseId' element={<ExerciseDetailPage />} />
+                                                <Route path='sessions/:sessionId' element={<SessionDetailPage />} />
+                                                <Route path='history' element={<HistoryPage />} />
                                                 <Route path='settings' element={<Settings />} />
                                             </Route>
 
