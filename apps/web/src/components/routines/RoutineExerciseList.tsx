@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Reorder, useDragControls } from 'framer-motion';
 import { GripVertical } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -9,8 +9,8 @@ type RoutineExerciseListProps = {
     slots: RoutineExercise[];
     selectedId: string | null;
     onSelect: (slot: RoutineExercise) => void;
-    /** Fired once per drop with the complete new order. */
-    onReorder: (orderedIds: string[]) => void;
+    /** Fired once per drop with the complete new order; a rejection means the save failed. */
+    onReorder: (orderedIds: string[]) => Promise<void>;
 };
 
 /**
@@ -19,17 +19,20 @@ type RoutineExerciseListProps = {
  */
 export function RoutineExerciseList({ slots, selectedId, onSelect, onReorder }: RoutineExerciseListProps): JSX.Element {
     const [order, setOrder] = useState<RoutineExercise[]>(slots);
-    // `onDragEnd` closes over the render it was created in; the ref always has the latest order.
-    const latest = useRef(order);
-    latest.current = order;
 
     useEffect(() => {
         setOrder(slots);
     }, [slots]);
 
+    // `commit` is recreated every render, so `SlotRow`'s `onDragEnd` always closes over the
+    // current `order` state — framer-motion reads the prop fresh on each drop, no ref needed.
     const commit = (): void => {
-        const ids = latest.current.map((slot) => slot.id);
-        if (ids.some((id, index) => id !== slots[index]?.id)) onReorder(ids);
+        const ids = order.map((slot) => slot.id);
+        if (ids.some((id, index) => id !== slots[index]?.id)) {
+            // A failed save must not leave the dragged arrangement on screen: snap back to the
+            // last-known-good `slots` from the server.
+            onReorder(ids).catch(() => setOrder(slots));
+        }
     };
 
     return (

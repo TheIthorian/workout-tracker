@@ -79,18 +79,34 @@ export default function RoutineDetailPage(): JSX.Element {
     const saveDetails = (): void => {
         updateRoutine.mutate(
             { routineId, data: { name: nameDraft.trim(), description: descriptionDraft.trim() || null } },
-            { onSuccess: () => setDetailsOpen(false) },
+            {
+                onSuccess: () => setDetailsOpen(false),
+                onError: (error) =>
+                    toast({ title: 'Could not save', description: error.message, variant: 'destructive' }),
+            },
         );
     };
 
     const toggleArchived = (): void => {
         updateRoutine.mutate(
             { routineId, data: { archived: !isArchived } },
-            { onSuccess: () => toast({ title: isArchived ? 'Routine restored' : 'Routine archived' }) },
+            {
+                onSuccess: () => toast({ title: isArchived ? 'Routine restored' : 'Routine archived' }),
+                onError: (error) =>
+                    toast({
+                        title: isArchived ? 'Could not restore' : 'Could not archive',
+                        description: error.message,
+                        variant: 'destructive',
+                    }),
+            },
         );
     };
 
+    // A double-tap before the first add resolves would otherwise fire two mutations against the
+    // same routine; the picker also disables its rows on `isAdding`, this is the belt to that braces.
     const handlePick = (exercise: Exercise): void => {
+        if (addExercise.isPending) return;
+
         addExercise.mutate(
             { exerciseId: exercise.id, targetSets: 3 },
             {
@@ -123,15 +139,24 @@ export default function RoutineDetailPage(): JSX.Element {
         removeExercise.mutate(selected.id, { onSuccess: () => setSelectedId(null) });
     };
 
-    const handleReorder = (orderedIds: string[]): void => {
+    // Reordering replaces every slot server-side, so the ids in `updated` are new — the previous
+    // selection has to be carried over by position, not by id, or the panel just goes blank.
+    // Returning the promise (and rethrowing on failure) lets the list roll the drag back on reject.
+    const handleReorder = async (orderedIds: string[]): Promise<void> => {
         const byId = new Map(routine.exercises.map((slot) => [slot.id, slot]));
-        replaceExercises.mutate(
-            orderedIds.flatMap((id) => {
-                const slot = byId.get(id);
-                return slot ? [toSaveRequest(slot)] : [];
-            }),
-            { onError: () => toast({ title: 'Could not reorder', variant: 'destructive' }) },
-        );
+        const requests = orderedIds.flatMap((id) => {
+            const slot = byId.get(id);
+            return slot ? [toSaveRequest(slot)] : [];
+        });
+
+        try {
+            const updated = await replaceExercises.mutateAsync(requests);
+            const index = selectedId === null ? -1 : orderedIds.indexOf(selectedId);
+            setSelectedId(index === -1 ? null : (updated.exercises[index]?.id ?? null));
+        } catch (error) {
+            toast({ title: 'Could not reorder', variant: 'destructive' });
+            throw error;
+        }
     };
 
     const isSlotSaving = updateExercise.isPending || removeExercise.isPending;
@@ -237,6 +262,7 @@ export default function RoutineDetailPage(): JSX.Element {
                 open={isPickerOpen}
                 onOpenChange={setPickerOpen}
                 onPick={handlePick}
+                isAdding={addExercise.isPending}
             />
 
             <Dialog open={isDetailsOpen} onOpenChange={setDetailsOpen}>

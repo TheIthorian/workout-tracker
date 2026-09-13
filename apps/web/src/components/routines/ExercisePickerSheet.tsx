@@ -16,6 +16,8 @@ type ExercisePickerSheetProps = {
     onOpenChange: (open: boolean) => void;
     /** Called with the chosen (or just-created) exercise; the sheet stays open so several can be added in a row. */
     onPick: (exercise: Exercise) => void;
+    /** True while a pick is being added to the routine; disables rows and the create button so a double-tap can't add twice. */
+    isAdding: boolean;
 };
 
 /**
@@ -28,6 +30,7 @@ export function ExercisePickerSheet({
     open,
     onOpenChange,
     onPick,
+    isAdding,
 }: ExercisePickerSheetProps): JSX.Element {
     const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');
@@ -109,7 +112,7 @@ export function ExercisePickerSheet({
                                         size='sm'
                                         className='gap-1'
                                         onClick={handleCreate}
-                                        disabled={createExercise.isPending}
+                                        disabled={createExercise.isPending || isAdding}
                                     >
                                         <Plus className='h-4 w-4' aria-hidden />
                                         {createExercise.isPending ? 'Creating…' : 'Create & add'}
@@ -123,7 +126,8 @@ export function ExercisePickerSheet({
                                         <button
                                             type='button'
                                             onClick={() => onPick(exercise)}
-                                            className='flex min-h-[3.25rem] w-full items-center gap-3 rounded-xl border border-border bg-card px-4 py-2 text-left transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                                            disabled={isAdding}
+                                            className='flex min-h-[3.25rem] w-full items-center gap-3 rounded-xl border border-border bg-card px-4 py-2 text-left transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50'
                                         >
                                             <span className='min-w-0 flex-1 truncate font-medium'>{exercise.name}</span>
                                             {exercise.isCatalog && (
