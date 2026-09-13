@@ -1,0 +1,13 @@
+{
+    "name": "Walking lunge",
+    "trackingType": "weight_reps",
+    "notes": "Bodyweight or loaded alternating lunge. Count total steps unless a routine specifies otherwise.",
+    "guide": {
+        "setup": "Stand tall with feet hip width, holding dumbbells at the sides if loaded, and brace before stepping.",
+        "execution": "Step forward and lower until both knees are near 90 degrees, then push through the front foot into the next step.",
+        "cues": "Stay tall. Keep the front knee tracking over the toes. Use a consistent stride.",
+        "mistakes": "Front knee collapsing inward; steps too short; pushing mainly from the back foot; rushing between steps."
+    },
+    "links": [],
+    "images": []
+}

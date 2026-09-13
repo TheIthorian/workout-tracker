@@ -1,0 +1,13 @@
+{
+    "name": "Leg extension",
+    "trackingType": "weight_reps",
+    "notes": "Machine quadriceps extension.",
+    "guide": {
+        "setup": "Align the knee joints with the machine pivot and place the shin pad just above the ankles.",
+        "execution": "Straighten the knees until the legs are nearly locked, squeeze the quadriceps, then lower under control.",
+        "cues": "Keep the hips down. Move smoothly. Use a pain-free range.",
+        "mistakes": "Kicking the weight up; lifting the hips; locking out aggressively; using a painful range."
+    },
+    "links": [],
+    "images": []
+}

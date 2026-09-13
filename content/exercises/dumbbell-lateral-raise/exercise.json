@@ -1,0 +1,13 @@
+{
+    "name": "Dumbbell lateral raise",
+    "trackingType": "weight_reps",
+    "notes": "Standing shoulder isolation. Record the load of one dumbbell.",
+    "guide": {
+        "setup": "Stand with dumbbells at the sides, a soft bend in the elbows, and a tall chest without arching the lower back.",
+        "execution": "Raise the arms out and slightly forward to near shoulder height, then lower slowly.",
+        "cues": "Lead with the elbows. Keep shoulders away from the ears. Use a smooth arc.",
+        "mistakes": "Shrugging; swinging the torso; lifting too high; using weights that force a bent elbow."
+    },
+    "links": [],
+    "images": []
+}

@@ -1,0 +1,13 @@
+{
+    "name": "Dumbbell row",
+    "trackingType": "weight_reps",
+    "notes": "Single-arm supported row. Record the load of one dumbbell.",
+    "guide": {
+        "setup": "Support one hand and knee on a bench, with the working arm hanging under the shoulder and the torso braced.",
+        "execution": "Pull the dumbbell toward the hip, pause without twisting, then lower to a full stretch.",
+        "cues": "Keep hips square. Pull elbow toward the back pocket. Control the lowering phase.",
+        "mistakes": "Rotating the torso; shrugging; yanking with momentum; cutting the bottom stretch short."
+    },
+    "links": [],
+    "images": []
+}

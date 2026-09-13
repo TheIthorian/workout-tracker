@@ -1,0 +1,13 @@
+{
+    "name": "Barbell bench press",
+    "trackingType": "weight_reps",
+    "notes": "Flat barbell press.",
+    "guide": {
+        "setup": "Lie with eyes under the bar, feet planted, shoulder blades pulled together, and hands just wider than shoulder width.",
+        "execution": "Unrack over the shoulders, lower with control to the lower chest, then press up and slightly back until the elbows lock.",
+        "cues": "Stay tight through the upper back. Keep wrists over elbows. Drive through the feet.",
+        "mistakes": "Bouncing the bar; flaring elbows straight out; lifting the hips; losing shoulder-blade tension."
+    },
+    "links": [],
+    "images": []
+}

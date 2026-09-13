@@ -1,0 +1,13 @@
+{
+    "name": "Barbell deadlift",
+    "trackingType": "weight_reps",
+    "notes": "Conventional deadlift from the floor.",
+    "guide": {
+        "setup": "Stand with the bar over mid-foot, hinge down to grip it just outside the legs, then brace the back and abdomen.",
+        "execution": "Push the floor away and keep the bar close to the legs. Stand tall by extending the hips, then guide the bar back to the floor.",
+        "cues": "Brace before the pull. Squeeze the armpits. Keep the bar close.",
+        "mistakes": "Jerking the bar; rounding the lower back; letting the bar drift forward; leaning back at lockout."
+    },
+    "links": [],
+    "images": []
+}
