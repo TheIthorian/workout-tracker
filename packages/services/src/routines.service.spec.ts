@@ -502,4 +502,47 @@ describe('replaceExercises', () => {
             routines.replaceExercises({ userId, workspaceId, routineId: theirs.id, exercises: [] }),
         ).rejects.toBeInstanceOf(EntityNotFoundError);
     });
+
+    // A slot's exercise can be archived after it was added (e.g. `seed-exercises`' `archiveMissing`
+    // dropping a catalog exercise); the routine must still be reorderable, but a NEW archived id
+    // is still refused.
+    it('keeps a slot whose exercise was archived after it was added, but still rejects a new archived id', async () => {
+        const routineId = await createRoutine();
+        const kept = await exercises.create({
+            userId,
+            workspaceId,
+            name: 'Kept',
+            trackingType: TrackingType.Duration,
+        });
+        await routines.addExercise({ userId, workspaceId, routineId, exerciseId: kept.id, targetSets: 1 });
+        await exercises.update({ userId, workspaceId, exerciseId: kept.id, archived: true });
+
+        const detail = await routines.replaceExercises({
+            userId,
+            workspaceId,
+            routineId,
+            exercises: [{ exerciseId: kept.id, targetSets: 2 }],
+        });
+        expect(detail.exercises[0]?.exercise.archivedAt).not.toBeNull();
+
+        const other = await exercises.create({
+            userId,
+            workspaceId,
+            name: 'Other',
+            trackingType: TrackingType.Duration,
+        });
+        await exercises.update({ userId, workspaceId, exerciseId: other.id, archived: true });
+
+        await expect(
+            routines.replaceExercises({
+                userId,
+                workspaceId,
+                routineId,
+                exercises: [
+                    { exerciseId: kept.id, targetSets: 2 },
+                    { exerciseId: other.id, targetSets: 1 },
+                ],
+            }),
+        ).rejects.toBeInstanceOf(EntityNotFoundError);
+    });
 });

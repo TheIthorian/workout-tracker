@@ -1,7 +1,7 @@
 import { schema, scopedToWorkspace, scopedToWorkspaceOrGlobal, withTransaction, type Db, type Tx } from '@app/db';
 import { validateSetMeasurements, type TrackingType } from '@app/domain';
 import { EntityNotFoundError, SetShapeMismatchError } from '@app/errors';
-import { asc, count, eq, ilike, inArray, isNull, sql } from 'drizzle-orm';
+import { asc, count, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm';
 import type { WorkspaceMembershipService } from './workspace-membership.service.js';
 
 const { exercises, routineExercises, routines } = schema;
@@ -393,10 +393,20 @@ export class RoutinesService {
 
         return withTransaction(this.db, async (tx) => {
             await this.requireRoutine({ db: tx, workspaceId, routineId });
+
+            const current = await tx
+                .select({ exerciseId: routineExercises.exerciseId })
+                .from(routineExercises)
+                .where(scopedToWorkspace(routineExercises, workspaceId, eq(routineExercises.routineId, routineId)));
+
+            // A slot the routine already has must survive its exercise being archived later, or
+            // the routine can never be reordered or re-saved again once any slot's exercise is
+            // retired from the catalog.
             const trackingTypes = await this.requireAssignableExercises({
                 db: tx,
                 workspaceId,
                 exerciseIds: inputs.map((input) => input.exerciseId),
+                allowArchivedIds: current.map((slot) => slot.exerciseId),
             });
 
             for (const input of inputs) {
@@ -447,25 +457,29 @@ export class RoutinesService {
         db,
         workspaceId,
         exerciseIds,
+        allowArchivedIds = [],
     }: {
         db: Db | Tx;
         workspaceId: string;
         exerciseIds: string[];
+        /** Ids admitted even if archived — the routine's own current slots, so they survive the exercise retiring. */
+        allowArchivedIds?: string[];
     }): Promise<Map<string, TrackingType>> {
         const unique = [...new Set(exerciseIds)];
         if (unique.length === 0) return new Map();
 
+        const uniqueAllowArchived = [...new Set(allowArchivedIds)];
+        // `inArray` with an empty array is invalid in Drizzle, so only add the archived branch
+        // when there is something to allow.
+        const notArchived =
+            uniqueAllowArchived.length === 0
+                ? isNull(exercises.archivedAt)
+                : or(isNull(exercises.archivedAt), inArray(exercises.id, uniqueAllowArchived));
+
         const rows = await db
             .select({ id: exercises.id, trackingType: exercises.trackingType })
             .from(exercises)
-            .where(
-                scopedToWorkspaceOrGlobal(
-                    exercises,
-                    workspaceId,
-                    inArray(exercises.id, unique),
-                    isNull(exercises.archivedAt),
-                ),
-            );
+            .where(scopedToWorkspaceOrGlobal(exercises, workspaceId, inArray(exercises.id, unique), notArchived));
 
         if (rows.length !== unique.length) throw new EntityNotFoundError('Exercise not found');
 
@@ -523,13 +537,12 @@ const ROUTINE_SUMMARY_COLUMNS = {
     name: routines.name,
     description: routines.description,
     archivedAt: routines.archivedAt,
-    // A join-less select strips table qualifiers from every `PgColumn` here, including this
-    // subquery's own `routines.id` — ambiguous against `routine_exercises.id` and silently always
-    // false. `sql.identifier` isn't a `PgColumn`, so it survives unqualified.
-    exerciseCount:
-        sql<number>`(select count(*) from ${routineExercises} where ${routineExercises.routineId} = ${sql.identifier('routines')}.${sql.identifier('id')})`.mapWith(
-            Number,
-        ),
+    // The comparison must stay inside a nested `SQL` so the single-table rewrite (which strips
+    // top-level `PgColumn` qualifiers) does not strip `routines.id`'s.
+    exerciseCount: sql<number>`(select count(*) from ${routineExercises} where ${eq(
+        routineExercises.routineId,
+        routines.id,
+    )})`.mapWith(Number),
     createdAt: routines.createdAt,
     updatedAt: routines.updatedAt,
 };
