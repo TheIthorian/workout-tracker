@@ -25,6 +25,7 @@ const Settings = lazy(() => import('./pages/Settings'));
 const SettingsRedirectPage = lazy(() => import('./pages/SettingsRedirectPage'));
 const ItemDetailPage = lazy(() => import('./pages/items/ItemDetailPage'));
 const RoutinesListPage = lazy(() => import('./pages/routines/RoutinesListPage'));
+const RoutineDetailPage = lazy(() => import('./pages/routines/RoutineDetailPage'));
 const ExercisesListPage = lazy(() => import('./pages/exercises/ExercisesListPage'));
 const ExerciseDetailPage = lazy(() => import('./pages/exercises/ExerciseDetailPage'));
 const NotFoundError = lazy(() => import('./pages/NotFoundError'));
@@ -100,6 +101,7 @@ const App = () => (
                                                 <Route index element={<ItemsListPage />} />
                                                 <Route path='items/:itemId' element={<ItemDetailPage />} />
                                                 <Route path='routines' element={<RoutinesListPage />} />
+                                                <Route path='routines/:routineId' element={<RoutineDetailPage />} />
                                                 <Route path='exercises' element={<ExercisesListPage />} />
                                                 <Route path='exercises/:exerciseId' element={<ExerciseDetailPage />} />
                                                 <Route path='settings' element={<Settings />} />
