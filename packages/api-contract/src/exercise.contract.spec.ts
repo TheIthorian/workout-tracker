@@ -1,4 +1,4 @@
-import { TrackingType } from '@app/domain';
+import { Equipment, TrackingType } from '@app/domain';
 import { describe, expect, it } from 'vitest';
 import {
     exerciseListQuerySchema,
@@ -86,5 +86,32 @@ describe('exerciseResponseSchema', () => {
         });
 
         expect(result.success).toBe(false);
+    });
+});
+
+describe('exercise equipment', () => {
+    it('defaults equipment to an empty list on create and rejects duplicates', () => {
+        expect(postExerciseRequestSchema.parse({ name: 'Plank', trackingType: 'duration' }).equipment).toEqual([]);
+        expect(
+            postExerciseRequestSchema.safeParse({
+                name: 'Squat',
+                trackingType: 'weight_reps',
+                equipment: [Equipment.Barbell, Equipment.Barbell],
+            }).success,
+        ).toBe(false);
+        expect(
+            postExerciseRequestSchema.safeParse({ name: 'Squat', trackingType: 'weight_reps', equipment: ['vibes'] })
+                .success,
+        ).toBe(false);
+    });
+
+    it('parses the equipment list query as absent, empty, or a list', () => {
+        expect(exerciseListQuerySchema.parse({}).equipment).toBeUndefined();
+        expect(exerciseListQuerySchema.parse({ equipment: '' }).equipment).toEqual([]);
+        expect(exerciseListQuerySchema.parse({ equipment: 'barbell,bench' }).equipment).toEqual([
+            Equipment.Barbell,
+            Equipment.Bench,
+        ]);
+        expect(exerciseListQuerySchema.safeParse({ equipment: 'barbell,vibes' }).success).toBe(false);
     });
 });

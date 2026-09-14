@@ -1,5 +1,6 @@
-import { TrackingType } from '@app/domain';
+import { Equipment, TrackingType } from '@app/domain';
 import { z } from 'zod';
+import { equipmentListSchema } from './exercise.contract.js';
 import { guidSchema, MAX_PAGE_SIZE } from './primitives.js';
 
 /**
@@ -17,6 +18,7 @@ export const getCurrentUserToolArgsSchema = z.strictObject({});
 export const listExercisesToolArgsSchema = z.strictObject({
     search: z.string().max(200).nullish(),
     includeArchived: z.boolean().nullish(),
+    equipment: z.array(z.enum(Equipment)).nullish(),
     page: z.number().int().min(1).nullish(),
     pageSize: z.number().int().min(1).max(MAX_PAGE_SIZE).nullish(),
 });
@@ -30,6 +32,7 @@ export const getExerciseToolArgsSchema = z.strictObject({
 export const createExerciseToolArgsSchema = z.strictObject({
     name: z.string().min(1).max(200),
     trackingType: z.enum(TrackingType),
+    equipment: equipmentListSchema.nullish(),
     notes: z.string().max(2000).nullish(),
     guideSetup: z.string().max(4000).nullish(),
     guideExecution: z.string().max(4000).nullish(),

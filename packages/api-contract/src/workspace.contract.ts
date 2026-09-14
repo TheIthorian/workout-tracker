@@ -1,3 +1,4 @@
+import { OnboardingStage } from '@app/domain';
 import { z } from 'zod';
 import { guidSchema } from './primitives.js';
 
@@ -25,6 +26,7 @@ export const workspaceListItemSchema = z.object({
     workspaceId: guidSchema,
     name: z.string(),
     role: z.enum(WorkspaceRole),
+    onboardingStage: z.enum(OnboardingStage),
 });
 
 /** The body of `GET /api/v1/workspaces/{workspaceId}`. */

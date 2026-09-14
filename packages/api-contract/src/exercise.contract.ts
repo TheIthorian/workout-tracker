@@ -1,8 +1,14 @@
-import { TrackingType } from '@app/domain';
+import { Equipment, TrackingType } from '@app/domain';
 import { z } from 'zod';
 import { guidSchema, paginatedResponseSchema, paginationQuerySchema } from './primitives.js';
 
 const guideFieldSchema = z.string().max(4000);
+
+/** A set of equipment with no repeats. */
+export const equipmentListSchema = z
+    .array(z.enum(Equipment))
+    .max(Object.values(Equipment).length)
+    .refine((list) => new Set(list).size === list.length, { message: 'Equipment must not repeat' });
 
 export const exerciseGuideImageResponseSchema = z.object({
     id: guidSchema,
@@ -27,6 +33,7 @@ export const exerciseResponseSchema = z.object({
     /** True for shared catalog content, which no workspace route may write. */
     isCatalog: z.boolean(),
     trackingType: z.enum(TrackingType),
+    equipment: z.array(z.enum(Equipment)),
     notes: z.string().nullable(),
     archivedAt: z.string().nullable(),
     createdAt: z.string(),
@@ -52,12 +59,27 @@ export const exerciseListQuerySchema = paginationQuerySchema.extend({
         .enum(['true', 'false'])
         .optional()
         .transform((value) => value === 'true'),
+    /** Comma-separated. Absent: no filter. Empty: bodyweight only. Otherwise: only exercises needing a subset. */
+    equipment: z
+        .string()
+        .optional()
+        .transform((raw, ctx) => {
+            if (raw === undefined) return undefined;
+            const values = raw === '' ? [] : raw.split(',');
+            const parsed = equipmentListSchema.safeParse(values);
+            if (!parsed.success) {
+                ctx.addIssue({ code: 'custom', message: 'Unknown equipment' });
+                return z.NEVER;
+            }
+            return parsed.data;
+        }),
 });
 
 /** The body of `POST /api/v1/workspaces/{workspaceId}/exercises`. */
 export const postExerciseRequestSchema = z.object({
     name: z.string().min(1, 'Name is required').max(200, 'Name must not exceed 200 characters'),
     trackingType: z.enum(TrackingType),
+    equipment: equipmentListSchema.default([]),
     notes: z.string().max(2000).nullable().optional(),
     guideSetup: guideFieldSchema.nullable().optional(),
     guideExecution: guideFieldSchema.nullable().optional(),
@@ -70,6 +92,7 @@ export const patchExerciseRequestSchema = z
     .object({
         name: z.string().min(1).max(200).optional(),
         trackingType: z.enum(TrackingType).optional(),
+        equipment: equipmentListSchema.optional(),
         notes: z.string().max(2000).nullable().optional(),
         guideSetup: guideFieldSchema.nullable().optional(),
         guideExecution: guideFieldSchema.nullable().optional(),

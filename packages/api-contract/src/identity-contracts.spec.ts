@@ -41,7 +41,9 @@ describe('user contracts', () => {
                 userId: GUID,
                 displayName: 'Ada',
                 email: 'a@b.com',
-                workspaces: [{ workspaceId: GUID, name: 'Acme', role: WorkspaceRole.Owner }],
+                workspaces: [
+                    { workspaceId: GUID, name: 'Acme', role: WorkspaceRole.Owner, onboardingStage: 'equipment' },
+                ],
             }).success,
         ).toBe(true);
     });
