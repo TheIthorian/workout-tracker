@@ -24,7 +24,7 @@ export default function NotFoundError(): JSX.Element {
                 <div className="space-y-2">
                     <h1 className="text-4xl font-bold tracking-tight">This page stepped out.</h1>
                     <p className="text-lg text-muted-foreground max-w-md mx-auto">
-                        We can’t find that page in your workspace. It may have moved or is no longer available.
+                        We can’t find that page. It may have moved or is no longer available.
                     </p>
                 </div>
 
@@ -34,7 +34,7 @@ export default function NotFoundError(): JSX.Element {
                     </Button>
                     <Button onClick={() => navigate('/')}>
                         <Home className="mr-2 h-4 w-4" />
-                        Back to my workspace
+                        Back to today
                     </Button>
                 </div>
             </div>

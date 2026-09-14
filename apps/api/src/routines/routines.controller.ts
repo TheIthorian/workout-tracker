@@ -65,7 +65,7 @@ export class RoutinesController {
     ): Promise<RoutineDetailResponse & { webUrl: string }> {
         const routine = await this.routines.get({ userId: currentUser.userId, workspaceId, routineId });
 
-        return { ...routine, webUrl: this.urls.webAppUrl({ path: routineWebPath({ workspaceId, routineId }) }) };
+        return { ...routine, webUrl: this.urls.webAppUrl({ path: routineWebPath({ routineId }) }) };
     }
 
     /** Creates an empty routine. */

@@ -1,4 +1,5 @@
-import { Catch, type ArgumentsHost, type ExceptionFilter } from '@nestjs/common';
+import { STATUS_CODES } from 'node:http';
+import { Catch, HttpException, type ArgumentsHost, type ExceptionFilter } from '@nestjs/common';
 import { AppError, buildProblem, type ProblemDetails } from '@app/errors';
 import type { Logger } from '@app/logger';
 import type { FastifyReply, FastifyRequest } from 'fastify';
@@ -55,6 +56,15 @@ export class AppErrorFilter implements ExceptionFilter {
 /** Resolves any thrown value to the problem body this filter writes, without touching the reply. */
 function resolveProblem(exception: unknown): ProblemDetails {
     if (exception instanceof AppError) return exception.problem;
+    if (exception instanceof HttpException) {
+        const status = exception.getStatus();
+
+        return buildProblem({
+            errorName: `Http${status}Error`,
+            title: STATUS_CODES[status] ?? 'Request failed',
+            status,
+        });
+    }
 
     return malformedBodyProblem(exception) ?? UNEXPECTED_ERROR_PROBLEM;
 }

@@ -1,6 +1,6 @@
 import { schema, type Db } from '@app/db';
 import { ForbiddenActionError, UnauthorizedError } from '@app/errors';
-import { and, count, eq } from 'drizzle-orm';
+import { and, count, eq, inArray } from 'drizzle-orm';
 import { WorkspaceRole } from './workspace-membership.service.js';
 
 const { user, workspaceUsers, workspaces } = schema;
@@ -57,25 +57,42 @@ export class UsersService {
     }
 
     /**
-     * Deletes the account. Memberships go with it via `on delete cascade`.
+     * Deletes the account and any personal workspace it owns.
      *
-     * @throws ForbiddenActionError when the user still owns a workspace — deleting them would
-     * leave it unadministrable, and cascading the workspace away would silently destroy other
-     * members' data.
+     * @throws ForbiddenActionError when an owned workspace contains another member. This protects
+     * legacy shared data while workspace management is unavailable.
      *
      * Better Auth's own `/delete-user` route is not used: it requires session freshness or a
      * password this contract does not carry, and is gated behind a config flag this app does not
      * otherwise need.
      */
     async deleteUser(userId: string): Promise<void> {
-        if ((await this.countOwnedWorkspaces(userId)) > 0) {
-            throw new ForbiddenActionError(
-                'Cannot delete account',
-                'You cannot delete your account while you own one or more workspaces. Transfer ownership or delete them first.',
-            );
-        }
+        await this.db.transaction(async (tx): Promise<void> => {
+            const owned = await tx
+                .select({ workspaceId: workspaceUsers.workspaceId })
+                .from(workspaceUsers)
+                .where(and(eq(workspaceUsers.userId, userId), eq(workspaceUsers.role, WorkspaceRole.Owner)));
+            const ownedWorkspaceIds = owned.map((row) => row.workspaceId);
 
-        await this.db.delete(user).where(eq(user.id, userId));
+            if (ownedWorkspaceIds.length > 0) {
+                const memberCounts = await tx
+                    .select({ workspaceId: workspaceUsers.workspaceId, members: count() })
+                    .from(workspaceUsers)
+                    .where(inArray(workspaceUsers.workspaceId, ownedWorkspaceIds))
+                    .groupBy(workspaceUsers.workspaceId);
+
+                if (memberCounts.some((row) => row.members > 1)) {
+                    throw new ForbiddenActionError(
+                        'Cannot delete account',
+                        'Your account still owns shared data. Contact support before deleting your account.',
+                    );
+                }
+
+                await tx.delete(workspaces).where(inArray(workspaces.id, ownedWorkspaceIds));
+            }
+
+            await tx.delete(user).where(eq(user.id, userId));
+        });
     }
 
     private async loadWorkspaces(userId: string): Promise<UserWorkspaceListItem[]> {
@@ -86,14 +103,5 @@ export class UsersService {
             .where(eq(workspaceUsers.userId, userId));
 
         return rows.map((row) => ({ ...row, role: row.role as WorkspaceRole }));
-    }
-
-    private async countOwnedWorkspaces(userId: string): Promise<number> {
-        const [row] = await this.db
-            .select({ owned: count() })
-            .from(workspaceUsers)
-            .where(and(eq(workspaceUsers.userId, userId), eq(workspaceUsers.role, WorkspaceRole.Owner)));
-
-        return row?.owned ?? 0;
     }
 }

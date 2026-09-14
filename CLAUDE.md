@@ -14,6 +14,11 @@ exercises, routines, and workout sessions.
 that forgets that filter is a data leak between tenants, not a bug that just returns extra rows.
 See "Multi-tenancy" below, which is the most important section in this file.
 
+**Workspaces are an internal implementation detail in Phase 1.** Every workspace has at most one
+user, so the consumer app must not show workspace names, switchers, settings, member management, or
+workspace ids in browser URLs. Keep the tenancy model and workspace scoping internally so sharing
+can return later, but do not expose workspace management API endpoints while this constraint holds.
+
 ## Monorepo Overview
 
 Turborepo monorepo managed with **pnpm workspaces**.
@@ -326,6 +331,8 @@ output in review.
 
 ### Testing
 
+- **Do not run UI browser or Playwright assertions.** Use static checks and non-browser automated
+  tests for web changes unless the user explicitly asks for browser verification.
 - **Co-locate test files** — place `*.spec.ts` files next to the source file they test. The vitest
   config picks up `src/**/*.spec.ts`; the build tsconfig excludes them from the production output.
   `apps/api`'s end-to-end specs live in `apps/api/test/` instead, because they boot the whole app.

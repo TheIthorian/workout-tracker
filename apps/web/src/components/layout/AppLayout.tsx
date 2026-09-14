@@ -1,24 +1,18 @@
-import { useEffect } from 'react';
-import { Outlet, useParams } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { AppBottomNav } from '@/components/layout/AppBottomNav';
 import { AppTopNav } from '@/components/layout/AppTopNav';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import NotFoundError from '@/pages/NotFoundError';
 
-/** The signed-in shell for every workspace-scoped route: header, content outlet, mobile tab bar. */
+/** The signed-in shell for every app route: header, content outlet, mobile tab bar. */
 export function AppLayout(): JSX.Element {
-    const { workspaceId = '' } = useParams<{ workspaceId: string }>();
-    const { setCurrentWorkspaceId, workspaces, isLoading } = useWorkspace();
-    const validWorkspace = workspaces.some((workspace) => workspace.workspaceId === workspaceId);
-    useEffect(() => {
-        if (validWorkspace) setCurrentWorkspaceId(workspaceId);
-    }, [setCurrentWorkspaceId, workspaceId, validWorkspace]);
-    if (!isLoading && !validWorkspace) return <NotFoundError />;
+    const { currentWorkspace, isLoading } = useWorkspace();
+    if (!isLoading && !currentWorkspace) return <NotFoundError />;
 
     return (
         <div className="flex min-h-screen flex-col bg-background md:flex-row">
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-                <AppTopNav workspaceId={workspaceId} />
+                <AppTopNav />
 
                 <a
                     href="#main-content"
@@ -30,7 +24,7 @@ export function AppLayout(): JSX.Element {
                     <Outlet />
                 </main>
 
-                <AppBottomNav workspaceId={workspaceId} />
+                <AppBottomNav />
             </div>
         </div>
     );

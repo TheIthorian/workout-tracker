@@ -16,7 +16,7 @@ export function attachRoutineLinks<T extends { id: string }>({
 }): WithResourceUrls<T> {
     return urls.attach({
         resource: routine,
-        webPath: routineWebPath({ workspaceId, routineId: routine.id }),
+        webPath: routineWebPath({ routineId: routine.id }),
         apiPath: routineApiPath({ workspaceId, routineId: routine.id }),
     });
 }

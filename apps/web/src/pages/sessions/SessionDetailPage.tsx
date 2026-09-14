@@ -34,10 +34,12 @@ import {
 import { toast } from '@/hooks/use-toast';
 import type { PatchSetRequest, SessionExercise, SessionSet } from '@/models/session';
 import NotFoundError from '@/pages/NotFoundError';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 
 /** The focused, interruption-tolerant workout screen for an active session. */
 export default function SessionDetailPage(): JSX.Element {
-    const { workspaceId = '', sessionId = '' } = useParams<{ workspaceId: string; sessionId: string }>();
+    const { sessionId = '' } = useParams<{ sessionId: string }>();
+    const { workspaceId } = useWorkspace();
     const navigate = useNavigate();
     const [isPickerOpen, setPickerOpen] = useState(false);
     const [guideExerciseId, setGuideExerciseId] = useState<string | null>(null);
@@ -101,7 +103,7 @@ export default function SessionDetailPage(): JSX.Element {
                 onSuccess: () => {
                     setCompleteOpen(false);
                     toast({ title: 'Workout complete' });
-                    navigate(`/workspaces/${workspaceId}/history`);
+                    navigate('/history');
                 },
                 onError: (error) =>
                     toast({ title: 'Could not complete workout', description: error.message, variant: 'destructive' }),
@@ -113,7 +115,7 @@ export default function SessionDetailPage(): JSX.Element {
             onSuccess: () => {
                 setAbandonOpen(false);
                 toast({ title: 'Workout abandoned' });
-                navigate(`/workspaces/${workspaceId}/today`);
+                navigate('/today');
             },
             onError: (error) =>
                 toast({ title: 'Could not abandon workout', description: error.message, variant: 'destructive' }),

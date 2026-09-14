@@ -47,7 +47,7 @@ export function buildExerciseTools({
         defineTool({
             methodName: 'ListExercises',
             description:
-                "Lists the exercises the token's workspace can see — the shared catalog plus its own " +
+                'Lists the exercises the user can see — the shared catalog plus their own ' +
                 'custom exercises — by name, with optional search and paging. isCatalog marks shared ' +
                 'catalog exercises, which cannot be edited. Archived exercises are excluded unless ' +
                 "includeArchived is set. Each exercise's trackingType (weight_reps, duration, or " +
@@ -90,7 +90,7 @@ export function buildExerciseTools({
         defineTool({
             methodName: 'CreateExercise',
             description:
-                "Creates an exercise in the token's workspace. trackingType decides which fields a logged set " +
+                'Creates an exercise. trackingType decides which fields a logged set ' +
                 'for this exercise must carry: weight_reps needs reps (and usually weightKg), duration needs ' +
                 'durationSeconds, and distance_time needs both distanceM and durationSeconds - choose the type ' +
                 'that matches how this exercise will actually be logged, not a guess. Returns the created ' +

@@ -1,19 +1,18 @@
 import { Link, NavLink } from 'react-router-dom';
 import { UserMenu } from '@/components/layout/UserMenu';
 import { Brand } from '@/components/layout/Brand';
-import { WorkspaceSwitcher } from '@/components/WorkspaceSwitcher';
-import { workspaceNavItems } from '@/lib/nav';
+import { appNavItems } from '@/lib/nav';
 
-/** Persistent navigation with a workspace switcher on every screen size. */
-export function AppTopNav({ workspaceId }: { workspaceId: string }): JSX.Element {
+/** Persistent navigation on every screen size. */
+export function AppTopNav(): JSX.Element {
     return (
         <header className="sticky top-0 z-30 h-[4.5rem] shrink-0 border-b bg-background/95 backdrop-blur-md">
             <div className="mx-auto flex h-full max-w-[1440px] items-center justify-between gap-4 px-5 md:px-8">
-                <Link to={`/workspaces/${workspaceId}/today`} aria-label="Forma home">
+                <Link to="/today" aria-label="Forma home">
                     <Brand />
                 </Link>
                 <nav aria-label="Primary navigation" className="hidden h-full items-center gap-1 md:flex">
-                    {workspaceNavItems(workspaceId).map((item) => (
+                    {appNavItems().map((item) => (
                         <NavLink
                             key={item.to}
                             to={item.to}
@@ -27,9 +26,8 @@ export function AppTopNav({ workspaceId }: { workspaceId: string }): JSX.Element
                     ))}
                 </nav>
                 <div className="flex min-w-0 items-center gap-3">
-                    <WorkspaceSwitcher />
                     <div className="hidden border-l pl-4 md:block">
-                        <UserMenu workspaceId={workspaceId} />
+                        <UserMenu />
                     </div>
                 </div>
             </div>

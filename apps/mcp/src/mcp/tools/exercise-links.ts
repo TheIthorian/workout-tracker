@@ -17,7 +17,7 @@ export function attachExerciseLinks<T extends { id: string }>({
 }): WithResourceUrls<T> {
     return urls.attach({
         resource: exercise,
-        webPath: exerciseWebPath({ workspaceId, exerciseId: exercise.id }),
+        webPath: exerciseWebPath({ exerciseId: exercise.id }),
         apiPath: exerciseApiPath({ workspaceId, exerciseId: exercise.id }),
     });
 }

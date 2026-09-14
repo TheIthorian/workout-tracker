@@ -39,7 +39,7 @@ export function useSessions({
     });
 }
 
-/** Gets the workspace's one active workout, if it has one. */
+/** Gets the user's one active workout, if they have one. */
 export function useActiveSession({
     workspaceId,
 }: {

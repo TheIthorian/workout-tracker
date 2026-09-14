@@ -13,7 +13,7 @@ export function attachWorkoutSessionLinks<T extends { id: string }>({
 }): WithResourceUrls<T> {
     return urls.attach({
         resource: session,
-        webPath: sessionWebPath({ workspaceId, sessionId: session.id }),
+        webPath: sessionWebPath({ sessionId: session.id }),
         apiPath: sessionApiPath({ workspaceId, sessionId: session.id }),
     });
 }

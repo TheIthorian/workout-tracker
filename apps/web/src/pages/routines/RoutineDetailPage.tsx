@@ -34,6 +34,7 @@ import { toast } from '@/hooks/use-toast';
 import type { Exercise } from '@/models/exercise';
 import type { PatchRoutineExerciseRequest, RoutineExercise, SaveRoutineExerciseRequest } from '@/models/routine';
 import NotFoundError from '@/pages/NotFoundError';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 
 /**
  * The routine editor. Every change saves as it is made — there is no draft to lose when a phone
@@ -41,7 +42,8 @@ import NotFoundError from '@/pages/NotFoundError';
  * it is the right-hand column.
  */
 export default function RoutineDetailPage(): JSX.Element {
-    const { workspaceId = '', routineId = '' } = useParams<{ workspaceId: string; routineId: string }>();
+    const { routineId = '' } = useParams<{ routineId: string }>();
+    const { workspaceId } = useWorkspace();
     const navigate = useNavigate();
     const isMobile = useIsMobile();
 
@@ -108,7 +110,7 @@ export default function RoutineDetailPage(): JSX.Element {
         startSession.mutate(
             { routineId },
             {
-                onSuccess: (session) => navigate(`/workspaces/${workspaceId}/sessions/${session.id}`),
+                onSuccess: (session) => navigate(`/sessions/${session.id}`),
                 onError: (error) =>
                     toast({ title: 'Could not start workout', description: error.message, variant: 'destructive' }),
             },
@@ -198,11 +200,7 @@ export default function RoutineDetailPage(): JSX.Element {
 
     return (
         <div className="mx-auto max-w-5xl px-4 py-6 md:px-8 md:py-10">
-            <Button
-                variant="ghost"
-                className="mb-6 gap-2"
-                onClick={() => navigate(`/workspaces/${workspaceId}/routines`)}
-            >
+            <Button variant="ghost" className="mb-6 gap-2" onClick={() => navigate('/routines')}>
                 <ArrowLeft className="h-4 w-4" aria-hidden />
                 Back to routines
             </Button>

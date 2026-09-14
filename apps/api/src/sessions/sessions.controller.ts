@@ -63,7 +63,7 @@ export class SessionsController {
         @ValidatedParam({ name: 'sessionId', schema: guidSchema }) sessionId: string,
     ): Promise<SessionDetailResponse & { webUrl: string }> {
         const session = await this.sessions.get({ userId: user.userId, workspaceId, sessionId });
-        return { ...session, webUrl: this.urls.webAppUrl({ path: sessionWebPath({ workspaceId, sessionId }) }) };
+        return { ...session, webUrl: this.urls.webAppUrl({ path: sessionWebPath({ sessionId }) }) };
     }
 
     /** Starts a blank session or snapshots a routine. */

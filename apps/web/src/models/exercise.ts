@@ -20,11 +20,11 @@ export const TRACKING_TYPE_META: Record<TrackingType, { label: string; icon: Luc
     [TrackingType.DistanceTime]: { label: 'Distance & time', icon: Route },
 };
 
-/** A movement in the workspace's exercise library. */
+/** A movement in the user's exercise library. */
 export type Exercise = {
     id: string;
     name: string;
-    /** Set on catalog exercises; null on the workspace's own. */
+    /** Set on catalog exercises; null on the user's own. */
     slug: string | null;
     /** Shared, read-only content: no edit, archive, or link controls apply. */
     isCatalog: boolean;

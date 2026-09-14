@@ -124,17 +124,13 @@ describe('/api/v1/me', () => {
             expect(response.statusCode).toBe(401);
         });
 
-        it('returns 403 when the user owns a workspace', async () => {
+        it('deletes the account and its personal workspace', async () => {
             const { cookie } = await signUpAndSignIn(app, { displayName: 'Owner' });
 
             const response = await app.inject({ method: 'DELETE', url: '/api/v1/me', headers: { cookie } });
 
-            expect(response.statusCode).toBe(403);
-            const body = JSON.parse(response.body) as { title: string; detail: string };
-            expect(body.title).toBe('Cannot delete account');
-            expect(body.detail).toBe(
-                'You cannot delete your account while you own one or more workspaces. Transfer ownership or delete them first.',
-            );
+            expect(response.statusCode).toBe(200);
+            expect(JSON.parse(response.body)).toEqual({ message: 'Account deleted successfully' });
         });
 
         it('deletes the account, signs out, and returns the success message when the user owns no workspace', async () => {

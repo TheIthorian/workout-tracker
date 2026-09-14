@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowUpRight, BookOpen, Check, ChevronRight, Dumbbell, Plus, Search, X } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { LoadingState } from '@/components/common/LoadingState';
@@ -18,10 +18,11 @@ import { Switch } from '@/components/ui/switch';
 import { useCreateExercise, useExercises } from '@/hooks/use-exercises';
 import { toast } from '@/hooks/use-toast';
 import { TRACKING_TYPE_META, TrackingType, type Exercise } from '@/models/exercise';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 
 /** A paginated library with a quick search and visible, accessible creation controls. */
 export default function ExercisesListPage(): JSX.Element {
-    const { workspaceId = '' } = useParams<{ workspaceId: string }>();
+    const { workspaceId } = useWorkspace();
     const navigate = useNavigate();
     const [isCreateOpen, setCreateOpen] = useState(false);
     const [name, setName] = useState('');
@@ -59,7 +60,7 @@ export default function ExercisesListPage(): JSX.Element {
                 onSuccess: (created) => {
                     toast({ title: 'Exercise added. Make it yours.' });
                     setCreateOpen(false);
-                    navigate(`/workspaces/${workspaceId}/exercises/${created.id}`);
+                    navigate(`/exercises/${created.id}`);
                 },
             },
         );
@@ -152,7 +153,7 @@ export default function ExercisesListPage(): JSX.Element {
                         <>
                             <ul className="overflow-hidden rounded-2xl border bg-card shadow-sm">
                                 {exercises.map((exercise) => (
-                                    <ExerciseRow key={exercise.id} exercise={exercise} workspaceId={workspaceId} />
+                                    <ExerciseRow key={exercise.id} exercise={exercise} />
                                 ))}
                             </ul>
                             <div className="mt-5 flex items-center justify-between gap-3">
@@ -210,7 +211,7 @@ export default function ExercisesListPage(): JSX.Element {
                         </div>
                     </div>
                     <Link
-                        to={`/workspaces/${workspaceId}/routines`}
+                        to="/routines"
                         className="flex min-h-12 items-center justify-between px-1 text-sm font-medium text-primary"
                     >
                         Put your movements into a routine
@@ -290,12 +291,12 @@ export default function ExercisesListPage(): JSX.Element {
     );
 }
 
-function ExerciseRow({ exercise, workspaceId }: { exercise: Exercise; workspaceId: string }): JSX.Element {
+function ExerciseRow({ exercise }: { exercise: Exercise }): JSX.Element {
     const { label, icon: Icon } = TRACKING_TYPE_META[exercise.trackingType];
     return (
         <li className="border-b last:border-0">
             <Link
-                to={`/workspaces/${workspaceId}/exercises/${exercise.id}`}
+                to={`/exercises/${exercise.id}`}
                 className="group flex min-h-[90px] items-center gap-4 px-4 py-4 transition-colors hover:bg-secondary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-5"
             >
                 <span className="exercise-icon" data-type={exercise.trackingType}>

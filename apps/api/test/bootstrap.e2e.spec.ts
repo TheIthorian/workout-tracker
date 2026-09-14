@@ -32,21 +32,24 @@ describe('app boot configuration (configureApp)', () => {
 
         const cookie = await signIn(app, { email, password });
 
-        // Signup alone creates one default workspace, whose listing is well under the
-        // 1024-byte compression threshold - create enough more that it's reliably crossed.
+        const me = await app.inject({ method: 'GET', url: '/api/v1/me', headers: { cookie } });
+        const workspaceId = (JSON.parse(me.body) as { workspaces: { workspaceId: string }[] }).workspaces[0]
+            ?.workspaceId as string;
+
+        // Create enough exercise rows that the listing reliably crosses the compression threshold.
         for (let i = 0; i < 15; i += 1) {
             const createResponse = await app.inject({
                 method: 'POST',
-                url: '/api/v1/workspaces',
+                url: `/api/v1/workspaces/${workspaceId}/exercises`,
                 headers: { cookie },
-                payload: { name: `Compression workspace ${i} ${randomUUID()}` },
+                payload: { name: `Compression exercise ${i} ${randomUUID()}`, trackingType: 'weight_reps' },
             });
             expect(createResponse.statusCode).toBe(200);
         }
 
         const response = await app.inject({
             method: 'GET',
-            url: '/api/v1/workspaces',
+            url: `/api/v1/workspaces/${workspaceId}/exercises`,
             headers: { cookie, 'accept-encoding': 'gzip' },
         });
 
@@ -56,9 +59,9 @@ describe('app boot configuration (configureApp)', () => {
         // response.body is the raw (still-compressed) bytes decoded as utf-8, which is not valid
         // JSON - only rawPayload, gunzipped, recovers the real response.
         const decompressed = gunzipSync(response.rawPayload);
-        const workspaceList = JSON.parse(decompressed.toString('utf-8')) as unknown[];
+        const exerciseList = JSON.parse(decompressed.toString('utf-8')) as { data: unknown[] };
 
-        expect(workspaceList.length).toBeGreaterThanOrEqual(16);
+        expect(exerciseList.data.length).toBeGreaterThanOrEqual(15);
     });
 
     it('answers a CORS preflight request with the configured origin policy', async () => {

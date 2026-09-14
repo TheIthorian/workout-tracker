@@ -72,8 +72,7 @@ export class MeController {
     }
 
     /**
-     * Deletes the account and signs the caller out. `UsersService.deleteUser` refuses first when the
-     * caller still owns a workspace, so no sign-out or deletion happens in that case. Session-only,
+     * Deletes the account and its personal data, then signs the caller out. Session-only,
      * deliberately: account deletion is irreversible and must not be reachable by a leaked token.
      */
     @Delete()

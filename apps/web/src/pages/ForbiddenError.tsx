@@ -24,7 +24,7 @@ export default function ForbiddenError(): JSX.Element {
                 <div className="space-y-2">
                     <h1 className="text-4xl font-bold tracking-tight">This action needs more access.</h1>
                     <p className="text-lg text-muted-foreground max-w-md mx-auto">
-                        Ask a workspace owner or admin for help. You can still head back to your training space.
+                        You don’t have permission to do that. You can still head back to your training space.
                     </p>
                 </div>
 
@@ -34,7 +34,7 @@ export default function ForbiddenError(): JSX.Element {
                     </Button>
                     <Button onClick={() => navigate('/')}>
                         <Home className="mr-2 h-4 w-4" />
-                        Back to my workspace
+                        Back to today
                     </Button>
                 </div>
             </div>

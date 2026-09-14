@@ -1,4 +1,4 @@
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, BookOpen, Dumbbell, Play, Plus } from 'lucide-react';
 import { LoadingState } from '@/components/common/LoadingState';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { useRoutines } from '@/hooks/use-routines';
 import { useActiveSession, useStartSession } from '@/hooks/use-sessions';
 import { useAuth } from '@/contexts/AuthContext';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 
 /** Starts or resumes training, with quick access to saved routines and the library. */
 export default function TodayPage(): JSX.Element {
-    const { workspaceId = '' } = useParams<{ workspaceId: string }>();
+    const { workspaceId } = useWorkspace();
     const navigate = useNavigate();
     const { user } = useAuth();
     const active = useActiveSession({ workspaceId });
@@ -20,7 +21,7 @@ export default function TodayPage(): JSX.Element {
     const session = active.data?.session;
     const start = (routineId?: string): void => {
         startSession.mutate(routineId ? { routineId } : {}, {
-            onSuccess: (created) => navigate(`/workspaces/${workspaceId}/sessions/${created.id}`),
+            onSuccess: (created) => navigate(`/sessions/${created.id}`),
         });
     };
     return (
@@ -67,9 +68,7 @@ export default function TodayPage(): JSX.Element {
                             <Button
                                 className="mt-7 bg-[#d5e8b5] text-[#234d3d] hover:bg-[#e0edcb]"
                                 disabled={startSession.isPending}
-                                onClick={() =>
-                                    session ? navigate(`/workspaces/${workspaceId}/sessions/${session.id}`) : start()
-                                }
+                                onClick={() => (session ? navigate(`/sessions/${session.id}`) : start())}
                             >
                                 {session ? <ArrowRight /> : <Plus />}
                                 {startSession.isPending ? 'Starting…' : session ? 'Resume workout' : 'Start a workout'}
@@ -80,10 +79,7 @@ export default function TodayPage(): JSX.Element {
                         <section>
                             <div className="mb-4 flex items-center justify-between gap-3">
                                 <h2 className="text-xl">Your routines</h2>
-                                <Link
-                                    to={`/workspaces/${workspaceId}/routines`}
-                                    className="py-3 text-xs font-medium text-primary"
-                                >
+                                <Link to="/routines" className="py-3 text-xs font-medium text-primary">
                                     View all <span aria-hidden>→</span>
                                 </Link>
                             </div>
@@ -97,10 +93,7 @@ export default function TodayPage(): JSX.Element {
                                             <span className="exercise-icon">
                                                 <Dumbbell className="h-5 w-5" />
                                             </span>
-                                            <Link
-                                                to={`/workspaces/${workspaceId}/routines/${routine.id}`}
-                                                className="min-w-0 flex-1"
-                                            >
+                                            <Link to={`/routines/${routine.id}`} className="min-w-0 flex-1">
                                                 <span className="block break-words text-sm font-semibold">
                                                     {routine.name}
                                                 </span>
@@ -127,14 +120,11 @@ export default function TodayPage(): JSX.Element {
                                     title="Make your go-to workout"
                                     description="Group your favorite movements into a routine, ready for the next time you train."
                                     actionLabel="Create a routine"
-                                    onAction={() => navigate(`/workspaces/${workspaceId}/routines`)}
+                                    onAction={() => navigate('/routines')}
                                 />
                             )}
                         </section>
-                        <Link
-                            to={`/workspaces/${workspaceId}/exercises`}
-                            className="group rounded-2xl border bg-secondary/50 p-6"
-                        >
+                        <Link to="/exercises" className="group rounded-2xl border bg-secondary/50 p-6">
                             <BookOpen className="mb-6 h-6 w-6 text-primary" aria-hidden />
                             <h2 className="text-xl">Find your next movement</h2>
                             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">

@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ChevronRight, Plus, Search } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { LoadingState } from '@/components/common/LoadingState';
@@ -18,10 +18,11 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { useCreateRoutine, useRoutines } from '@/hooks/use-routines';
 import { toast } from '@/hooks/use-toast';
 import type { Routine } from '@/models/routine';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 
-/** The workspace's routines: a searchable single-column list, with creation leading straight into the editor. */
+/** The user's routines: a searchable single-column list, with creation leading straight into the editor. */
 export default function RoutinesListPage(): JSX.Element {
-    const { workspaceId = '' } = useParams<{ workspaceId: string }>();
+    const { workspaceId } = useWorkspace();
     const navigate = useNavigate();
 
     const [isCreateOpen, setCreateOpen] = useState(false);
@@ -57,7 +58,7 @@ export default function RoutinesListPage(): JSX.Element {
                 onSuccess: (created) => {
                     toast({ title: 'Routine created' });
                     setCreateOpen(false);
-                    navigate(`/workspaces/${workspaceId}/routines/${created.id}`);
+                    navigate(`/routines/${created.id}`);
                 },
                 onError: (error) =>
                     toast({ title: 'Could not create routine', description: error.message, variant: 'destructive' }),
@@ -124,7 +125,7 @@ export default function RoutinesListPage(): JSX.Element {
                     <>
                         <ul className="space-y-2">
                             {routines.map((routine) => (
-                                <RoutineRow key={routine.id} routine={routine} workspaceId={workspaceId} />
+                                <RoutineRow key={routine.id} routine={routine} />
                             ))}
                         </ul>
 
@@ -175,13 +176,13 @@ export default function RoutinesListPage(): JSX.Element {
     );
 }
 
-function RoutineRow({ routine, workspaceId }: { routine: Routine; workspaceId: string }): JSX.Element {
+function RoutineRow({ routine }: { routine: Routine }): JSX.Element {
     const count = routine.exerciseCount;
 
     return (
         <li>
             <Link
-                to={`/workspaces/${workspaceId}/routines/${routine.id}`}
+                to={`/routines/${routine.id}`}
                 className="flex min-h-[3.5rem] items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
                 <span className="min-w-0 flex-1">

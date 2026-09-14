@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { parseISO } from 'date-fns';
 import { formatDate } from '@/lib/date-format';
@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
     Dialog,
     DialogContent,
@@ -28,9 +27,8 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { mcpAccessTokensApi, workspacesApi } from '@/lib/api';
+import { mcpAccessTokensApi } from '@/lib/api';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
-import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { analyticsEvents, useAnalytics, withWorkspaceProperties } from '@/lib/analytics';
@@ -48,57 +46,30 @@ function formatTokenTimestamp(iso: string): string {
 
 export function IntegrationsSettings(): JSX.Element {
     const queryClient = useQueryClient();
-    const { currentWorkspace } = useWorkspace();
-    const { user } = useAuth();
+    const { currentWorkspace, workspaceId } = useWorkspace();
     const { capture } = useAnalytics();
     const isMobile = useIsMobile();
 
-    const [selectedWorkspaceId, setSelectedWorkspaceId] = useState('');
     const [optionalLabel, setOptionalLabel] = useState('');
     const [createdConnection, setCreatedConnection] = useState<McpAccessTokenCreated | null>(null);
     const [urlCopied, setUrlCopied] = useState(false);
     const [tokenToRevoke, setTokenToRevoke] = useState<McpAccessTokenListItem | null>(null);
-
-    const { data: workspaces = [] } = useQuery({
-        queryKey: ['workspaces'],
-        queryFn: () => workspacesApi.getAll(),
-    });
 
     const { data: tokens = [], isLoading: tokensLoading } = useQuery({
         queryKey: ['mcp-access-tokens'],
         queryFn: () => mcpAccessTokensApi.list(),
     });
 
-    useEffect(() => {
-        if (selectedWorkspaceId) return;
-        if (currentWorkspace?.workspaceId) {
-            setSelectedWorkspaceId(currentWorkspace.workspaceId);
-            return;
-        }
-        if (workspaces[0]) {
-            setSelectedWorkspaceId(workspaces[0].workspaceId);
-        }
-    }, [currentWorkspace?.workspaceId, selectedWorkspaceId, workspaces]);
-
-    const workspaceNameById = useMemo(() => {
-        const map = new Map<string, string>();
-        for (const w of workspaces) {
-            map.set(w.workspaceId, w.name);
-        }
-        return map;
-    }, [workspaces]);
-
     const createToken = useMutation({
         mutationFn: () => {
             const trimmed = optionalLabel.trim();
             return mcpAccessTokensApi.create({
-                workspaceId: selectedWorkspaceId,
+                workspaceId,
                 ...(trimmed ? { name: trimmed } : {}),
             });
         },
         onSuccess: (data) => {
-            const workspaceMeta = user?.workspaces.find((w) => w.workspaceId === data.workspaceId);
-            capture(analyticsEvents.mcpAccessTokenCreated, withWorkspaceProperties(workspaceMeta));
+            capture(analyticsEvents.mcpAccessTokenCreated, withWorkspaceProperties(currentWorkspace));
             queryClient.invalidateQueries({ queryKey: ['mcp-access-tokens'] });
             setCreatedConnection(data);
             setUrlCopied(false);
@@ -109,9 +80,7 @@ export function IntegrationsSettings(): JSX.Element {
     const revokeToken = useMutation({
         mutationFn: (tokenId: string) => mcpAccessTokensApi.revoke(tokenId),
         onSuccess: (_data, tokenId) => {
-            const row = tokens.find((t) => t.id === tokenId);
-            const workspaceMeta = row ? user?.workspaces.find((w) => w.workspaceId === row.workspaceId) : undefined;
-            capture(analyticsEvents.mcpAccessTokenRevoked, withWorkspaceProperties(workspaceMeta));
+            capture(analyticsEvents.mcpAccessTokenRevoked, withWorkspaceProperties(currentWorkspace));
             queryClient.invalidateQueries({ queryKey: ['mcp-access-tokens'] });
             toast({ title: 'Connection revoked' });
             setTokenToRevoke(null);
@@ -160,40 +129,17 @@ export function IntegrationsSettings(): JSX.Element {
                                 <div className="min-w-0">
                                     <CardTitle className="text-xl">Connect your tools</CardTitle>
                                     <CardDescription className="mt-1.5">
-                                        Connect Cursor, Claude, or other MCP clients to a workspace using a personal
-                                        server URL. Each URL is scoped to one workspace and can be revoked anytime.
+                                        Connect Cursor, Claude, or other MCP clients using a personal server URL. Each
+                                        URL can be revoked anytime.
                                     </CardDescription>
                                 </div>
                             </div>
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-6 pt-6">
-                        {workspaces.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">
-                                Create a workspace first, then you can generate an MCP server URL for it.
-                            </p>
-                        ) : (
+                        {currentWorkspace ? (
                             <>
                                 <div className="grid gap-4 sm:max-w-md">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="mcp-workspace">Workspace</Label>
-                                        <Select
-                                            value={selectedWorkspaceId}
-                                            onValueChange={setSelectedWorkspaceId}
-                                            disabled={createToken.isPending}
-                                        >
-                                            <SelectTrigger id="mcp-workspace">
-                                                <SelectValue placeholder="Choose workspace" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {workspaces.map((w) => (
-                                                    <SelectItem key={w.workspaceId} value={w.workspaceId}>
-                                                        {w.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="mcp-label">Label (optional)</Label>
                                         <Input
@@ -210,7 +156,7 @@ export function IntegrationsSettings(): JSX.Element {
                                     </div>
                                     <Button
                                         type="button"
-                                        disabled={!selectedWorkspaceId || createToken.isPending}
+                                        disabled={createToken.isPending}
                                         onClick={() => createToken.mutate()}
                                     >
                                         {createToken.isPending ? 'Generating…' : 'Generate MCP URL'}
@@ -239,10 +185,6 @@ export function IntegrationsSettings(): JSX.Element {
                                                         <div className="min-w-0">
                                                             <p className="font-medium">
                                                                 {row.name?.trim() || 'Unnamed'}
-                                                            </p>
-                                                            <p className="text-sm text-muted-foreground">
-                                                                {workspaceNameById.get(row.workspaceId) ??
-                                                                    row.workspaceId}
                                                             </p>
                                                             <p className="mt-1 text-xs text-muted-foreground">
                                                                 Created {formatTokenTimestamp(row.createdAt)}
@@ -283,7 +225,6 @@ export function IntegrationsSettings(): JSX.Element {
                                             <TableHeader>
                                                 <TableRow>
                                                     <TableHead>Label</TableHead>
-                                                    <TableHead>Workspace</TableHead>
                                                     <TableHead>Created</TableHead>
                                                     <TableHead>Last used</TableHead>
                                                     <TableHead className="w-[100px]">Status</TableHead>
@@ -298,9 +239,6 @@ export function IntegrationsSettings(): JSX.Element {
                                                     >
                                                         <TableCell className="font-medium">
                                                             {row.name?.trim() || 'Unnamed'}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            {workspaceNameById.get(row.workspaceId) ?? row.workspaceId}
                                                         </TableCell>
                                                         <TableCell className="whitespace-nowrap">
                                                             {formatTokenTimestamp(row.createdAt)}
@@ -344,6 +282,8 @@ export function IntegrationsSettings(): JSX.Element {
                                     )}
                                 </div>
                             </>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">Your training data is still being prepared.</p>
                         )}
                     </CardContent>
                 </Card>
@@ -363,7 +303,7 @@ export function IntegrationsSettings(): JSX.Element {
                         <DialogTitle>Your connection is ready</DialogTitle>
                         <DialogDescription>
                             Copy your URL or access token now — they’re only shown once. Keep them private; they give
-                            access to this workspace.
+                            access to your training data.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-2">

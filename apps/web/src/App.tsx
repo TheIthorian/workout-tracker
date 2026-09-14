@@ -10,7 +10,6 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { WorkspaceRedirect } from '@/components/WorkspaceRedirect';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { WorkspaceProvider } from '@/contexts/WorkspaceContext';
 
@@ -18,7 +17,6 @@ import { WorkspaceProvider } from '@/contexts/WorkspaceContext';
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const Settings = lazy(() => import('./pages/Settings'));
-const SettingsRedirectPage = lazy(() => import('./pages/SettingsRedirectPage'));
 const RoutinesListPage = lazy(() => import('./pages/routines/RoutinesListPage'));
 const RoutineDetailPage = lazy(() => import('./pages/routines/RoutineDetailPage'));
 const ExercisesListPage = lazy(() => import('./pages/exercises/ExercisesListPage'));
@@ -60,7 +58,7 @@ const AnalyticsProvider = ({ children }: { children: ReactNode }): JSX.Element =
         <>{children}</>
     );
 
-/** Router-owned providers keep navigation guards active across workspace and account routes. */
+/** Router-owned providers keep navigation guards active across app and account routes. */
 function SessionLayout(): JSX.Element {
     return (
         <AuthProvider>
@@ -77,22 +75,12 @@ function SessionLayout(): JSX.Element {
 const router = createBrowserRouter(
     createRoutesFromElements(
         <Route element={<SessionLayout />}>
-            <Route path="/" element={<WorkspaceRedirect />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/403" element={<ForbiddenError />} />
 
             <Route
-                path="/settings"
-                element={
-                    <ProtectedRoute>
-                        <SettingsRedirectPage />
-                    </ProtectedRoute>
-                }
-            />
-
-            <Route
-                path="/workspaces/:workspaceId"
+                path="/"
                 element={
                     <ProtectedRoute>
                         <AppLayout />

@@ -23,7 +23,7 @@ export default function Register(): JSX.Element {
     const location = useLocation();
     const { capture } = useAnalytics();
     const from = (location.state as { from?: { pathname?: string } })?.from;
-    // Keep whatever link brought the visitor here (e.g. a workspace invite) across sign-up.
+    // Keep whichever app link brought the visitor here across sign-up.
     const returnUrl = readReturnUrl(location.search) ?? sanitizeReturnUrl(from?.pathname);
 
     const handleSubmit = async (e: React.FormEvent): Promise<void> => {

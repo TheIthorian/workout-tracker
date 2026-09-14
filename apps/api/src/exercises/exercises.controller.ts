@@ -63,7 +63,7 @@ export class ExercisesController {
 
         return {
             ...toDetailResponse({ exercise, imageBaseUrl: this.catalogImageBaseUrl, workspaceId, urls: this.urls }),
-            webUrl: this.urls.webAppUrl({ path: exerciseWebPath({ workspaceId, exerciseId }) }),
+            webUrl: this.urls.webAppUrl({ path: exerciseWebPath({ exerciseId }) }),
         };
     }
 
