@@ -1,14 +1,15 @@
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { formatDate } from '@/lib/date-format';
 import { ChevronRight } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { LoadingState } from '@/components/common/LoadingState';
 import { Button } from '@/components/ui/button';
 import { useSessions } from '@/hooks/use-sessions';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 
 /** The session-history index. Individual session pages retain their full set details. */
 export default function HistoryPage(): JSX.Element {
-    const { workspaceId = '' } = useParams<{ workspaceId: string }>();
+    const { workspaceId } = useWorkspace();
     const navigate = useNavigate();
     const { data, isLoading, isError, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useSessions({
         workspaceId,
@@ -35,7 +36,7 @@ export default function HistoryPage(): JSX.Element {
                         title="No workouts yet"
                         description="Complete a workout and it will appear here."
                         actionLabel="Start a workout"
-                        onAction={() => navigate(`/workspaces/${workspaceId}/today`)}
+                        onAction={() => navigate('/today')}
                     />
                 ) : (
                     <>
@@ -43,7 +44,7 @@ export default function HistoryPage(): JSX.Element {
                             {sessions.map((session) => (
                                 <li key={session.id}>
                                     <Link
-                                        to={`/workspaces/${workspaceId}/sessions/${session.id}`}
+                                        to={`/sessions/${session.id}`}
                                         className="flex min-h-[4rem] items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                     >
                                         <span className="min-w-0 flex-1">

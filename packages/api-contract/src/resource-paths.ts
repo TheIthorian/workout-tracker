@@ -9,8 +9,8 @@
  */
 
 /** The exercise's page in the SPA. */
-export function exerciseWebPath({ workspaceId, exerciseId }: { workspaceId: string; exerciseId: string }): string {
-    return `/workspaces/${workspaceId}/exercises/${exerciseId}`;
+export function exerciseWebPath({ exerciseId }: { exerciseId: string }): string {
+    return `/exercises/${exerciseId}`;
 }
 
 /** The exercise's own REST route, without the `/api/v1` prefix the generator adds. */
@@ -19,8 +19,8 @@ export function exerciseApiPath({ workspaceId, exerciseId }: { workspaceId: stri
 }
 
 /** The routine's editor page in the SPA. */
-export function routineWebPath({ workspaceId, routineId }: { workspaceId: string; routineId: string }): string {
-    return `/workspaces/${workspaceId}/routines/${routineId}`;
+export function routineWebPath({ routineId }: { routineId: string }): string {
+    return `/routines/${routineId}`;
 }
 
 /** The routine's own REST route, without the `/api/v1` prefix the generator adds. */
@@ -29,8 +29,8 @@ export function routineApiPath({ workspaceId, routineId }: { workspaceId: string
 }
 
 /** The session page in the SPA. */
-export function sessionWebPath({ workspaceId, sessionId }: { workspaceId: string; sessionId: string }): string {
-    return `/workspaces/${workspaceId}/sessions/${sessionId}`;
+export function sessionWebPath({ sessionId }: { sessionId: string }): string {
+    return `/sessions/${sessionId}`;
 }
 
 /** The session REST path without the API version prefix. */

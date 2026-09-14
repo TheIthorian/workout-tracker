@@ -3,11 +3,11 @@ import { buildAuthPath, readReturnUrl, sanitizeReturnUrl } from './return-url';
 
 describe('sanitizeReturnUrl', () => {
     it('keeps an allowed local path', () => {
-        expect(sanitizeReturnUrl('/workspaces/abc123/exercises/def456')).toBe('/workspaces/abc123/exercises/def456');
+        expect(sanitizeReturnUrl('/exercises/def456')).toBe('/exercises/def456');
     });
 
     it('keeps the query string and hash of an allowed local path', () => {
-        expect(sanitizeReturnUrl('/workspaces/123/exercises?page=2#top')).toBe('/workspaces/123/exercises?page=2#top');
+        expect(sanitizeReturnUrl('/exercises?page=2#top')).toBe('/exercises?page=2#top');
     });
 
     it('rejects an absolute url to another host', () => {
@@ -44,7 +44,7 @@ describe('sanitizeReturnUrl', () => {
 
     it('rejects empty, relative and non-string values', () => {
         expect(sanitizeReturnUrl('')).toBeUndefined();
-        expect(sanitizeReturnUrl('workspaces/123/exercises')).toBeUndefined();
+        expect(sanitizeReturnUrl('exercises/123')).toBeUndefined();
         expect(sanitizeReturnUrl(undefined)).toBeUndefined();
         expect(sanitizeReturnUrl(null)).toBeUndefined();
         expect(sanitizeReturnUrl(42 as unknown as string)).toBeUndefined();
@@ -57,7 +57,7 @@ describe('sanitizeReturnUrl', () => {
 
 describe('readReturnUrl', () => {
     it('reads and sanitizes the returnUrl query parameter', () => {
-        expect(readReturnUrl('?returnUrl=%2Fworkspaces%2Fabc123%2Fexercises')).toBe('/workspaces/abc123/exercises');
+        expect(readReturnUrl('?returnUrl=%2Fexercises%2Fabc123')).toBe('/exercises/abc123');
     });
 
     it('drops an external returnUrl query parameter', () => {
@@ -71,9 +71,7 @@ describe('readReturnUrl', () => {
 
 describe('buildAuthPath', () => {
     it('appends an encoded returnUrl', () => {
-        expect(buildAuthPath('/login', '/workspaces/abc123/exercises')).toBe(
-            '/login?returnUrl=%2Fworkspaces%2Fabc123%2Fexercises',
-        );
+        expect(buildAuthPath('/login', '/exercises/abc123')).toBe('/login?returnUrl=%2Fexercises%2Fabc123');
     });
 
     it('omits a rejected returnUrl', () => {

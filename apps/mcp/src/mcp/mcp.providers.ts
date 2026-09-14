@@ -44,7 +44,7 @@ export const mcpProviders: Provider[] = [
                 });
 
                 return [
-                    ...buildSessionTools({ context, client }),
+                    ...buildSessionTools({ client }),
                     ...buildExerciseTools({ context, client, logger, urls }),
                     ...buildRoutineTools({ context, client, logger, urls }),
                     ...buildWorkoutSessionTools({ context, client, logger, urls }),

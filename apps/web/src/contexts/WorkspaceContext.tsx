@@ -1,11 +1,10 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, ReactNode } from 'react';
 import { WorkspaceListItem } from '@/models/workspace';
 import { useAuth } from './AuthContext';
 
 interface WorkspaceContextType {
-    workspaces: WorkspaceListItem[];
     currentWorkspace?: WorkspaceListItem;
-    setCurrentWorkspaceId: (workspaceId: string | null) => void;
+    workspaceId: string;
     isLoading: boolean;
 }
 
@@ -13,19 +12,13 @@ const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefin
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
     const { user, isLoading } = useAuth();
-    const [currentWorkspaceId, setCurrentWorkspaceIdState] = useState<string | null>(null);
-
-    const setCurrentWorkspaceId = useCallback((newWorkspaceId: string | null): void => {
-        setCurrentWorkspaceIdState(newWorkspaceId);
-    }, []);
+    const currentWorkspace = user?.workspaces[0];
 
     return (
         <WorkspaceContext.Provider
             value={{
-                workspaces: user?.workspaces ?? [],
-                currentWorkspace:
-                    user?.workspaces?.find((w) => w.workspaceId === currentWorkspaceId) ?? user?.workspaces?.[0],
-                setCurrentWorkspaceId,
+                currentWorkspace,
+                workspaceId: currentWorkspace?.workspaceId ?? '',
                 isLoading: isLoading,
             }}
         >

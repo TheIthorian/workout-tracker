@@ -1,15 +1,15 @@
 import { NavLink } from 'react-router-dom';
-import { workspaceNavItems } from '@/lib/nav';
+import { appNavItems } from '@/lib/nav';
 
 /** Thumb-reachable primary destinations, with the device safe area reserved below. */
-export function AppBottomNav({ workspaceId }: { workspaceId: string }): JSX.Element {
+export function AppBottomNav(): JSX.Element {
     return (
         <nav
             aria-label="Mobile navigation"
             className="safe-area-pb fixed inset-x-0 bottom-0 z-30 border-t bg-card/95 backdrop-blur-md md:hidden"
         >
             <div className="grid grid-cols-5 px-2 py-2">
-                {workspaceNavItems(workspaceId).map((item) => (
+                {appNavItems().map((item) => (
                     <NavLink
                         key={item.to}
                         to={item.to}

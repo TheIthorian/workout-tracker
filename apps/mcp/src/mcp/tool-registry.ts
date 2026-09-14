@@ -82,7 +82,6 @@ const DEFAULT_BEHAVIOR_HINTS: ToolBehaviorHints = {
 
 const BEHAVIOR_HINTS: Record<string, ToolBehaviorHints> = {
     GetCurrentUser: READ,
-    ListWorkspaces: READ,
     ListExercises: READ,
     GetExercise: READ,
     CreateExercise: CREATE,

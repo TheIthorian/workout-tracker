@@ -7,7 +7,6 @@ import {
     syncAnalyticsUser,
     syncAnalyticsWorkspace,
     trackScreenView,
-    trackWorkspaceChange,
     useAnalytics,
 } from '@/lib/analytics';
 
@@ -16,10 +15,7 @@ export function AnalyticsBridge() {
     const { user, isLoading } = useAuth();
     const { currentWorkspace } = useWorkspace();
     const { posthog } = useAnalytics();
-    const pathSegments = location.pathname.split('/').filter(Boolean);
-    const routeWorkspaceId = pathSegments[0] === 'workspaces' ? pathSegments[1] : null;
-    const analyticsWorkspace =
-        routeWorkspaceId && currentWorkspace?.workspaceId !== routeWorkspaceId ? null : currentWorkspace;
+    const analyticsWorkspace = currentWorkspace;
 
     useEffect(() => {
         if (!posthog || isLoading) return;
@@ -36,14 +32,13 @@ export function AnalyticsBridge() {
         if (!posthog) return;
 
         syncAnalyticsWorkspace(posthog, analyticsWorkspace);
-        trackWorkspaceChange(posthog, analyticsWorkspace);
     }, [analyticsWorkspace, posthog]);
 
     useEffect(() => {
         if (!posthog) return;
 
-        trackScreenView(posthog, location.pathname, location.search, analyticsWorkspace, routeWorkspaceId);
-    }, [analyticsWorkspace, location.pathname, location.search, posthog, routeWorkspaceId]);
+        trackScreenView(posthog, location.pathname, location.search, analyticsWorkspace);
+    }, [analyticsWorkspace, location.pathname, location.search, posthog]);
 
     return null;
 }

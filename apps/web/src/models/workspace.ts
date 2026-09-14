@@ -27,12 +27,3 @@ export type WorkspaceResponse = {
     role: WorkspaceRole;
     members: MemberListItem[];
 };
-
-export type PostWorkspaceRequest = {
-    name: string;
-};
-
-export type PostWorkspaceMemberRequest = {
-    email: string;
-    role: WorkspaceRole;
-};

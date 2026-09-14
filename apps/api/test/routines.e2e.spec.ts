@@ -82,7 +82,7 @@ describe('routine routes', () => {
             name: 'Push Day',
             exerciseCount: 0,
             exercises: [],
-            webUrl: `${TEST_WEB_APP_BASE_URL}/workspaces/${workspaceId}/routines/${routineId}`,
+            webUrl: `${TEST_WEB_APP_BASE_URL}/routines/${routineId}`,
         });
 
         const listed = await app.inject({

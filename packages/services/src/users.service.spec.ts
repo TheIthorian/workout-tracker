@@ -81,9 +81,19 @@ describe('deleteUser', () => {
         expect(await db.select().from(user).where(eq(user.id, memberId))).toHaveLength(0);
     });
 
-    it('refuses while the user still owns a workspace, and leaves the account intact', async () => {
+    it('deletes the user and their personal workspace', async () => {
         const userId = await seedUser(db);
         await seedWorkspace(db, userId);
+
+        await users.deleteUser(userId);
+
+        expect(await db.select().from(user).where(eq(user.id, userId))).toHaveLength(0);
+    });
+
+    it('refuses to delete legacy shared data and leaves the account intact', async () => {
+        const userId = await seedUser(db);
+        const workspaceId = await seedWorkspace(db, userId);
+        await seedMembership(db, { workspaceId, userId: await seedUser(db) });
 
         await expect(users.deleteUser(userId)).rejects.toBeInstanceOf(ForbiddenActionError);
 

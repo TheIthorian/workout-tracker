@@ -24,6 +24,7 @@ import { TRACKING_TYPE_META } from '@/models/exercise';
 import type { SessionSet } from '@/models/session';
 import ForbiddenError from '@/pages/ForbiddenError';
 import NotFoundError from '@/pages/NotFoundError';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 
 /**
  * One exercise's how-to guide: read it in a few seconds mid-rest, or switch to editing it.
@@ -36,7 +37,8 @@ import NotFoundError from '@/pages/NotFoundError';
  * because there is nothing a member could do to make it work.
  */
 export default function ExerciseDetailPage(): JSX.Element {
-    const { workspaceId = '', exerciseId = '' } = useParams<{ workspaceId: string; exerciseId: string }>();
+    const { exerciseId = '' } = useParams<{ exerciseId: string }>();
+    const { workspaceId } = useWorkspace();
     const navigate = useNavigate();
 
     const [isEditing, setEditing] = useState(false);
@@ -75,11 +77,7 @@ export default function ExerciseDetailPage(): JSX.Element {
 
     return (
         <div className="page-shell">
-            <Button
-                variant="ghost"
-                className="mb-6 gap-2"
-                onClick={() => navigate(`/workspaces/${workspaceId}/exercises`)}
-            >
+            <Button variant="ghost" className="mb-6 gap-2" onClick={() => navigate('/exercises')}>
                 <ArrowLeft className="h-4 w-4" aria-hidden />
                 Back to exercises
             </Button>
@@ -193,7 +191,7 @@ export default function ExerciseDetailPage(): JSX.Element {
                                 <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                                     <Link
                                         className="font-medium hover:underline"
-                                        to={`/workspaces/${workspaceId}/sessions/${appearance.sessionId}`}
+                                        to={`/sessions/${appearance.sessionId}`}
                                     >
                                         {appearance.sessionName}
                                     </Link>

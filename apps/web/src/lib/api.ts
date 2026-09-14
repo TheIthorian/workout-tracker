@@ -31,13 +31,6 @@ import type {
     SaveRoutineRequest,
 } from '@/models/routine';
 import type { PatchUserRequest, UserResponse } from '@/models/user';
-import type {
-    PostWorkspaceMemberRequest,
-    PostWorkspaceRequest,
-    WorkspaceResponse,
-    WorkspaceListItem,
-    WorkspaceRole,
-} from '@/models/workspace';
 import { httpClient } from './http-client';
 
 export const authApi = {
@@ -47,21 +40,6 @@ export const authApi = {
     getMe: () => httpClient.get<UserResponse>('/api/v1/me'),
     updateMe: (data: PatchUserRequest) => httpClient.patch<UserResponse>('/api/v1/me', data),
     deleteMe: () => httpClient.delete<void>('/api/v1/me'),
-};
-
-export const workspacesApi = {
-    getAll: () => httpClient.get<WorkspaceListItem[]>('/api/v1/workspaces'),
-    getById: (workspaceId: string) => httpClient.get<WorkspaceResponse>(`/api/v1/workspaces/${workspaceId}`),
-    create: (data: PostWorkspaceRequest) => httpClient.post<WorkspaceResponse>('/api/v1/workspaces', data),
-    update: (workspaceId: string, data: Partial<PostWorkspaceRequest>) =>
-        httpClient.patch<WorkspaceResponse>(`/api/v1/workspaces/${workspaceId}`, data),
-    remove: (workspaceId: string) => httpClient.delete<void>(`/api/v1/workspaces/${workspaceId}`),
-    addMember: (workspaceId: string, data: PostWorkspaceMemberRequest) =>
-        httpClient.post<void>(`/api/v1/workspaces/${workspaceId}/members`, data),
-    updateMemberRole: (workspaceId: string, userId: string, role: WorkspaceRole) =>
-        httpClient.patch<void>(`/api/v1/workspaces/${workspaceId}/members/${userId}`, { role }),
-    removeMember: (workspaceId: string, userId: string) =>
-        httpClient.delete<void>(`/api/v1/workspaces/${workspaceId}/members/${userId}`),
 };
 
 export const mcpAccessTokensApi = {

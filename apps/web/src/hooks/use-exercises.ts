@@ -22,7 +22,7 @@ import type { ExerciseHistoryResponse } from '@/models/session';
 import type { PaginatedResponse } from '@/models/pagination';
 
 /**
- * The workspace's exercise library, optionally filtered by name, one page at a time.
+ * The user's exercise library, optionally filtered by name, one page at a time.
  *
  * A gym-use list can outgrow the API's default page size, so this loads more pages on demand
  * (`fetchNextPage`) rather than capping at the first one — nothing in the library may become
@@ -79,7 +79,7 @@ export function useExerciseHistory({
     });
 }
 
-/** Creates an exercise in the workspace and refreshes the list so it appears immediately. */
+/** Creates an exercise and refreshes the list so it appears immediately. */
 export function useCreateExercise({
     workspaceId,
 }: {

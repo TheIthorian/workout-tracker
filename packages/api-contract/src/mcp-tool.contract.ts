@@ -13,9 +13,6 @@ import { guidSchema, MAX_PAGE_SIZE } from './primitives.js';
 /** `get_current_user` takes no arguments — the caller comes from the access token. */
 export const getCurrentUserToolArgsSchema = z.strictObject({});
 
-/** `list_workspaces` takes no arguments - it lists what the caller can reach. */
-export const listWorkspacesToolArgsSchema = z.strictObject({});
-
 /** `list_exercises`. */
 export const listExercisesToolArgsSchema = z.strictObject({
     search: z.string().max(200).nullish(),
@@ -131,7 +128,6 @@ export const completeSessionToolArgsSchema = z.strictObject({
 });
 
 export type GetCurrentUserToolArgs = z.infer<typeof getCurrentUserToolArgsSchema>;
-export type ListWorkspacesToolArgs = z.infer<typeof listWorkspacesToolArgsSchema>;
 export type ListExercisesToolArgs = z.infer<typeof listExercisesToolArgsSchema>;
 export type GetExerciseToolArgs = z.infer<typeof getExerciseToolArgsSchema>;
 export type CreateExerciseToolArgs = z.infer<typeof createExerciseToolArgsSchema>;

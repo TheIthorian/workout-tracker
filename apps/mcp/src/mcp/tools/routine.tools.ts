@@ -63,7 +63,7 @@ export function buildRoutineTools({
         defineTool({
             methodName: 'ListRoutines',
             description:
-                "Lists the token's workspace routines (workout templates) by name, with optional search and " +
+                "Lists the user's routines (workout templates) by name, with optional search and " +
                 'paging. Each entry carries exerciseCount and webUrl, the routine editor in the web app. ' +
                 'Archived routines are excluded unless includeArchived is set.',
             inputSchema: listRoutinesToolArgsSchema,
@@ -101,7 +101,7 @@ export function buildRoutineTools({
         defineTool({
             methodName: 'CreateRoutine',
             description:
-                "Creates a routine in the token's workspace, optionally with its complete ordered exercise " +
+                'Creates a routine, optionally with its complete ordered exercise ' +
                 'list. Use list_exercises to find exerciseIds first. ' +
                 TARGET_HELP +
                 ' Returns the routine, including webUrl. If the exercise list is rejected, the routine is ' +

@@ -37,22 +37,14 @@ describe('MCP tools', () => {
         await app?.close();
     });
 
-    it('sends server instructions naming the workspace-pinning rule', () => {
-        expect(client.getInstructions()).toContain('This server is scoped to one workspace by the MCP URL token');
+    it('sends server instructions describing token-scoped user data', () => {
+        expect(client.getInstructions()).toContain('The MCP URL token determines which user data');
     });
 
     it('calls get_current_user through the real transport and gets the real user back', async () => {
         const result = await client.callTool({ name: 'get_current_user', arguments: {} });
 
-        expect(toolResultBody(result)).toMatchObject({ userId, email: 'tools@example.com', displayName: 'Tools' });
-    });
-
-    // The workspace comes from the token, never from an argument - `list_workspaces` returns the one
-    // workspace this token is scoped to, wrapped in a single-element array.
-    it('returns the token workspace as a one-element array from list_workspaces', async () => {
-        const result = await client.callTool({ name: 'list_workspaces', arguments: {} });
-
-        expect(toolResultBody(result)).toMatchObject([{ workspaceId, name: 'Home' }]);
+        expect(toolResultBody(result)).toEqual({ userId, email: 'tools@example.com', displayName: 'Tools' });
     });
 
     it('rejects an unrecognised argument rather than ignoring it', async () => {
@@ -82,7 +74,7 @@ describe('MCP tools', () => {
             expect(toolResultBody(result)).toMatchObject({
                 name: 'Back Squat',
                 trackingType: 'weight_reps',
-                webUrl: expect.stringContaining(`${TEST_WEB_APP_BASE_URL}/workspaces/${workspaceId}/exercises/`),
+                webUrl: expect.stringContaining(`${TEST_WEB_APP_BASE_URL}/exercises/`),
             });
         });
 
@@ -162,7 +154,7 @@ describe('MCP tools', () => {
                 name: 'Push Day',
                 exerciseCount: 1,
                 exercises: [{ position: 0, targetSets: 4, targetReps: 8, exercise: { id: benchId, name: 'Bench' } }],
-                webUrl: expect.stringContaining(`${TEST_WEB_APP_BASE_URL}/workspaces/${workspaceId}/routines/`),
+                webUrl: expect.stringContaining(`${TEST_WEB_APP_BASE_URL}/routines/`),
             });
         });
 

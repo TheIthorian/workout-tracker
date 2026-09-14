@@ -2,13 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { loginRequestSchema, signupRequestSchema } from './auth.contract.js';
 import { postMcpAccessTokenRequestSchema } from './mcp-token.contract.js';
 import { patchUserRequestSchema, userResponseSchema } from './user.contract.js';
-import {
-    patchWorkspaceUserRoleRequestSchema,
-    postWorkspaceRequestSchema,
-    postWorkspaceUserRequestSchema,
-    WorkspaceRole,
-    workspaceResponseSchema,
-} from './workspace.contract.js';
+import { WorkspaceRole, workspaceResponseSchema } from './workspace.contract.js';
 
 const GUID = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
 
@@ -54,21 +48,6 @@ describe('user contracts', () => {
 });
 
 describe('workspace contracts', () => {
-    it('requires a name of at most 100 characters on create', () => {
-        expect(postWorkspaceRequestSchema.safeParse({ name: '' }).success).toBe(false);
-        expect(postWorkspaceRequestSchema.safeParse({ name: 'x'.repeat(101) }).success).toBe(false);
-        expect(postWorkspaceRequestSchema.safeParse({ name: 'Acme' }).success).toBe(true);
-    });
-
-    it('defaults an invited member to the member role', () => {
-        expect(postWorkspaceUserRequestSchema.parse({ email: 'a@b.com' }).role).toBe(WorkspaceRole.Member);
-    });
-
-    it('rejects a role outside the enum', () => {
-        expect(patchWorkspaceUserRoleRequestSchema.safeParse({ role: 'superuser' }).success).toBe(false);
-        expect(patchWorkspaceUserRoleRequestSchema.safeParse({ role: WorkspaceRole.Admin }).success).toBe(true);
-    });
-
     it('describes the workspace response', () => {
         expect(
             workspaceResponseSchema.safeParse({

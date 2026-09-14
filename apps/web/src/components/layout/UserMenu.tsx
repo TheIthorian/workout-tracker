@@ -14,7 +14,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLogout } from '@/hooks/use-logout';
 
 type UserMenuProps = {
-    workspaceId: string;
     align?: 'start' | 'center' | 'end';
     side?: 'top' | 'bottom';
 };
@@ -28,14 +27,12 @@ function initialsFor(name: string): string {
 }
 
 /** The account menu behind the avatar: profile settings and signing out. */
-export function UserMenu({ workspaceId, align = 'end', side = 'bottom' }: UserMenuProps): JSX.Element {
+export function UserMenu({ align = 'end', side = 'bottom' }: UserMenuProps): JSX.Element {
     const { user } = useAuth();
     const logout = useLogout();
     const navigate = useNavigate();
 
     const name = user?.displayName || user?.email || '';
-    const settingsPath = workspaceId ? `/workspaces/${workspaceId}/settings` : '/settings';
-
     return (
         <DropdownMenu>
             <DropdownMenuTrigger
@@ -58,7 +55,7 @@ export function UserMenu({ workspaceId, align = 'end', side = 'bottom' }: UserMe
                         <DropdownMenuSeparator />
                     </>
                 )}
-                <DropdownMenuItem onSelect={() => navigate(settingsPath)}>
+                <DropdownMenuItem onSelect={() => navigate('/settings')}>
                     <Settings className="mr-2 h-4 w-4" aria-hidden />
                     Settings
                 </DropdownMenuItem>

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ArgumentsHost } from '@nestjs/common';
+import { NotFoundException, type ArgumentsHost } from '@nestjs/common';
 import { EntityNotFoundError, ForbiddenActionError, PROBLEM_TYPE_BASE, RequestValidationError } from '@app/errors';
 import type { Logger } from '@app/logger';
 import { AppErrorFilter } from './app-error.filter.js';
@@ -26,6 +26,20 @@ describe('AppErrorFilter', () => {
 
         expect(reply.status).toHaveBeenCalledWith(400);
         expect(reply.send).toHaveBeenCalledWith(expect.objectContaining({ errors: { name: ['Name is required'] } }));
+    });
+
+    it('preserves a framework HTTP status without exposing its route message', () => {
+        const { filter, host, reply } = makeFilter();
+
+        filter.catch(new NotFoundException('Cannot POST /internal-path'), host);
+
+        expect(reply.status).toHaveBeenCalledWith(404);
+        expect(reply.send).toHaveBeenCalledWith({
+            type: `${PROBLEM_TYPE_BASE}/Http404Error`,
+            title: 'Not Found',
+            status: 404,
+        });
+        expect(JSON.stringify(reply.send.mock.calls)).not.toContain('/internal-path');
     });
 
     it('returns a problem body for an unknown throw and never leaks its message', () => {

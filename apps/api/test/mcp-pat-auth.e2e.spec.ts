@@ -100,20 +100,24 @@ describe('MCP token auth on REST routes', () => {
         expect(response.statusCode).toBe(401);
     });
 
-    // Critical finding from review: these routes are inside the token's workspace pin, so without
-    // an explicit guard a leaked PAT could add an attacker's own email as a member and then
-    // promote them - persistent session-grade access from a single leaked token. No MCP tool calls
-    // this route, so it must be unreachable by a token at all (401, not 404 - no credential this
-    // route accepts was presented).
-    it('refuses a PAT calling POST /:workspaceId/members', async () => {
-        const response = await app.inject({
-            method: 'POST',
-            url: `/api/v1/workspaces/${workspaceId}/members`,
-            headers: { authorization: `Bearer ${token}` },
-            payload: { email: 'attacker@example.com' },
-        });
+    // Workspace management is unavailable in the current product, so none of its routes are
+    // registered even for the workspace owner using a browser session.
+    it('does not expose workspace management routes', async () => {
+        const routes = [
+            { method: 'POST', url: '/api/v1/workspaces' },
+            { method: 'PATCH', url: `/api/v1/workspaces/${workspaceId}` },
+            { method: 'DELETE', url: `/api/v1/workspaces/${workspaceId}` },
+            { method: 'GET', url: `/api/v1/workspaces/${workspaceId}/members` },
+            { method: 'POST', url: `/api/v1/workspaces/${workspaceId}/members` },
+            { method: 'PATCH', url: `/api/v1/workspaces/${workspaceId}/members/${workspaceId}` },
+            { method: 'DELETE', url: `/api/v1/workspaces/${workspaceId}/members/${workspaceId}` },
+        ] as const;
 
-        expect(response.statusCode).toBe(401);
+        for (const route of routes) {
+            const response = await app.inject({ ...route, headers: { cookie: sessionCookie } });
+
+            expect(response.statusCode).toBe(404);
+        }
     });
 
     // Critical finding from review: DELETE /v1/me was unpinned and PAT-reachable, and

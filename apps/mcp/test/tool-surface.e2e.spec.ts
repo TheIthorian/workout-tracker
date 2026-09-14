@@ -16,7 +16,6 @@ const EXPECTED_TOOL_NAMES = [
     'list_exercises',
     'list_routines',
     'list_sessions',
-    'list_workspaces',
     'log_set',
     'start_session',
     'update_exercise',

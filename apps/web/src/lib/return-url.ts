@@ -6,8 +6,8 @@
  * it is a local path matching the allowlist below. Absolute, protocol-relative and encoded escapes
  * are rejected to rule out open redirects.
  */
-const allowedPathPrefixes = ['/workspaces/'] as const;
-const allowedExactPaths = ['/', '/settings'] as const;
+const allowedPathRoots = ['/routines', '/exercises', '/sessions'] as const;
+const allowedExactPaths = ['/', '/today', '/history', '/settings'] as const;
 // eslint-disable-next-line no-control-regex
 const controlCharacters = /[\u0000-\u001f\u007f]/;
 const schemePrefix = /^[a-z][a-z0-9+.-]*:/i;
@@ -36,7 +36,7 @@ export function sanitizeReturnUrl(candidate?: string | null): string | undefined
     const pathname = value.split(/[?#]/)[0];
     const isAllowed =
         allowedExactPaths.some((path) => pathname === path) ||
-        allowedPathPrefixes.some((prefix) => pathname.startsWith(prefix));
+        allowedPathRoots.some((root) => pathname === root || pathname.startsWith(`${root}/`));
 
     return isAllowed ? value : undefined;
 }

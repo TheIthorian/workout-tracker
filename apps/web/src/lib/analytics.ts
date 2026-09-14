@@ -11,8 +11,6 @@ export const analyticsEvents = {
     userLoggedIn: 'user_logged_in',
     userLoggedOut: 'user_logged_out',
     userRegistered: 'user_registered',
-    workspaceCreated: 'workspace_created',
-    workspaceSwitched: 'workspace_switched',
     mcpAccessTokenCreated: 'mcp_access_token_created',
     mcpAccessTokenRevoked: 'mcp_access_token_revoked',
 } as const;
@@ -22,7 +20,6 @@ type AnalyticsEventName = (typeof analyticsEvents)[keyof typeof analyticsEvents]
 let lastIdentifiedUserSignature: string | null = null;
 let lastTrackedScreenKey: string | null = null;
 let lastWorkspaceGroupSignature: string | null = null;
-let lastWorkspaceId: string | null = null;
 
 const sanitizeProperties = (properties?: AnalyticsProperties) =>
     Object.fromEntries(Object.entries(properties ?? {}).filter(([, value]) => value !== undefined));
@@ -31,7 +28,6 @@ const getScreenName = (pathname: string) => {
     const segments = pathname.split('/').filter(Boolean);
 
     if (segments.length === 0) return 'home';
-    if (segments[0] === 'workspaces') return segments[2] ?? 'workspace';
     return segments[0];
 };
 
@@ -81,7 +77,6 @@ export const resetAnalyticsUser = (posthog: AnalyticsClient) => {
     lastIdentifiedUserSignature = null;
     lastTrackedScreenKey = null;
     lastWorkspaceGroupSignature = null;
-    lastWorkspaceId = null;
 };
 
 export const syncAnalyticsWorkspace = (posthog: AnalyticsClient, workspace?: WorkspaceListItem | null) => {
@@ -100,29 +95,6 @@ export const syncAnalyticsWorkspace = (posthog: AnalyticsClient, workspace?: Wor
     );
 
     lastWorkspaceGroupSignature = signature;
-};
-
-export const trackWorkspaceChange = (posthog: AnalyticsClient, workspace?: WorkspaceListItem | null) => {
-    if (!posthog) return;
-
-    if (!workspace) {
-        lastWorkspaceId = null;
-        return;
-    }
-
-    if (lastWorkspaceId === null) {
-        lastWorkspaceId = workspace.workspaceId;
-        return;
-    }
-
-    if (lastWorkspaceId === workspace.workspaceId) return;
-
-    posthog.capture(
-        analyticsEvents.workspaceSwitched,
-        withWorkspaceProperties(workspace, { previous_workspace_id: lastWorkspaceId }),
-    );
-
-    lastWorkspaceId = workspace.workspaceId;
 };
 
 export const trackScreenView = (

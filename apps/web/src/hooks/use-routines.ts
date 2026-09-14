@@ -19,7 +19,7 @@ import type {
     SaveRoutineRequest,
 } from '@/models/routine';
 
-/** The workspace's routines, optionally filtered by name, one page at a time. `search` is assumed trimmed. */
+/** The user's routines, optionally filtered by name, one page at a time. `search` is assumed trimmed. */
 export function useRoutines({
     workspaceId,
     search,
