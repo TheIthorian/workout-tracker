@@ -30,6 +30,8 @@ export type Exercise = {
     isCatalog: boolean;
     trackingType: TrackingType;
     notes: string | null;
+    /** This workspace's rest between sets; null until set, when the app's default applies. */
+    restSeconds: number | null;
     archivedAt: string | null;
     createdAt: string;
     updatedAt: string;
@@ -81,6 +83,11 @@ export type PatchExerciseRequest = {
     guideCues?: string | null;
     guideMistakes?: string | null;
     archived?: boolean;
+};
+
+/** The workspace's own settings for an exercise, catalog or custom. */
+export type SaveExercisePreferencesRequest = {
+    restSeconds: number;
 };
 
 export type SaveExerciseLinkRequest = {

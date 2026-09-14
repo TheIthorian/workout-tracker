@@ -1,6 +1,7 @@
 import { schema, scopedToWorkspace, scopedToWorkspaceOrGlobal, withTransaction, type Db, type Tx } from '@app/db';
 import {
     computeSessionState,
+    resolveRestSeconds,
     SessionExerciseSource,
     validateSetMeasurements,
     type SetMeasurements,
@@ -15,7 +16,8 @@ import {
 import { asc, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { WorkspaceMembershipService } from './workspace-membership.service.js';
 
-const { exercises, routineExercises, routines, sessionExercises, setEntries, workoutSessions } = schema;
+const { exercisePreferences, exercises, routineExercises, routines, sessionExercises, setEntries, workoutSessions } =
+    schema;
 const ACTIVE_SESSION_INDEX = 'workout_sessions_active_uidx';
 
 export type SessionSummary = {
@@ -689,6 +691,7 @@ export class WorkoutSessionsService {
                 targetWeightKg: sessionExercises.targetWeightKg,
                 targetDurationSeconds: sessionExercises.targetDurationSeconds,
                 targetDistanceM: sessionExercises.targetDistanceM,
+                preferredRestSeconds: exercisePreferences.restSeconds,
                 exercise: {
                     id: exercises.id,
                     name: exercises.name,
@@ -698,6 +701,10 @@ export class WorkoutSessionsService {
             })
             .from(sessionExercises)
             .innerJoin(exercises, eq(exercises.id, sessionExercises.exerciseId))
+            .leftJoin(
+                exercisePreferences,
+                scopedToWorkspace(exercisePreferences, workspaceId, eq(exercisePreferences.exerciseId, exercises.id)),
+            )
             .where(scopedToWorkspace(sessionExercises, workspaceId, eq(sessionExercises.sessionId, sessionId)))
             .orderBy(asc(sessionExercises.position));
         const setRows =
@@ -731,7 +738,11 @@ export class WorkoutSessionsService {
         const setsByExercise = new Map<string, SessionSet[]>();
         for (const { sessionExerciseId, ...set } of setRows)
             setsByExercise.set(sessionExerciseId, [...(setsByExercise.get(sessionExerciseId) ?? []), set]);
-        const rows: SessionExercise[] = exerciseRows.map((row) => ({ ...row, sets: setsByExercise.get(row.id) ?? [] }));
+        const rows: SessionExercise[] = exerciseRows.map(({ preferredRestSeconds, ...row }) => ({
+            ...row,
+            restSeconds: resolveRestSeconds({ preferred: preferredRestSeconds, planned: row.restSeconds }),
+            sets: setsByExercise.get(row.id) ?? [],
+        }));
         return {
             ...session,
             exercises: rows,

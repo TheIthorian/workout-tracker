@@ -1,6 +1,7 @@
+import { DEFAULT_REST_SECONDS } from '@app/domain';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Archive, ArrowLeft, Pencil, RotateCcw } from 'lucide-react';
+import { Archive, ArrowLeft, Pencil, RotateCcw, Timer } from 'lucide-react';
 import { formatDate } from '@/lib/date-format';
 import { toast } from '@/hooks/use-toast';
 import {
@@ -13,15 +14,15 @@ import {
 } from '@/components/ui/dialog';
 import { EmptyState } from '@/components/common/EmptyState';
 import { isAxiosError } from 'axios';
-
 import { ExerciseGuide } from '@/components/exercises/ExerciseGuide';
 import { ExerciseGuideEditor } from '@/components/exercises/ExerciseGuideEditor';
+import { RestTimeSheet } from '@/components/exercises/RestTimeSheet';
 import { LoadingState } from '@/components/common/LoadingState';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useExercise, useExerciseHistory, useUpdateExercise } from '@/hooks/use-exercises';
+import { useExercise, useExerciseHistory, useSetExercisePreferences, useUpdateExercise } from '@/hooks/use-exercises';
 import { TRACKING_TYPE_META } from '@/models/exercise';
-import type { SessionSet } from '@/models/session';
+import { formatSessionClock, type SessionSet } from '@/models/session';
 import ForbiddenError from '@/pages/ForbiddenError';
 import NotFoundError from '@/pages/NotFoundError';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
@@ -44,9 +45,11 @@ export default function ExerciseDetailPage(): JSX.Element {
     const [isEditing, setEditing] = useState(false);
     const [archiveOpen, setArchiveOpen] = useState(false);
     const updateExercise = useUpdateExercise({ workspaceId });
+    const [isRestOpen, setRestOpen] = useState(false);
 
     const { data: exercise, isLoading, isError, error, refetch } = useExercise({ workspaceId, exerciseId });
     const { data: history, isLoading: isHistoryLoading } = useExerciseHistory({ workspaceId, exerciseId });
+    const setPreferences = useSetExercisePreferences({ workspaceId });
 
     if (isLoading) {
         return (
@@ -74,6 +77,20 @@ export default function ExerciseDetailPage(): JSX.Element {
     }
 
     const { label, icon: Icon } = TRACKING_TYPE_META[exercise.trackingType];
+    const restSeconds = exercise.restSeconds ?? DEFAULT_REST_SECONDS;
+    const handleSaveRest = (seconds: number): void => {
+        setPreferences.mutate(
+            { exerciseId, data: { restSeconds: seconds } },
+            {
+                onSuccess: () => {
+                    setRestOpen(false);
+                    toast({ title: seconds > 0 ? `Rest set to ${formatSessionClock(seconds)}` : 'Rest timer off' });
+                },
+                onError: (error) =>
+                    toast({ title: 'Could not save rest time', description: error.message, variant: 'destructive' }),
+            },
+        );
+    };
 
     return (
         <div className="page-shell">
@@ -94,6 +111,20 @@ export default function ExerciseDetailPage(): JSX.Element {
                         {exercise.isCatalog && <Badge variant="outline">Forma guide</Badge>}
                         {exercise.archivedAt && <Badge variant="secondary">Archived</Badge>}
                     </div>
+                    <button
+                        type="button"
+                        className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-border bg-card px-3 text-sm hover:bg-secondary"
+                        onClick={() => setRestOpen(true)}
+                    >
+                        <Timer className="h-4 w-4 text-primary" aria-hidden />
+                        <span className="text-muted-foreground">Rest between sets</span>
+                        <span className="font-medium tabular-nums">
+                            {restSeconds > 0 ? formatSessionClock(restSeconds) : 'Off'}
+                        </span>
+                        {exercise.restSeconds === null && (
+                            <span className="text-xs text-muted-foreground">(default)</span>
+                        )}
+                    </button>
                 </div>
                 {/* While editing, ExerciseGuideEditor renders its own close control: it alone knows
                     whether there's unsaved guide text or an open link draft a close might
@@ -173,6 +204,15 @@ export default function ExerciseDetailPage(): JSX.Element {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+            <RestTimeSheet
+                open={isRestOpen}
+                exerciseName={exercise.name}
+                restSeconds={restSeconds}
+                isSaving={setPreferences.isPending}
+                onOpenChange={setRestOpen}
+                onSave={handleSaveRest}
+            />
+
             <section className="mt-10 border-t border-border pt-8" aria-labelledby="exercise-history-heading">
                 <h2 id="exercise-history-heading" className="font-heading text-xl">
                     Recent workouts

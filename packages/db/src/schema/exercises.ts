@@ -164,3 +164,41 @@ export const exerciseLinks = pgTable(
         }).onDelete('cascade'),
     ],
 );
+
+/**
+ * A workspace's own settings for an exercise it trains — catalog or custom. Kept off `exercises`
+ * because a catalog row is shared, read-only content and every workspace needs its own rest time.
+ */
+export const exercisePreferences = pgTable(
+    'exercise_preferences',
+    {
+        id: uuid('id').primaryKey().defaultRandom().notNull(),
+        workspaceId: uuid('workspace_id').notNull(),
+        exerciseId: uuid('exercise_id').notNull(),
+        restSeconds: integer('rest_seconds').notNull(),
+        createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+            .default(sql`now()`)
+            .notNull(),
+        updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' })
+            .default(sql`now()`)
+            .notNull(),
+    },
+    (table) => [
+        index('exercise_preferences_workspace_id_idx').using(
+            'btree',
+            table.workspaceId.asc().nullsLast().op('uuid_ops'),
+        ),
+        uniqueIndex('exercise_preferences_workspace_id_exercise_id_uidx').on(table.workspaceId, table.exerciseId),
+        check('exercise_preferences_rest_seconds_check', sql`${table.restSeconds} >= 0`),
+        foreignKey({
+            columns: [table.workspaceId],
+            foreignColumns: [workspaces.id],
+            name: 'exercise_preferences_workspace_id_workspaces_id_fk',
+        }).onDelete('cascade'),
+        foreignKey({
+            columns: [table.exerciseId],
+            foreignColumns: [exercises.id],
+            name: 'exercise_preferences_exercise_id_exercises_id_fk',
+        }).onDelete('cascade'),
+    ],
+);

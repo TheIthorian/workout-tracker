@@ -16,6 +16,7 @@ import type {
     PatchExerciseLinkRequest,
     PatchExerciseRequest,
     SaveExerciseLinkRequest,
+    SaveExercisePreferencesRequest,
     SaveExerciseRequest,
 } from '@/models/exercise';
 import type { ExerciseHistoryResponse } from '@/models/session';
@@ -113,6 +114,29 @@ export function useUpdateExercise({
             exercisesApi.update(workspaceId, exerciseId, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['exercises', workspaceId] });
+        },
+    });
+}
+
+/**
+ * Saves the workspace's rest between sets for an exercise.
+ *
+ * Active sessions resolve their rest from this setting, so their queries are refreshed too — the
+ * timer on the workout screen must follow a change made mid-session.
+ */
+export function useSetExercisePreferences({
+    workspaceId,
+}: {
+    workspaceId: string;
+}): UseMutationResult<ExerciseDetail, Error, { exerciseId: string; data: SaveExercisePreferencesRequest }> {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ exerciseId, data }: { exerciseId: string; data: SaveExercisePreferencesRequest }) =>
+            exercisesApi.setPreferences({ workspaceId, exerciseId, data }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exercises', workspaceId] });
+            queryClient.invalidateQueries({ queryKey: ['sessions', workspaceId] });
         },
     });
 }

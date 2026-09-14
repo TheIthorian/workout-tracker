@@ -269,3 +269,75 @@ describe('catalog exercises', () => {
         expect(JSON.parse(created.body)).toMatchObject({ isCatalog: false, slug: null });
     });
 });
+
+describe('exercise preferences', () => {
+    it('sets a rest time on a catalog exercise for this workspace only', async () => {
+        const { cookie, workspaceId } = await signUpUser();
+        const other = await signUpUser();
+        const { id } = await seedCatalog();
+
+        const response = await app.inject({
+            method: 'PUT',
+            url: `/api/v1/workspaces/${workspaceId}/exercises/${id}/preferences`,
+            headers: { cookie },
+            payload: { restSeconds: 120 },
+        });
+
+        expect(response.statusCode).toBe(200);
+        expect(JSON.parse(response.body)).toMatchObject({ id, isCatalog: true, restSeconds: 120 });
+
+        const theirs = await app.inject({
+            method: 'GET',
+            url: `/api/v1/workspaces/${other.workspaceId}/exercises/${id}`,
+            headers: { cookie: other.cookie },
+        });
+        expect(JSON.parse(theirs.body)).toMatchObject({ restSeconds: null });
+    });
+
+    it("answers 404 for another workspace's exercise", async () => {
+        const { cookie, workspaceId } = await signUpUser();
+        const other = await signUpUser();
+        const exerciseId = await createExercise({
+            cookie: other.cookie,
+            workspaceId: other.workspaceId,
+            payload: { name: 'Theirs', trackingType: 'weight_reps' },
+        });
+
+        const response = await app.inject({
+            method: 'PUT',
+            url: `/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/preferences`,
+            headers: { cookie },
+            payload: { restSeconds: 60 },
+        });
+
+        expect(response.statusCode).toBe(404);
+    });
+
+    it('rejects a rest outside the allowed range', async () => {
+        const { cookie, workspaceId } = await signUpUser();
+        const { id } = await seedCatalog();
+
+        const response = await app.inject({
+            method: 'PUT',
+            url: `/api/v1/workspaces/${workspaceId}/exercises/${id}/preferences`,
+            headers: { cookie },
+            payload: { restSeconds: -5 },
+        });
+
+        expect(response.statusCode).toBe(400);
+    });
+});
+
+async function seedCatalog(): Promise<{ id: string }> {
+    const [row] = await app.db
+        .insert(schema.exercises)
+        .values({
+            workspaceId: null,
+            slug: `e2e-catalog-${randomUUID()}`,
+            name: 'E2E Catalog',
+            trackingType: TrackingType.WeightReps,
+        })
+        .returning({ id: schema.exercises.id });
+
+    return { id: row.id };
+}

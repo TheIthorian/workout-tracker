@@ -364,3 +364,68 @@ describe('equipment', () => {
         });
     });
 });
+
+describe('setPreferences', () => {
+    it('stores a rest time for a catalog exercise and reads it back on the list and the detail', async () => {
+        const catalogId = await seedCatalogExercise(db, { slug: `catalog-${randomUUID()}`, name: 'Rested Row' });
+
+        const updated = await exercises.setPreferences({
+            userId,
+            workspaceId,
+            exerciseId: catalogId,
+            restSeconds: 120,
+        });
+
+        expect(updated).toMatchObject({ id: catalogId, isCatalog: true, restSeconds: 120 });
+        const listed = await exercises.list({ userId, workspaceId, ...page, search: 'Rested Row' });
+        expect(listed.data.map((exercise) => exercise.restSeconds)).toEqual([120]);
+    });
+
+    it('replaces an earlier setting rather than adding a second row', async () => {
+        const custom = await exercises.create({
+            userId,
+            workspaceId,
+            name: 'Twice Set',
+            trackingType: TrackingType.WeightReps,
+        });
+        await exercises.setPreferences({ userId, workspaceId, exerciseId: custom.id, restSeconds: 60 });
+
+        const updated = await exercises.setPreferences({ userId, workspaceId, exerciseId: custom.id, restSeconds: 0 });
+
+        expect(updated.restSeconds).toBe(0);
+        const rows = await db
+            .select({ id: schema.exercisePreferences.id })
+            .from(schema.exercisePreferences)
+            .where(eq(schema.exercisePreferences.exerciseId, custom.id));
+        expect(rows).toHaveLength(1);
+    });
+
+    it("keeps one workspace's setting invisible to another sharing the same catalog exercise", async () => {
+        const catalogId = await seedCatalogExercise(db, { slug: `catalog-${randomUUID()}` });
+        await exercises.setPreferences({ userId, workspaceId, exerciseId: catalogId, restSeconds: 45 });
+
+        const theirs = await exercises.get({
+            userId: outsiderId,
+            workspaceId: otherWorkspaceId,
+            exerciseId: catalogId,
+        });
+
+        expect(theirs.restSeconds).toBeNull();
+    });
+
+    it("refuses another workspace's custom exercise, and a workspace the caller does not belong to", async () => {
+        const theirs = await exercises.create({
+            userId: outsiderId,
+            workspaceId: otherWorkspaceId,
+            name: 'Private',
+            trackingType: TrackingType.WeightReps,
+        });
+
+        await expect(
+            exercises.setPreferences({ userId, workspaceId, exerciseId: theirs.id, restSeconds: 30 }),
+        ).rejects.toBeInstanceOf(EntityNotFoundError);
+        await expect(
+            exercises.setPreferences({ userId, workspaceId: otherWorkspaceId, exerciseId: theirs.id, restSeconds: 30 }),
+        ).rejects.toBeInstanceOf(EntityNotFoundError);
+    });
+});
