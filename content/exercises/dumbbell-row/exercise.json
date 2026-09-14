@@ -1,6 +1,7 @@
 {
     "name": "Dumbbell row",
     "trackingType": "weight_reps",
+    "equipment": ["dumbbell", "bench"],
     "notes": "Single-arm supported row. Record the load of one dumbbell.",
     "guide": {
         "setup": "Support one hand and knee on a bench, with the working arm hanging under the shoulder and the torso braced.",

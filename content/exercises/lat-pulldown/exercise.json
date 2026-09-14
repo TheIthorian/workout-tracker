@@ -1,6 +1,7 @@
 {
     "name": "Lat pulldown",
     "trackingType": "weight_reps",
+    "equipment": ["machine"],
     "notes": "Cable pulldown to the upper chest.",
     "guide": {
         "setup": "Sit with thighs secured under the pad, grip the bar just outside shoulder width, and lift the chest with only a slight lean back.",

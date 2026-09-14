@@ -1,6 +1,7 @@
 {
     "name": "Seated cable row",
     "trackingType": "weight_reps",
+    "equipment": ["cable"],
     "notes": "Neutral-grip seated cable row.",
     "guide": {
         "setup": "Sit tall with feet braced, knees soft, arms extended, and the chest lifted while holding a neutral-grip attachment.",

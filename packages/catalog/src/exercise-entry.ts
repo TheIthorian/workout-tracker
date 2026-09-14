@@ -1,4 +1,4 @@
-import { TrackingType } from '@app/domain';
+import { Equipment, TrackingType } from '@app/domain';
 import { z } from 'zod';
 
 /** The directory name of a catalog entry. Doubles as the row's slug, so it must be URL-safe. */
@@ -10,6 +10,11 @@ const guideField = z.string().max(4000).nullable().default(null);
 export const exerciseEntrySchema = z.object({
     name: z.string().min(1).max(200),
     trackingType: z.enum(TrackingType),
+    /** Everything the movement requires. Empty means bodyweight. */
+    equipment: z
+        .array(z.enum(Equipment))
+        .refine((list) => new Set(list).size === list.length, { message: 'Equipment must not repeat' })
+        .default([]),
     notes: z.string().max(2000).nullable().default(null),
     guide: z
         .object({

@@ -1,6 +1,7 @@
 {
     "name": "Barbell hip thrust",
     "trackingType": "weight_reps",
+    "equipment": ["barbell", "bench"],
     "notes": "Barbell hip extension with the upper back supported on a bench.",
     "guide": {
         "setup": "Sit with the upper back against a stable bench, the padded bar across the hip crease, and feet about shoulder width.",

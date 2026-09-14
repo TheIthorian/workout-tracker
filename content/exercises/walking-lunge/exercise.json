@@ -1,6 +1,7 @@
 {
     "name": "Walking lunge",
     "trackingType": "weight_reps",
+    "equipment": [],
     "notes": "Bodyweight or loaded alternating lunge. Count total steps unless a routine specifies otherwise.",
     "guide": {
         "setup": "Stand tall with feet hip width, holding dumbbells at the sides if loaded, and brace before stepping.",

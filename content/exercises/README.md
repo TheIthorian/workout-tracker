@@ -9,6 +9,10 @@ The starter library covers common strength, bodyweight, core, and cardio movemen
 `distance_time` for cardio. Keep an entry focused on one movement; use `notes` to clarify equipment
 or how to record a single-dumbbell or alternating movement.
 
+`equipment` lists everything the movement requires (see `Equipment` in `@app/domain`); leave it
+empty for bodyweight and outdoor work. `machine` covers pin- and plate-loaded machines; `cable` is a
+cable stack.
+
 Publish with `pnpm --filter @app/admin start seed-exercises` against the target database and
 bucket (`DATABASE_URL`, `S3_*`). Runs are idempotent; removing a directory archives its exercise
 rather than deleting it, because past sessions reference it.

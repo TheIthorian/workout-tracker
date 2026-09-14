@@ -1,6 +1,7 @@
 {
     "name": "Goblet squat",
     "trackingType": "weight_reps",
+    "equipment": ["dumbbell"],
     "notes": "Front-loaded kettlebell or dumbbell squat.",
     "guide": {
         "setup": "Hold one dumbbell or kettlebell close to the chest, feet about shoulder width, and brace the trunk.",

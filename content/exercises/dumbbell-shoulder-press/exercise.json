@@ -1,6 +1,7 @@
 {
     "name": "Dumbbell shoulder press",
     "trackingType": "weight_reps",
+    "equipment": ["dumbbell"],
     "notes": "Seated or standing dumbbell overhead press. Record the load of one dumbbell.",
     "guide": {
         "setup": "Hold dumbbells at shoulder level with forearms near vertical and ribs stacked over the hips.",

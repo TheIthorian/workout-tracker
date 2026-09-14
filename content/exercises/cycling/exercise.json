@@ -1,6 +1,7 @@
 {
     "name": "Cycling",
     "trackingType": "distance_time",
+    "equipment": [],
     "notes": "Indoor or outdoor ride tracked by distance and elapsed time.",
     "guide": {
         "setup": "Set the saddle so the knee has a slight bend at the bottom of the pedal stroke, with relaxed hands on the bars.",

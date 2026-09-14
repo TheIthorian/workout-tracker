@@ -64,6 +64,7 @@ export class CatalogSeedService {
                 slug: exercise.slug,
                 name: exercise.entry.name,
                 trackingType: exercise.entry.trackingType,
+                equipment: exercise.entry.equipment,
                 notes: exercise.entry.notes,
                 guideSetup: exercise.entry.guide.setup,
                 guideExecution: exercise.entry.guide.execution,
@@ -167,6 +168,7 @@ type DesiredRow = {
     slug: string;
     name: string;
     trackingType: LoadedExercise['entry']['trackingType'];
+    equipment: LoadedExercise['entry']['equipment'];
     notes: string | null;
     guideSetup: string | null;
     guideExecution: string | null;
@@ -180,6 +182,7 @@ async function syncRow({ tx, id, desired }: { tx: Tx; id: string; desired: Desir
         .select({
             name: exercises.name,
             trackingType: exercises.trackingType,
+            equipment: exercises.equipment,
             notes: exercises.notes,
             guideSetup: exercises.guideSetup,
             guideExecution: exercises.guideExecution,

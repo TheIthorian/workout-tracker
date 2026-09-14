@@ -1,6 +1,7 @@
 {
     "name": "Romanian deadlift",
     "trackingType": "weight_reps",
+    "equipment": ["barbell"],
     "notes": "Barbell hip hinge emphasizing the hamstrings.",
     "guide": {
         "setup": "Stand tall holding the bar at the thighs with feet hip width, a soft knee bend, and a braced trunk.",

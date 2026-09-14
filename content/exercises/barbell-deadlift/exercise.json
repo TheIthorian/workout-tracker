@@ -1,6 +1,7 @@
 {
     "name": "Barbell deadlift",
     "trackingType": "weight_reps",
+    "equipment": ["barbell"],
     "notes": "Conventional deadlift from the floor.",
     "guide": {
         "setup": "Stand with the bar over mid-foot, hinge down to grip it just outside the legs, then brace the back and abdomen.",

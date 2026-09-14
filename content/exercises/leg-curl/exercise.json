@@ -1,6 +1,7 @@
 {
     "name": "Leg curl",
     "trackingType": "weight_reps",
+    "equipment": ["machine"],
     "notes": "Seated or lying machine hamstring curl.",
     "guide": {
         "setup": "Align the knee joint with the machine pivot and place the pad securely above the ankles.",

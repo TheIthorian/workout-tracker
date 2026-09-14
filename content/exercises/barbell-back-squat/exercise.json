@@ -1,6 +1,7 @@
 {
     "name": "Barbell back squat",
     "trackingType": "weight_reps",
+    "equipment": ["barbell", "squat_rack"],
     "notes": null,
     "guide": {
         "setup": "Bar across the upper back, hands just outside the shoulders, elbows pulled down. Feet shoulder-width, toes turned out slightly.",

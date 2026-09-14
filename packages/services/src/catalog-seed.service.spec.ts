@@ -6,7 +6,7 @@ import { CreateBucketCommand, S3Client } from '@aws-sdk/client-s3';
 import { loadCatalog } from '@app/catalog';
 import { schema, type Db } from '@app/db';
 import { startTestDatabase } from '@app/db/testing';
-import { TrackingType } from '@app/domain';
+import { Equipment, TrackingType } from '@app/domain';
 import { createLogger } from '@app/logger';
 import { StorageService } from '@app/storage';
 import { eq } from 'drizzle-orm';
@@ -198,6 +198,26 @@ describe('upsertExercise', () => {
         expect(images.map((image) => image.caption)).toEqual(['New caption']);
     });
 
+    it('writes and updates equipment', async () => {
+        const dir = await writeEntry({
+            slug: 'seed-equipment',
+            entry: squat({ equipment: [Equipment.Barbell], images: [] }),
+        });
+        const [loaded] = await loadCatalog({ dir });
+        const { id } = await seed.upsertExercise({ exercise: loaded });
+        expect(await readEquipment(id)).toEqual([Equipment.Barbell]);
+
+        const dir2 = await writeEntry({
+            slug: 'seed-equipment',
+            entry: squat({ equipment: [Equipment.Barbell, Equipment.Bench], images: [] }),
+        });
+        const [changedLoaded] = await loadCatalog({ dir: dir2 });
+        const changed = await seed.upsertExercise({ exercise: changedLoaded });
+
+        expect(changed.outcome).toBe(SeedOutcome.Updated);
+        expect(await readEquipment(id)).toEqual([Equipment.Barbell, Equipment.Bench]);
+    });
+
     it('removes an image dropped from the file, and its object', async () => {
         const dir = await writeEntry({ slug: 'squat-drop', entry: squat(), imageBytes: PNG_BYTES });
         const [first] = await loadCatalog({ dir });
@@ -319,3 +339,11 @@ describe('archiveMissing', () => {
         expect(customRow.archivedAt).toBeNull();
     });
 });
+
+async function readEquipment(id: string): Promise<Equipment[]> {
+    const [row] = await db
+        .select({ equipment: schema.exercises.equipment })
+        .from(schema.exercises)
+        .where(eq(schema.exercises.id, id));
+    return row?.equipment ?? [];
+}

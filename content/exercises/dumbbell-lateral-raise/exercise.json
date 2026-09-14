@@ -1,6 +1,7 @@
 {
     "name": "Dumbbell lateral raise",
     "trackingType": "weight_reps",
+    "equipment": ["dumbbell"],
     "notes": "Standing shoulder isolation. Record the load of one dumbbell.",
     "guide": {
         "setup": "Stand with dumbbells at the sides, a soft bend in the elbows, and a tall chest without arching the lower back.",

@@ -2,6 +2,7 @@ import { join } from 'node:path';
 import { TrackingType } from '@app/domain';
 import { InvalidFormatError } from '@app/errors';
 import { describe, expect, it } from 'vitest';
+import { exerciseEntrySchema } from './exercise-entry.js';
 import { loadCatalog } from './load-catalog.js';
 
 const fixtures = join(__dirname, '..', 'fixtures');
@@ -53,5 +54,12 @@ describe('loadCatalog', () => {
 
     it('rejects a directory that does not exist', async () => {
         await expect(loadCatalog({ dir: join(fixtures, 'nowhere') })).rejects.toThrow(InvalidFormatError);
+    });
+
+    it('defaults equipment to none and rejects an unknown value', () => {
+        expect(exerciseEntrySchema.parse({ name: 'Plank', trackingType: 'duration' }).equipment).toEqual([]);
+        expect(
+            exerciseEntrySchema.safeParse({ name: 'X', trackingType: 'duration', equipment: ['laser'] }).success,
+        ).toBe(false);
     });
 });

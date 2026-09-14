@@ -1,6 +1,7 @@
 {
     "name": "Leg press",
     "trackingType": "weight_reps",
+    "equipment": ["machine"],
     "notes": "45-degree or horizontal sled leg press.",
     "guide": {
         "setup": "Sit with the lower back and hips against the pad, feet about shoulder width on the platform, and knees tracking over the toes.",

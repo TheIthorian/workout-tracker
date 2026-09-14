@@ -1,6 +1,7 @@
 {
     "name": "Dumbbell biceps curl",
     "trackingType": "weight_reps",
+    "equipment": ["dumbbell"],
     "notes": "Standing curl. Record the load of one dumbbell.",
     "guide": {
         "setup": "Stand tall holding dumbbells at the sides with palms forward and elbows close to the ribs.",

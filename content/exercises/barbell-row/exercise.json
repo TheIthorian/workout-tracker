@@ -1,6 +1,7 @@
 {
     "name": "Barbell row",
     "trackingType": "weight_reps",
+    "equipment": ["barbell"],
     "notes": "Bent-over row from a braced hinge position.",
     "guide": {
         "setup": "Hold the bar just outside the legs, hinge until the torso is roughly 30 to 45 degrees from the floor, and brace.",

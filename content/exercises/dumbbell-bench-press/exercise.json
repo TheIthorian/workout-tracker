@@ -1,6 +1,7 @@
 {
     "name": "Dumbbell bench press",
     "trackingType": "weight_reps",
+    "equipment": ["dumbbell", "bench"],
     "notes": "Flat dumbbell press. Record the load of one dumbbell.",
     "guide": {
         "setup": "Lie on a flat bench with a dumbbell in each hand, feet planted, and shoulder blades pulled together.",

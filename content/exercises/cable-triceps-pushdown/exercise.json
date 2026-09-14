@@ -1,6 +1,7 @@
 {
     "name": "Cable triceps pushdown",
     "trackingType": "weight_reps",
+    "equipment": ["cable"],
     "notes": "Rope or straight-bar cable pushdown.",
     "guide": {
         "setup": "Face a high cable with elbows tucked at the sides and hands holding the attachment near chest height.",

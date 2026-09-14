@@ -1,6 +1,7 @@
 {
     "name": "Barbell bench press",
     "trackingType": "weight_reps",
+    "equipment": ["barbell", "bench"],
     "notes": "Flat barbell press.",
     "guide": {
         "setup": "Lie with eyes under the bar, feet planted, shoulder blades pulled together, and hands just wider than shoulder width.",

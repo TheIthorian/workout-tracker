@@ -1,6 +1,7 @@
 {
     "name": "Leg extension",
     "trackingType": "weight_reps",
+    "equipment": ["machine"],
     "notes": "Machine quadriceps extension.",
     "guide": {
         "setup": "Align the knee joints with the machine pivot and place the shin pad just above the ankles.",

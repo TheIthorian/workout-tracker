@@ -1,6 +1,7 @@
 {
     "name": "Barbell overhead press",
     "trackingType": "weight_reps",
+    "equipment": ["barbell"],
     "notes": "Standing strict press.",
     "guide": {
         "setup": "Stand tall with the bar at the upper chest, forearms vertical, glutes squeezed, and hands just outside the shoulders.",

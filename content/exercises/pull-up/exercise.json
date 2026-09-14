@@ -1,6 +1,7 @@
 {
     "name": "Pull-up",
     "trackingType": "weight_reps",
+    "equipment": ["pull_up_bar"],
     "notes": "Bodyweight vertical pull. Add external load only when appropriate.",
     "guide": {
         "setup": "Hang from a bar with hands just outside shoulder width and shoulders pulled gently away from the ears.",

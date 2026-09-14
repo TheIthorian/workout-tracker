@@ -1,6 +1,7 @@
 {
     "name": "Rowing",
     "trackingType": "distance_time",
+    "equipment": ["rowing_machine"],
     "notes": "Ergometer or on-water rowing tracked by distance and elapsed time.",
     "guide": {
         "setup": "Set the foot straps securely and sit tall with relaxed shoulders and shins near vertical at the catch.",
