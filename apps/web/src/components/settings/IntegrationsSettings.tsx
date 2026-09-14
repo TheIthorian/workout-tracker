@@ -111,28 +111,26 @@ export function IntegrationsSettings(): JSX.Element {
             <div className="space-y-6">
                 <Card className="overflow-hidden border-border/80 shadow-sm">
                     <CardHeader className="border-b border-border/60 bg-muted/20">
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                            <div className="flex min-w-0 flex-1 items-start gap-4">
-                                <div className="shrink-0 pt-0.5">
-                                    <img
-                                        src="/mcp-logo-light.svg"
-                                        alt="Model Context Protocol"
-                                        className="h-8 w-auto max-w-[min(100%,280px)] dark:hidden"
-                                    />
-                                    <img
-                                        src="/mcp-logo-dark.svg"
-                                        alt=""
-                                        className="hidden h-8 w-auto max-w-[min(100%,280px)] dark:block"
-                                        aria-hidden
-                                    />
-                                </div>
-                                <div className="min-w-0">
-                                    <CardTitle className="text-xl">Connect your tools</CardTitle>
-                                    <CardDescription className="mt-1.5">
-                                        Connect Cursor, Claude, or other MCP clients using a personal server URL. Each
-                                        URL can be revoked anytime.
-                                    </CardDescription>
-                                </div>
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
+                            <div className="shrink-0 sm:pt-0.5">
+                                <img
+                                    src="/mcp-logo-light.svg"
+                                    alt="Model Context Protocol"
+                                    className="h-7 w-auto sm:h-8 dark:hidden"
+                                />
+                                <img
+                                    src="/mcp-logo-dark.svg"
+                                    alt=""
+                                    className="hidden h-7 w-auto sm:h-8 dark:block"
+                                    aria-hidden
+                                />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <CardTitle className="text-xl">Connect your tools</CardTitle>
+                                <CardDescription className="mt-1.5">
+                                    Connect Cursor, Claude, or other MCP clients using a personal server URL. Each URL
+                                    can be revoked anytime.
+                                </CardDescription>
                             </div>
                         </div>
                     </CardHeader>
