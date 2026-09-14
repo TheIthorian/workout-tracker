@@ -1,3 +1,4 @@
+import { OnboardingStage } from '@app/domain';
 import { sql } from 'drizzle-orm';
 import { foreignKey, index, pgEnum, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { user } from './auth.js';
@@ -8,10 +9,14 @@ import { user } from './auth.js';
  */
 export const workspaceRole = pgEnum('workspace_role', ['member', 'admin', 'owner']);
 
+/** Mirrors `OnboardingStage` in `@app/domain`; the two must stay in step. */
+export const onboardingStageEnum = pgEnum('onboarding_stage', [OnboardingStage.Equipment, OnboardingStage.Complete]);
+
 /** The unit of multi-tenancy. Nearly every application row belongs to exactly one of these. */
 export const workspaces = pgTable('workspaces', {
     id: uuid('id').primaryKey().defaultRandom().notNull(),
     name: text('name').notNull(),
+    onboardingStage: onboardingStageEnum('onboarding_stage').default(OnboardingStage.Equipment).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
         .default(sql`now()`)
         .notNull(),

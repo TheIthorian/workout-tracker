@@ -3,5 +3,6 @@ export * from './lockout.js';
 export * from './workspaces.js';
 export * from './mcp.js';
 export * from './exercises.js';
+export * from './equipment-presets.js';
 export * from './routines.js';
 export * from './sessions.js';

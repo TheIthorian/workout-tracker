@@ -50,6 +50,13 @@
             "when": 1789292840807,
             "tag": "0006_gorgeous_korg",
             "breakpoints": true
+        },
+        {
+            "idx": 7,
+            "version": "7",
+            "when": 1789424468022,
+            "tag": "0007_silent_zeigeist",
+            "breakpoints": true
         }
     ]
 }

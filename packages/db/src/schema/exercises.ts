@@ -1,4 +1,4 @@
-import { TrackingType } from '@app/domain';
+import { Equipment, TrackingType } from '@app/domain';
 import { sql } from 'drizzle-orm';
 import {
     check,
@@ -21,6 +21,21 @@ export const trackingTypeEnum = pgEnum('tracking_type', [
     TrackingType.DistanceTime,
 ]);
 
+export const equipmentEnum = pgEnum('equipment', [
+    Equipment.Barbell,
+    Equipment.Dumbbell,
+    Equipment.Kettlebell,
+    Equipment.Cable,
+    Equipment.Machine,
+    Equipment.SquatRack,
+    Equipment.Bench,
+    Equipment.PullUpBar,
+    Equipment.ResistanceBand,
+    Equipment.Treadmill,
+    Equipment.StationaryBike,
+    Equipment.RowingMachine,
+]);
+
 /**
  * The exercise library: catalog exercises shared by every workspace, and each workspace's own
  * custom ones. `workspace_id IS NULL` marks a catalog row; `slug` is the seed's stable key for it.
@@ -40,6 +55,10 @@ export const exercises = pgTable(
         createdByUserId: uuid('created_by_user_id'),
         name: text('name').notNull(),
         trackingType: trackingTypeEnum('tracking_type').notNull(),
+        equipment: equipmentEnum('equipment')
+            .array()
+            .notNull()
+            .default(sql`'{}'::equipment[]`),
         notes: text('notes'),
         guideSetup: text('guide_setup'),
         guideExecution: text('guide_execution'),
