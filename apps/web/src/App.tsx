@@ -1,7 +1,7 @@
 import { StrictMode, Suspense, lazy, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PostHogProvider } from '@posthog/react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { createBrowserRouter, createRoutesFromElements, Outlet, Route, RouterProvider } from 'react-router-dom';
 import { AnalyticsBridge } from '@/components/AnalyticsBridge';
 import { FullPageSpinner } from '@/components/FullPageSpinner';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -51,7 +51,7 @@ const posthogKey = import.meta.env.VITE_PUBLIC_POSTHOG_KEY;
  * misconfiguration. `usePostHog` falls back to an uninitialised client outside a provider and
  * `useAnalytics` already null-checks it, so callers keep working either way.
  */
-const AnalyticsProvider = ({ children }: { children: ReactNode }) =>
+const AnalyticsProvider = ({ children }: { children: ReactNode }): JSX.Element =>
     posthogKey ? (
         <PostHogProvider apiKey={posthogKey} options={posthogOptions}>
             {children}
@@ -60,64 +60,77 @@ const AnalyticsProvider = ({ children }: { children: ReactNode }) =>
         <>{children}</>
     );
 
-const App = () => (
-    <StrictMode>
-        <AnalyticsProvider>
-            <ThemeProvider defaultTheme='system' storageKey='vite-ui-theme'>
-                <QueryClientProvider client={queryClient}>
-                    <TooltipProvider>
-                        <Toaster />
-                        <Sonner />
-                        <BrowserRouter>
-                            <AuthProvider>
-                                <WorkspaceProvider>
-                                    <AnalyticsBridge />
-                                    <Suspense fallback={<FullPageSpinner />}>
-                                        <Routes>
-                                            <Route path='/' element={<WorkspaceRedirect />} />
-                                            <Route path='/login' element={<Login />} />
-                                            <Route path='/register' element={<Register />} />
-                                            <Route path='/403' element={<ForbiddenError />} />
+/** Router-owned providers keep navigation guards active across workspace and account routes. */
+function SessionLayout(): JSX.Element {
+    return (
+        <AuthProvider>
+            <WorkspaceProvider>
+                <AnalyticsBridge />
+                <Suspense fallback={<FullPageSpinner />}>
+                    <Outlet />
+                </Suspense>
+            </WorkspaceProvider>
+        </AuthProvider>
+    );
+}
 
-                                            <Route
-                                                path='/settings'
-                                                element={
-                                                    <ProtectedRoute>
-                                                        <SettingsRedirectPage />
-                                                    </ProtectedRoute>
-                                                }
-                                            />
+const router = createBrowserRouter(
+    createRoutesFromElements(
+        <Route element={<SessionLayout />}>
+            <Route path="/" element={<WorkspaceRedirect />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/403" element={<ForbiddenError />} />
 
-                                            <Route
-                                                path='/workspaces/:workspaceId'
-                                                element={
-                                                    <ProtectedRoute>
-                                                        <AppLayout />
-                                                    </ProtectedRoute>
-                                                }
-                                            >
-                                                <Route index element={<TodayPage />} />
-                                                <Route path='today' element={<TodayPage />} />
-                                                <Route path='routines' element={<RoutinesListPage />} />
-                                                <Route path='routines/:routineId' element={<RoutineDetailPage />} />
-                                                <Route path='exercises' element={<ExercisesListPage />} />
-                                                <Route path='exercises/:exerciseId' element={<ExerciseDetailPage />} />
-                                                <Route path='sessions/:sessionId' element={<SessionDetailPage />} />
-                                                <Route path='history' element={<HistoryPage />} />
-                                                <Route path='settings' element={<Settings />} />
-                                            </Route>
+            <Route
+                path="/settings"
+                element={
+                    <ProtectedRoute>
+                        <SettingsRedirectPage />
+                    </ProtectedRoute>
+                }
+            />
 
-                                            <Route path='*' element={<NotFoundError />} />
-                                        </Routes>
-                                    </Suspense>
-                                </WorkspaceProvider>
-                            </AuthProvider>
-                        </BrowserRouter>
-                    </TooltipProvider>
-                </QueryClientProvider>
-            </ThemeProvider>
-        </AnalyticsProvider>
-    </StrictMode>
+            <Route
+                path="/workspaces/:workspaceId"
+                element={
+                    <ProtectedRoute>
+                        <AppLayout />
+                    </ProtectedRoute>
+                }
+            >
+                <Route index element={<TodayPage />} />
+                <Route path="today" element={<TodayPage />} />
+                <Route path="routines" element={<RoutinesListPage />} />
+                <Route path="routines/:routineId" element={<RoutineDetailPage />} />
+                <Route path="exercises" element={<ExercisesListPage />} />
+                <Route path="exercises/:exerciseId" element={<ExerciseDetailPage />} />
+                <Route path="sessions/:sessionId" element={<SessionDetailPage />} />
+                <Route path="history" element={<HistoryPage />} />
+                <Route path="settings" element={<Settings />} />
+            </Route>
+
+            <Route path="*" element={<NotFoundError />} />
+        </Route>,
+    ),
 );
+
+function App(): JSX.Element {
+    return (
+        <StrictMode>
+            <AnalyticsProvider>
+                <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+                    <QueryClientProvider client={queryClient}>
+                        <TooltipProvider>
+                            <Toaster />
+                            <Sonner />
+                            <RouterProvider router={router} />
+                        </TooltipProvider>
+                    </QueryClientProvider>
+                </ThemeProvider>
+            </AnalyticsProvider>
+        </StrictMode>
+    );
+}
 
 export default App;

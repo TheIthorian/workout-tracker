@@ -25,21 +25,26 @@ import type {
 type SessionAction<TVariables> = { sessionId: string; variables: TVariables };
 
 /** Lists workouts newest first, including completed sessions for history. */
-export function useSessions({ workspaceId }: { workspaceId: string }): UseInfiniteQueryResult<
-    InfiniteData<PaginatedResponse<SessionSummary>>,
-    Error
-> {
+export function useSessions({
+    workspaceId,
+}: {
+    workspaceId: string;
+}): UseInfiniteQueryResult<InfiniteData<PaginatedResponse<SessionSummary>>, Error> {
     return useInfiniteQuery({
         queryKey: ['sessions', workspaceId, 'list'],
         queryFn: ({ pageParam }) => sessionsApi.getAll(workspaceId, { page: pageParam }),
         initialPageParam: 1,
-        getNextPageParam: page => (page.page < page.totalPages ? page.page + 1 : undefined),
+        getNextPageParam: (page) => (page.page < page.totalPages ? page.page + 1 : undefined),
         enabled: Boolean(workspaceId),
     });
 }
 
 /** Gets the workspace's one active workout, if it has one. */
-export function useActiveSession({ workspaceId }: { workspaceId: string }): UseQueryResult<ActiveSessionResponse, Error> {
+export function useActiveSession({
+    workspaceId,
+}: {
+    workspaceId: string;
+}): UseQueryResult<ActiveSessionResponse, Error> {
     return useQuery({
         queryKey: ['sessions', workspaceId, 'active'],
         queryFn: () => sessionsApi.getActive(workspaceId),
@@ -48,10 +53,13 @@ export function useActiveSession({ workspaceId }: { workspaceId: string }): UseQ
 }
 
 /** Gets a single workout aggregate. */
-export function useSession({ workspaceId, sessionId }: { workspaceId: string; sessionId: string }): UseQueryResult<
-    SessionDetail,
-    Error
-> {
+export function useSession({
+    workspaceId,
+    sessionId,
+}: {
+    workspaceId: string;
+    sessionId: string;
+}): UseQueryResult<SessionDetail, Error> {
     return useQuery({
         queryKey: sessionKey({ workspaceId, sessionId }),
         queryFn: () => sessionsApi.getById(workspaceId, sessionId),
@@ -60,25 +68,25 @@ export function useSession({ workspaceId, sessionId }: { workspaceId: string; se
 }
 
 /** Starts a blank workout or snapshots a routine into one. */
-export function useStartSession({ workspaceId }: { workspaceId: string }): UseMutationResult<
-    SessionDetail,
-    Error,
-    StartSessionRequest
-> {
+export function useStartSession({
+    workspaceId,
+}: {
+    workspaceId: string;
+}): UseMutationResult<SessionDetail, Error, StartSessionRequest> {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: data => sessionsApi.start(workspaceId, data),
-        onSuccess: session => writeSession({ queryClient, workspaceId, session }),
+        mutationFn: (data) => sessionsApi.start(workspaceId, data),
+        onSuccess: (session) => writeSession({ queryClient, workspaceId, session }),
     });
 }
 
 /** Adds an ad-hoc exercise to an active workout. */
-export function useAddSessionExercise({ workspaceId }: { workspaceId: string }): UseMutationResult<
-    SessionDetail,
-    Error,
-    SessionAction<AddSessionExerciseRequest>
-> {
+export function useAddSessionExercise({
+    workspaceId,
+}: {
+    workspaceId: string;
+}): UseMutationResult<SessionDetail, Error, SessionAction<AddSessionExerciseRequest>> {
     return useSessionMutation({
         workspaceId,
         mutationFn: ({ sessionId, variables }) => sessionsApi.addExercise(workspaceId, sessionId, variables),
@@ -86,7 +94,11 @@ export function useAddSessionExercise({ workspaceId }: { workspaceId: string }):
 }
 
 /** Updates an active exercise, including its skipped status. */
-export function useUpdateSessionExercise({ workspaceId }: { workspaceId: string }): UseMutationResult<
+export function useUpdateSessionExercise({
+    workspaceId,
+}: {
+    workspaceId: string;
+}): UseMutationResult<
     SessionDetail,
     Error,
     SessionAction<{ sessionExerciseId: string; data: PatchSessionExerciseRequest }>
@@ -99,11 +111,11 @@ export function useUpdateSessionExercise({ workspaceId }: { workspaceId: string 
 }
 
 /** Persists the complete exercise order for an active workout. */
-export function useReorderSessionExercises({ workspaceId }: { workspaceId: string }): UseMutationResult<
-    SessionDetail,
-    Error,
-    SessionAction<string[]>
-> {
+export function useReorderSessionExercises({
+    workspaceId,
+}: {
+    workspaceId: string;
+}): UseMutationResult<SessionDetail, Error, SessionAction<string[]>> {
     return useSessionMutation({
         workspaceId,
         mutationFn: ({ sessionId, variables }) => sessionsApi.reorderExercises(workspaceId, sessionId, variables),
@@ -111,11 +123,11 @@ export function useReorderSessionExercises({ workspaceId }: { workspaceId: strin
 }
 
 /** Completes a workout after it has at least one working set. */
-export function useCompleteSession({ workspaceId }: { workspaceId: string }): UseMutationResult<
-    SessionDetail,
-    Error,
-    SessionAction<string | null | undefined>
-> {
+export function useCompleteSession({
+    workspaceId,
+}: {
+    workspaceId: string;
+}): UseMutationResult<SessionDetail, Error, SessionAction<string | null | undefined>> {
     return useSessionMutation({
         workspaceId,
         mutationFn: ({ sessionId, variables }) => sessionsApi.complete(workspaceId, sessionId, variables),
@@ -123,7 +135,11 @@ export function useCompleteSession({ workspaceId }: { workspaceId: string }): Us
 }
 
 /** Corrects a recorded set in an active or completed workout. */
-export function useUpdateSessionSet({ workspaceId }: { workspaceId: string }): UseMutationResult<
+export function useUpdateSessionSet({
+    workspaceId,
+}: {
+    workspaceId: string;
+}): UseMutationResult<
     SessionDetail,
     Error,
     SessionAction<{ sessionExerciseId: string; setId: string; data: PatchSetRequest }>
@@ -136,11 +152,11 @@ export function useUpdateSessionSet({ workspaceId }: { workspaceId: string }): U
 }
 
 /** Deletes a mistaken set and lets the API renumber the remaining entries. */
-export function useRemoveSessionSet({ workspaceId }: { workspaceId: string }): UseMutationResult<
-    SessionDetail,
-    Error,
-    SessionAction<{ sessionExerciseId: string; setId: string }>
-> {
+export function useRemoveSessionSet({
+    workspaceId,
+}: {
+    workspaceId: string;
+}): UseMutationResult<SessionDetail, Error, SessionAction<{ sessionExerciseId: string; setId: string }>> {
     return useSessionMutation({
         workspaceId,
         mutationFn: ({ sessionId, variables }) =>
@@ -153,7 +169,7 @@ export function useAbandonSession({ workspaceId }: { workspaceId: string }): Use
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: sessionId => sessionsApi.abandon(workspaceId, sessionId),
+        mutationFn: (sessionId) => sessionsApi.abandon(workspaceId, sessionId),
         onSuccess: (_result, sessionId) => {
             queryClient.removeQueries({ queryKey: sessionKey({ workspaceId, sessionId }) });
             queryClient.setQueryData<ActiveSessionResponse>(['sessions', workspaceId, 'active'], { session: null });
@@ -167,7 +183,11 @@ export function useAbandonSession({ workspaceId }: { workspaceId: string }): Use
  * A rejected request restores the exact prior aggregate and refetches, so a delayed response never
  * leaves the workout screen with a fabricated set.
  */
-export function useLogSet({ workspaceId }: { workspaceId: string }): UseMutationResult<
+export function useLogSet({
+    workspaceId,
+}: {
+    workspaceId: string;
+}): UseMutationResult<
     SessionDetail,
     Error,
     SessionAction<{ sessionExerciseId: string; data: LogSetRequest }>,
@@ -185,7 +205,7 @@ export function useLogSet({ workspaceId }: { workspaceId: string }): UseMutation
             const previous = queryClient.getQueryData<SessionDetail>(key);
             if (previous) {
                 const now = new Date().toISOString();
-                const exercises = previous.exercises.map(exercise => {
+                const exercises = previous.exercises.map((exercise) => {
                     if (exercise.id !== variables.sessionExerciseId) return exercise;
                     return {
                         ...exercise,
@@ -218,7 +238,7 @@ export function useLogSet({ workspaceId }: { workspaceId: string }): UseMutation
             queryClient.setQueryData(key, context?.previous);
             queryClient.invalidateQueries({ queryKey: key });
         },
-        onSuccess: session => writeSession({ queryClient, workspaceId, session }),
+        onSuccess: (session) => writeSession({ queryClient, workspaceId, session }),
     });
 }
 
@@ -234,7 +254,7 @@ function useSessionMutation<TVariables>({
 
     return useMutation({
         mutationFn,
-        onSuccess: session => writeSession({ queryClient, workspaceId, session }),
+        onSuccess: (session) => writeSession({ queryClient, workspaceId, session }),
     });
 }
 
@@ -249,7 +269,9 @@ function writeSession({
     session: SessionDetail;
 }): void {
     queryClient.setQueryData<SessionDetail>(sessionKey({ workspaceId, sessionId: session.id }), session);
-    queryClient.setQueryData<ActiveSessionResponse>(['sessions', workspaceId, 'active'], { session: session.completedAt ? null : session });
+    queryClient.setQueryData<ActiveSessionResponse>(['sessions', workspaceId, 'active'], {
+        session: session.completedAt ? null : session,
+    });
     queryClient.invalidateQueries({ queryKey: ['sessions', workspaceId, 'list'] });
     for (const exercise of session.exercises) {
         queryClient.invalidateQueries({

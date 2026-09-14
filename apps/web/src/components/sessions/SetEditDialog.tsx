@@ -1,7 +1,14 @@
 import { useEffect, useState, type ComponentProps } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { TrackingType } from '@/models/exercise';
@@ -62,30 +69,30 @@ export function SetEditDialog({ exercise, set, isSaving, onOpenChange, onSave }:
                     <DialogTitle>Edit set {set.setIndex}</DialogTitle>
                     <DialogDescription>{exercise.exercise.name}</DialogDescription>
                 </DialogHeader>
-                <div className='grid grid-cols-2 gap-3'>
+                <div className="grid grid-cols-2 gap-3">
                     {exercise.trackingType === TrackingType.WeightReps && (
-                        <SetField label='Weight (kg)' value={weightKg} onChange={setWeightKg} step='0.25' />
+                        <SetField label="Weight (kg)" value={weightKg} onChange={setWeightKg} step="0.25" />
                     )}
                     {exercise.trackingType === TrackingType.WeightReps && (
-                        <SetField label='Reps' value={reps} onChange={setReps} required />
+                        <SetField label="Reps" value={reps} onChange={setReps} required />
                     )}
                     {exercise.trackingType === TrackingType.Duration && (
-                        <SetField label='Seconds' value={durationSeconds} onChange={setDurationSeconds} required />
+                        <SetField label="Seconds" value={durationSeconds} onChange={setDurationSeconds} required />
                     )}
                     {exercise.trackingType === TrackingType.DistanceTime && (
-                        <SetField label='Distance (m)' value={distanceM} onChange={setDistanceM} step='0.1' required />
+                        <SetField label="Distance (m)" value={distanceM} onChange={setDistanceM} step="0.1" required />
                     )}
                     {exercise.trackingType === TrackingType.DistanceTime && (
-                        <SetField label='Seconds' value={durationSeconds} onChange={setDurationSeconds} required />
+                        <SetField label="Seconds" value={durationSeconds} onChange={setDurationSeconds} required />
                     )}
-                    <SetField label='RPE' value={rpe} onChange={setRpe} step='0.5' min='0' max='10' />
+                    <SetField label="RPE" value={rpe} onChange={setRpe} step="0.5" min="0" max="10" />
                 </div>
-                <label className='flex min-h-9 items-center gap-2 text-sm text-muted-foreground'>
-                    <Checkbox checked={isWarmup} onCheckedChange={checked => setWarmup(checked === true)} />
+                <label className="flex min-h-9 items-center gap-2 text-sm text-muted-foreground">
+                    <Checkbox checked={isWarmup} onCheckedChange={(checked) => setWarmup(checked === true)} />
                     Warm-up set
                 </label>
                 <DialogFooter>
-                    <Button variant='ghost' onClick={() => onOpenChange(false)}>
+                    <Button variant="ghost" onClick={() => onOpenChange(false)}>
                         Cancel
                     </Button>
                     <Button onClick={save} disabled={!isValid || isSaving}>
@@ -111,17 +118,17 @@ function SetField({
     required?: boolean;
 } & Omit<ComponentProps<typeof Input>, 'value' | 'onChange'>): JSX.Element {
     return (
-        <div className='space-y-1'>
-            <Label className='text-xs text-muted-foreground'>
+        <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">
                 {label}
-                {required && <span className='text-destructive'> *</span>}
+                {required && <span className="text-destructive"> *</span>}
             </Label>
             <Input
-                type='number'
-                inputMode='decimal'
+                type="number"
+                inputMode="decimal"
                 value={value}
-                onChange={event => onChange(event.target.value)}
-                className='h-10'
+                onChange={(event) => onChange(event.target.value)}
+                className="h-10"
                 {...inputProps}
             />
         </div>

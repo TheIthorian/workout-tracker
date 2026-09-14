@@ -18,7 +18,9 @@ type SetLogFormProps = {
 export function SetLogForm({ exercise, previousSet, isPending, onLog }: SetLogFormProps): JSX.Element {
     const [weightKg, setWeightKg] = useState(numberDraft(previousSet?.weightKg ?? exercise.targetWeightKg));
     const [reps, setReps] = useState(numberDraft(previousSet?.reps ?? exercise.targetReps));
-    const [durationSeconds, setDurationSeconds] = useState(numberDraft(previousSet?.durationSeconds ?? exercise.targetDurationSeconds));
+    const [durationSeconds, setDurationSeconds] = useState(
+        numberDraft(previousSet?.durationSeconds ?? exercise.targetDurationSeconds),
+    );
     const [distanceM, setDistanceM] = useState(numberDraft(previousSet?.distanceM ?? exercise.targetDistanceM));
     const [isWarmup, setWarmup] = useState(false);
     const [rpe, setRpe] = useState('');
@@ -64,32 +66,55 @@ export function SetLogForm({ exercise, previousSet, isPending, onLog }: SetLogFo
               : requiredNumber(distanceM) !== null && requiredNumber(durationSeconds) !== null;
 
     return (
-        <div className='space-y-3 rounded-xl bg-secondary/50 p-3'>
-            <div className='grid grid-cols-2 gap-3 sm:grid-cols-4'>
+        <div className="space-y-3 rounded-xl bg-secondary/50 p-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {exercise.trackingType === TrackingType.WeightReps && (
-                    <NumberField label='Weight (kg)' value={weightKg} onChange={setWeightKg} step='0.25' min='0' />
+                    <NumberField label="Weight (kg)" value={weightKg} onChange={setWeightKg} step="0.25" min="0" />
                 )}
                 {exercise.trackingType === TrackingType.WeightReps && (
-                    <NumberField label='Reps' value={reps} onChange={setReps} min='0' required />
+                    <NumberField label="Reps" value={reps} onChange={setReps} min="0" required />
                 )}
                 {exercise.trackingType === TrackingType.Duration && (
-                    <NumberField label='Seconds' value={durationSeconds} onChange={setDurationSeconds} min='0' required />
+                    <NumberField
+                        label="Seconds"
+                        value={durationSeconds}
+                        onChange={setDurationSeconds}
+                        min="0"
+                        required
+                    />
                 )}
                 {exercise.trackingType === TrackingType.DistanceTime && (
-                    <NumberField label='Distance (m)' value={distanceM} onChange={setDistanceM} step='0.1' min='0' required />
+                    <NumberField
+                        label="Distance (m)"
+                        value={distanceM}
+                        onChange={setDistanceM}
+                        step="0.1"
+                        min="0"
+                        required
+                    />
                 )}
                 {exercise.trackingType === TrackingType.DistanceTime && (
-                    <NumberField label='Seconds' value={durationSeconds} onChange={setDurationSeconds} min='0' required />
+                    <NumberField
+                        label="Seconds"
+                        value={durationSeconds}
+                        onChange={setDurationSeconds}
+                        min="0"
+                        required
+                    />
                 )}
-                <NumberField label='RPE' value={rpe} onChange={setRpe} step='0.5' min='0' max='10' />
+                <NumberField label="RPE" value={rpe} onChange={setRpe} step="0.5" min="0" max="10" />
             </div>
-            <div className='flex flex-wrap items-center justify-between gap-3'>
-                <label className='flex min-h-9 items-center gap-2 text-sm text-muted-foreground'>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <label className="flex min-h-9 items-center gap-2 text-sm text-muted-foreground">
                     <Checkbox checked={isWarmup} onCheckedChange={(checked) => setWarmup(checked === true)} />
                     Warm-up set
                 </label>
-                <Button onClick={log} disabled={!valid || isPending} className='min-w-32 gap-2'>
-                    {isPending ? <Plus className='h-4 w-4 animate-spin' aria-hidden /> : <Check className='h-4 w-4' aria-hidden />}
+                <Button onClick={log} disabled={!valid || isPending} className="min-w-32 gap-2">
+                    {isPending ? (
+                        <Plus className="h-4 w-4 animate-spin" aria-hidden />
+                    ) : (
+                        <Check className="h-4 w-4" aria-hidden />
+                    )}
                     {isPending ? 'Logging…' : isWarmup ? 'Log warm-up' : 'Log set'}
                 </Button>
             </div>
@@ -111,17 +136,17 @@ function NumberField({
     required?: boolean;
 } & Omit<ComponentProps<typeof Input>, 'value' | 'onChange'>): JSX.Element {
     return (
-        <div className='space-y-1'>
-            <Label className='text-xs text-muted-foreground'>
+        <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">
                 {label}
-                {required && <span className='text-destructive'> *</span>}
+                {required && <span className="text-destructive"> *</span>}
             </Label>
             <Input
-                type='number'
-                inputMode='decimal'
+                type="number"
+                inputMode="decimal"
                 value={value}
                 onChange={(event) => onChange(event.target.value)}
-                className='h-10 bg-background'
+                className="h-10 bg-background"
                 {...inputProps}
             />
         </div>

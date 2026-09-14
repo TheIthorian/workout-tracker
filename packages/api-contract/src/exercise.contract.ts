@@ -8,7 +8,7 @@ export const exerciseGuideImageResponseSchema = z.object({
     id: guidSchema,
     caption: z.string().nullable(),
     position: z.number().int(),
-    /** Absolute; served by the CDN in front of object storage, never by this API. */
+    /** Absolute URL; custom images require a workspace session, catalog images use the CDN. */
     url: z.url(),
 });
 
@@ -102,3 +102,15 @@ export type PostExerciseRequest = z.infer<typeof postExerciseRequestSchema>;
 export type PatchExerciseRequest = z.infer<typeof patchExerciseRequestSchema>;
 export type PostExerciseLinkRequest = z.infer<typeof postExerciseLinkRequestSchema>;
 export type PatchExerciseLinkRequest = z.infer<typeof patchExerciseLinkRequestSchema>;
+
+/** Image uploads use one multipart file, with an optional caption in the query string. */
+export const postExerciseImageQuerySchema = z.object({ caption: z.string().max(200).optional() });
+export const patchExerciseImageRequestSchema = z.object({ caption: z.string().max(200).nullable() });
+export const MAX_EXERCISE_IMAGE_BYTES = 10 * 1024 * 1024;
+export enum ExerciseImageContentType {
+    Jpeg = 'image/jpeg',
+    Png = 'image/png',
+    Webp = 'image/webp',
+}
+export type PostExerciseImageQuery = z.infer<typeof postExerciseImageQuerySchema>;
+export type PatchExerciseImageRequest = z.infer<typeof patchExerciseImageRequestSchema>;

@@ -14,7 +14,7 @@ export default {
         },
         extend: {
             fontFamily: {
-                heading: ['DM Serif Display', 'serif'],
+                heading: ['DM Sans', 'system-ui', 'sans-serif'],
                 body: ['DM Sans', 'system-ui', 'sans-serif'],
             },
             colors: {

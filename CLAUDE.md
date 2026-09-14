@@ -244,6 +244,12 @@ Vite + React SPA with Tailwind and shadcn/ui, talking to `apps/api` through its 
 client (`src/lib/http-client.ts`) — not `@app/api-client`, which is `apps/mcp`'s bearer-token client
 and has no session concept.
 
+The consumer experience is mobile-first and comfortable to use one-handed at the gym. Prioritize
+clarity over density, large tap targets, minimal typing, and an unmistakable primary action.
+Use a persistent desktop header and mobile bottom navigation. Keep light/dark/system themes and
+date preferences remembered, provide actionable empty/error states and brief action feedback,
+confirm destructive actions, and protect unsaved exercise-guide edits when navigating away.
+
 ### packages/services
 
 Business logic. Depends on `db` and `domain`; knows nothing about HTTP.

@@ -12,7 +12,7 @@ export function useQueryString<T extends string[]>(supportedProperties: T, persi
 
         if (shouldReset) {
             localStorage.removeItem(persistenceKey);
-            setUrlSearchParams(prev => {
+            setUrlSearchParams((prev) => {
                 prev.delete('filter');
                 return prev;
             });
@@ -21,7 +21,7 @@ export function useQueryString<T extends string[]>(supportedProperties: T, persi
 
         // Only load if URL params are effectively empty (ignoring non-supported ones if we wanted to be strict, but checking size is a good proxy)
         // Or better: check if any supported property is present.
-        const hasSupportedParams = supportedProperties.some(prop => urlSearchParams.has(prop));
+        const hasSupportedParams = supportedProperties.some((prop) => urlSearchParams.has(prop));
 
         if (!hasSupportedParams) {
             const saved = localStorage.getItem(persistenceKey);
@@ -41,7 +41,7 @@ export function useQueryString<T extends string[]>(supportedProperties: T, persi
         if (!persistenceKey) return;
 
         const paramsToSave: Record<string, string> = {};
-        supportedProperties.forEach(prop => {
+        supportedProperties.forEach((prop) => {
             const val = urlSearchParams.get(prop);
             if (val) paramsToSave[prop] = val;
         });
@@ -67,14 +67,14 @@ export function useQueryString<T extends string[]>(supportedProperties: T, persi
     }, [supportedProperties, urlSearchParams]);
 
     function setParam(key: T[number], val: string) {
-        setUrlSearchParams(u => {
+        setUrlSearchParams((u) => {
             u.set(key, val);
             return u;
         });
     }
 
     function deleteParam(key: T[number]) {
-        setUrlSearchParams(u => {
+        setUrlSearchParams((u) => {
             u.delete(key);
             return u;
         });

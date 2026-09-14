@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -11,6 +12,7 @@ import { toast } from '@/hooks/use-toast';
  * and redirects to the login page.
  */
 export function useLogout() {
+    const queryClient = useQueryClient();
     const { logout } = useAuth();
     const { currentWorkspace } = useWorkspace();
     const navigate = useNavigate();
@@ -21,6 +23,8 @@ export function useLogout() {
 
         try {
             await logout();
+            queryClient.clear();
+            toast({ title: 'You’re signed out' });
             navigate('/login');
         } catch {
             toast({
@@ -29,5 +33,5 @@ export function useLogout() {
                 description: 'Please try again.',
             });
         }
-    }, [capture, currentWorkspace, logout, navigate]);
+    }, [capture, currentWorkspace, logout, navigate, queryClient]);
 }

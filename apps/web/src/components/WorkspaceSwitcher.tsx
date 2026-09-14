@@ -1,5 +1,5 @@
-import { useNavigate } from 'react-router-dom';
-import { ChevronDown } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Check, ChevronDown, Plus, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -12,47 +12,58 @@ import {
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { cn } from '@/lib/utils';
 
-interface WorkspaceSwitcherProps {
+/** Switches workspaces while preserving the current primary destination. */
+export function WorkspaceSwitcher({
+    className,
+    triggerClassName,
+}: {
     className?: string;
     triggerClassName?: string;
-}
-
-/** Dropdown to change the active workspace and navigate to that workspace’s home route. */
-export function WorkspaceSwitcher({ className, triggerClassName }: WorkspaceSwitcherProps) {
-    const { currentWorkspace, workspaces, setCurrentWorkspaceId } = useWorkspace();
+}): JSX.Element | null {
+    const { currentWorkspace, workspaces } = useWorkspace();
     const navigate = useNavigate();
-
-    if (workspaces.length === 0) return null;
-
+    const location = useLocation();
+    if (!currentWorkspace) return null;
     return (
-        <div className={cn('min-w-0 shrink-0', className)}>
+        <div className={cn('min-w-0', className)}>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button
-                        variant='outline'
-                        className={cn(
-                            'min-w-0 max-w-[min(200px,42vw)] gap-1 sm:max-w-[min(240px,28vw)] sm:gap-2',
-                            triggerClassName,
-                        )}
+                        variant="ghost"
+                        aria-label={`Switch workspace: ${currentWorkspace.name}`}
+                        className={cn('max-w-[48vw] gap-2 px-2 text-xs md:max-w-48 md:text-sm', triggerClassName)}
                     >
-                        <span className='truncate'>{currentWorkspace?.name || 'Select workspace'}</span>
-                        <ChevronDown className='h-4 w-4 shrink-0' />
+                        <Users className="hidden text-muted-foreground sm:block" aria-hidden />
+                        <span className="truncate">{currentWorkspace.name}</span>
+                        <ChevronDown className="h-3 w-3" aria-hidden />
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align='start'>
-                    <DropdownMenuLabel>Workspaces</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {workspaces.map(workspace => (
+                <DropdownMenuContent align="end" className="w-64">
+                    <DropdownMenuLabel className="eyebrow py-3">Your workspaces</DropdownMenuLabel>
+                    {workspaces.map((workspace) => (
                         <DropdownMenuItem
                             key={workspace.workspaceId}
-                            onClick={() => {
-                                setCurrentWorkspaceId(workspace.workspaceId);
-                                navigate(`/workspaces/${workspace.workspaceId}/`);
+                            className="min-h-12 gap-2"
+                            onSelect={() => {
+                                const section = location.pathname.split('/')[3] || 'today';
+                                navigate(`/workspaces/${workspace.workspaceId}/${section}`);
                             }}
                         >
-                            {workspace.name}
+                            <Users className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                            <span className="flex-1 truncate">{workspace.name}</span>
+                            {workspace.workspaceId === currentWorkspace.workspaceId && (
+                                <Check className="h-4 w-4 text-primary" aria-hidden />
+                            )}
                         </DropdownMenuItem>
                     ))}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                        className="min-h-12 gap-2"
+                        onSelect={() => navigate(`/workspaces/${currentWorkspace.workspaceId}/settings?tab=workspaces`)}
+                    >
+                        <Plus className="h-4 w-4" aria-hidden />
+                        Manage workspaces
+                    </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
         </div>

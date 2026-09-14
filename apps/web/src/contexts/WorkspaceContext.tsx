@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { WorkspaceListItem } from '@/models/workspace';
 import { useAuth } from './AuthContext';
 
@@ -15,28 +15,16 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     const { user, isLoading } = useAuth();
     const [currentWorkspaceId, setCurrentWorkspaceIdState] = useState<string | null>(null);
 
-    // Wrapper that clears filters when workspace changes
-    const setCurrentWorkspaceId = (newWorkspaceId: string | null) => {
-        if (newWorkspaceId !== currentWorkspaceId && currentWorkspaceId !== null) {
-            // Clear filter localStorage keys when switching workspaces
-            // These keys are used by useQueryString hook for filter persistence
-            const filterKeys = [''];
-            filterKeys.forEach(key => localStorage.removeItem(key));
-        }
-
-        if (user && !user.workspaces.some(workspace => workspace.workspaceId === newWorkspaceId)) {
-            throw new Error('Workspace not found');
-        }
-
+    const setCurrentWorkspaceId = useCallback((newWorkspaceId: string | null): void => {
         setCurrentWorkspaceIdState(newWorkspaceId);
-    };
+    }, []);
 
     return (
         <WorkspaceContext.Provider
             value={{
                 workspaces: user?.workspaces ?? [],
                 currentWorkspace:
-                    user?.workspaces?.find(w => w.workspaceId === currentWorkspaceId) ?? user?.workspaces?.[0],
+                    user?.workspaces?.find((w) => w.workspaceId === currentWorkspaceId) ?? user?.workspaces?.[0],
                 setCurrentWorkspaceId,
                 isLoading: isLoading,
             }}

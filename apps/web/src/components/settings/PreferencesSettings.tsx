@@ -1,100 +1,87 @@
+import { useState } from 'react';
+import { Monitor, Moon, Sun } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
 import { useTheme } from '@/components/theme-provider';
 import { toast } from '@/hooks/use-toast';
-import { useState, useEffect } from 'react';
-import { Palette } from 'lucide-react';
+import { DateFormat, readDateFormat } from '@/lib/date-format';
 
-const PREFERENCES_KEY = 'userPreferences';
-
-type DateFormatId = 'mdy' | 'dmy' | 'ymd';
-
-export function PreferencesSettings() {
+/** Immediate theme and date choices, remembered on this device. */
+export function PreferencesSettings(): JSX.Element {
     const { theme, setTheme } = useTheme();
-    const [dateFormat, setDateFormat] = useState<DateFormatId>('mdy');
-
-    useEffect(() => {
-        try {
-            const raw = localStorage.getItem(PREFERENCES_KEY);
-            if (raw) {
-                const parsed = JSON.parse(raw) as { dateFormat?: DateFormatId };
-                if (parsed.dateFormat === 'mdy' || parsed.dateFormat === 'dmy' || parsed.dateFormat === 'ymd') {
-                    setDateFormat(parsed.dateFormat);
-                }
-            }
-        } catch {
-            /* ignore corrupt localStorage */
-        }
-    }, []);
-
-    function saveRegionalPreferences() {
-        try {
-            localStorage.setItem(PREFERENCES_KEY, JSON.stringify({ dateFormat }));
-            toast({
-                title: 'Preferences saved',
-                description: 'Date format is stored on this device.',
-            });
-        } catch {
-            toast({
-                variant: 'destructive',
-                title: 'Could not save',
-                description: 'Storage may be disabled for this site.',
-            });
-        }
-    }
-
+    const [dateFormat, setDateFormat] = useState(readDateFormat);
+    const themes = [
+        { value: 'light', label: 'Light', icon: Sun },
+        { value: 'dark', label: 'Dark', icon: Moon },
+        { value: 'system', label: 'System', icon: Monitor },
+    ] as const;
     return (
-        <Card className='overflow-hidden border-border/80 shadow-sm'>
-            <CardHeader className='border-b border-border/60 bg-muted/20'>
-                <div className='flex items-start gap-3'>
-                    <div className='flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary'>
-                        <Palette className='h-5 w-5' aria-hidden />
-                    </div>
-                    <div className='min-w-0 space-y-1'>
-                        <CardTitle className='text-lg'>Display</CardTitle>
-                        <CardDescription>
-                            Theme applies immediately. Date format is saved in this browser only.
-                        </CardDescription>
-                    </div>
-                </div>
+        <Card className="shadow-none">
+            <CardHeader>
+                <CardTitle className="text-xl">Make yourself comfortable</CardTitle>
+                <CardDescription>Your preferences are remembered on this device.</CardDescription>
             </CardHeader>
-            <CardContent className='space-y-6 pt-6'>
-                <div className='space-y-2'>
-                    <Label htmlFor='settings-theme'>Theme</Label>
-                    <Select value={theme} onValueChange={(value: 'light' | 'dark' | 'system') => setTheme(value)}>
-                        <SelectTrigger id='settings-theme' className='max-w-md'>
+            <CardContent className="space-y-8">
+                <fieldset>
+                    <legend className="mb-3 text-sm font-medium">Appearance</legend>
+                    <div className="grid grid-cols-3 gap-3">
+                        {themes.map(({ value, label, icon: Icon }) => (
+                            <label
+                                key={value}
+                                className={`relative cursor-pointer rounded-xl border p-3 text-center ${theme === value ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'hover:bg-secondary'}`}
+                            >
+                                <input
+                                    type="radio"
+                                    name="theme"
+                                    checked={theme === value}
+                                    onChange={() => {
+                                        setTheme(value);
+                                        toast({ title: `${label} theme selected` });
+                                    }}
+                                    className="peer sr-only"
+                                />
+                                <span
+                                    className={`mb-3 flex h-16 items-center justify-center rounded-lg border peer-focus-visible:ring-2 peer-focus-visible:ring-ring ${value === 'dark' ? 'bg-[#1c2923] text-[#d8e6cb]' : value === 'light' ? 'bg-[#f8f7f2] text-[#345741]' : 'bg-secondary text-foreground'}`}
+                                >
+                                    <Icon className="h-6 w-6" aria-hidden />
+                                </span>
+                                <span className="text-sm font-medium">{label}</span>
+                            </label>
+                        ))}
+                    </div>
+                    <p className="mt-3 text-xs text-muted-foreground">
+                        System follows your device’s light or dark setting.
+                    </p>
+                </fieldset>
+                <div className="space-y-3 border-t pt-6">
+                    <Label htmlFor="date-format">Date format</Label>
+                    <Select
+                        value={dateFormat}
+                        onValueChange={(value) => {
+                            const next = Object.values(DateFormat).find((item) => item === value);
+                            if (!next) return;
+                            try {
+                                localStorage.setItem('userPreferences', JSON.stringify({ dateFormat: next }));
+                                setDateFormat(next);
+                                toast({ title: 'Date format saved' });
+                            } catch {
+                                toast({ title: 'Could not save your preference', variant: 'destructive' });
+                            }
+                        }}
+                    >
+                        <SelectTrigger id="date-format" className="max-w-sm">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value='light'>Light</SelectItem>
-                            <SelectItem value='dark'>Dark</SelectItem>
-                            <SelectItem value='system'>System</SelectItem>
+                            <SelectItem value={DateFormat.DayFirst}>DD/MM/YYYY · 24/01/2026</SelectItem>
+                            <SelectItem value={DateFormat.MonthFirst}>MM/DD/YYYY · 01/24/2026</SelectItem>
+                            <SelectItem value={DateFormat.YearFirst}>YYYY-MM-DD · 2026-01-24</SelectItem>
                         </SelectContent>
                     </Select>
-                </div>
-
-                <Separator />
-
-                <div className='space-y-4'>
-                    <div className='space-y-2'>
-                        <Label htmlFor='settings-date-format'>Date format</Label>
-                        <Select value={dateFormat} onValueChange={value => setDateFormat(value as DateFormatId)}>
-                            <SelectTrigger id='settings-date-format' className='max-w-md'>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value='mdy'>MM/DD/YYYY</SelectItem>
-                                <SelectItem value='dmy'>DD/MM/YYYY</SelectItem>
-                                <SelectItem value='ymd'>YYYY-MM-DD</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <Button type='button' onClick={saveRegionalPreferences}>
-                        Save date format
-                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                        Used for dates in your workout history and connections.
+                    </p>
                 </div>
             </CardContent>
         </Card>

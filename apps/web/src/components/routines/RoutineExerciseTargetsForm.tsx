@@ -70,27 +70,27 @@ export function RoutineExerciseTargetsForm({
     };
 
     return (
-        <div className='space-y-5'>
+        <div className="space-y-5">
             <div>
-                <h2 className='text-lg font-semibold'>{slot.exercise.name}</h2>
-                <p className='mt-1 flex items-center gap-1 text-xs text-muted-foreground'>
-                    <Icon className='h-3 w-3' aria-hidden />
+                <h2 className="text-lg font-semibold">{slot.exercise.name}</h2>
+                <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                    <Icon className="h-3 w-3" aria-hidden />
                     {label}
-                    {slot.exercise.archivedAt && <span className='ml-2 text-destructive'>Archived exercise</span>}
+                    {slot.exercise.archivedAt && <span className="ml-2 text-destructive">Archived exercise</span>}
                 </p>
             </div>
 
-            <div className='grid grid-cols-2 gap-3'>
+            <div className="grid grid-cols-2 gap-3">
                 <NumberField
-                    id='target-sets'
-                    label='Sets'
+                    id="target-sets"
+                    label="Sets"
                     value={draft.targetSets}
                     onChange={set('targetSets')}
                     min={1}
                 />
                 <NumberField
-                    id='rest-seconds'
-                    label='Rest (s)'
+                    id="rest-seconds"
+                    label="Rest (s)"
                     value={draft.restSeconds}
                     onChange={set('restSeconds')}
                 />
@@ -98,24 +98,24 @@ export function RoutineExerciseTargetsForm({
                 {slot.exercise.trackingType === TrackingType.WeightReps && (
                     <>
                         <NumberField
-                            id='target-reps'
-                            label='Reps'
+                            id="target-reps"
+                            label="Reps"
                             value={draft.targetReps}
                             onChange={set('targetReps')}
                         />
                         <NumberField
-                            id='target-weight'
-                            label='Weight (kg)'
+                            id="target-weight"
+                            label="Weight (kg)"
                             value={draft.targetWeightKg}
                             onChange={set('targetWeightKg')}
-                            step='0.5'
+                            step="0.5"
                         />
                     </>
                 )}
                 {slot.exercise.trackingType === TrackingType.Duration && (
                     <NumberField
-                        id='target-duration'
-                        label='Duration (s)'
+                        id="target-duration"
+                        label="Duration (s)"
                         value={draft.targetDurationSeconds}
                         onChange={set('targetDurationSeconds')}
                     />
@@ -123,15 +123,15 @@ export function RoutineExerciseTargetsForm({
                 {slot.exercise.trackingType === TrackingType.DistanceTime && (
                     <>
                         <NumberField
-                            id='target-distance'
-                            label='Distance (m)'
+                            id="target-distance"
+                            label="Distance (m)"
                             value={draft.targetDistanceM}
                             onChange={set('targetDistanceM')}
-                            step='10'
+                            step="10"
                         />
                         <NumberField
-                            id='target-duration'
-                            label='Time (s)'
+                            id="target-duration"
+                            label="Time (s)"
                             value={draft.targetDurationSeconds}
                             onChange={set('targetDurationSeconds')}
                         />
@@ -139,21 +139,21 @@ export function RoutineExerciseTargetsForm({
                 )}
             </div>
 
-            <div className='space-y-2'>
-                <Label htmlFor='slot-notes'>Notes</Label>
+            <div className="space-y-2">
+                <Label htmlFor="slot-notes">Notes</Label>
                 <Textarea
-                    id='slot-notes'
+                    id="slot-notes"
                     value={draft.notes}
                     maxLength={1000}
                     rows={2}
-                    placeholder='e.g. pause at the bottom'
+                    placeholder="e.g. pause at the bottom"
                     onChange={(event) => set('notes')(event.target.value)}
                 />
             </div>
 
-            <div className='flex items-center justify-between gap-2'>
-                <Button variant='ghost' className='gap-2 text-destructive' onClick={onRemove} disabled={isSaving}>
-                    <Trash2 className='h-4 w-4' aria-hidden />
+            <div className="flex items-center justify-between gap-2">
+                <Button variant="ghost" className="gap-2 text-destructive" onClick={onRemove} disabled={isSaving}>
+                    <Trash2 className="h-4 w-4" aria-hidden />
                     Remove
                 </Button>
                 <Button onClick={handleSave} disabled={isSaving}>
@@ -175,17 +175,17 @@ type NumberFieldProps = {
 
 function NumberField({ id, label, value, onChange, min = 0, step = '1' }: NumberFieldProps): JSX.Element {
     return (
-        <div className='space-y-2'>
+        <div className="space-y-2">
             <Label htmlFor={id}>{label}</Label>
             <Input
                 id={id}
-                type='number'
-                inputMode='decimal'
+                type="number"
+                inputMode="decimal"
                 min={min}
                 step={step}
                 value={value}
                 onChange={(event) => onChange(event.target.value)}
-                className='h-11 text-base'
+                className="h-11 text-base"
             />
         </div>
     );

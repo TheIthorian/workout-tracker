@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from './api-base-url';
 import type { LoginRequest, RegisterRequest } from '@/models/auth';
 import type {
     Exercise,
@@ -34,6 +35,7 @@ import type {
     PostWorkspaceMemberRequest,
     PostWorkspaceRequest,
     WorkspaceResponse,
+    WorkspaceListItem,
     WorkspaceRole,
 } from '@/models/workspace';
 import { httpClient } from './http-client';
@@ -48,7 +50,7 @@ export const authApi = {
 };
 
 export const workspacesApi = {
-    getAll: () => httpClient.get<WorkspaceResponse[]>('/api/v1/workspaces'),
+    getAll: () => httpClient.get<WorkspaceListItem[]>('/api/v1/workspaces'),
     getById: (workspaceId: string) => httpClient.get<WorkspaceResponse>(`/api/v1/workspaces/${workspaceId}`),
     create: (data: PostWorkspaceRequest) => httpClient.post<WorkspaceResponse>('/api/v1/workspaces', data),
     update: (workspaceId: string, data: Partial<PostWorkspaceRequest>) =>
@@ -75,10 +77,21 @@ export const exercisesApi = {
         workspaceId: string,
         params?: { search?: string; includeArchived?: boolean; page?: number; pageSize?: number },
     ) => httpClient.get<PaginatedResponse<Exercise>>(`/api/v1/workspaces/${workspaceId}/exercises`, { params }),
-    getById: (workspaceId: string, exerciseId: string) =>
-        httpClient.get<ExerciseDetail & { webUrl: string }>(
+    getById: async (workspaceId: string, exerciseId: string): Promise<ExerciseDetail & { webUrl: string }> => {
+        const exercise = await httpClient.get<ExerciseDetail & { webUrl: string }>(
             `/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}`,
-        ),
+        );
+        // Private images follow the browser’s API proxy so session cookies work in local previews too.
+        return {
+            ...exercise,
+            images: exercise.images.map((image) => ({
+                ...image,
+                url: exercise.isCatalog
+                    ? image.url
+                    : `${getApiBaseUrl()}/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/images/${image.id}`,
+            })),
+        };
+    },
     create: (workspaceId: string, data: SaveExerciseRequest) =>
         httpClient.post<ExerciseDetail>(`/api/v1/workspaces/${workspaceId}/exercises`, data),
     update: (workspaceId: string, exerciseId: string, data: PatchExerciseRequest) =>

@@ -36,7 +36,7 @@ export function RoutineExerciseList({ slots, selectedId, onSelect, onReorder }: 
     };
 
     return (
-        <Reorder.Group axis='y' values={order} onReorder={setOrder} className='space-y-2'>
+        <Reorder.Group axis="y" values={order} onReorder={setOrder} className="space-y-2">
             {order.map((slot) => (
                 <SlotRow
                     key={slot.id}
@@ -72,27 +72,27 @@ function SlotRow({ slot, isSelected, onSelect, onDrop }: SlotRowProps): JSX.Elem
             )}
         >
             <button
-                type='button'
-                aria-label='Drag to reorder'
+                type="button"
+                aria-label="Drag to reorder"
                 onPointerDown={(event) => controls.start(event)}
-                className='flex h-14 w-10 shrink-0 cursor-grab touch-none items-center justify-center text-muted-foreground active:cursor-grabbing'
+                className="flex h-14 w-10 shrink-0 cursor-grab touch-none items-center justify-center text-muted-foreground active:cursor-grabbing"
             >
-                <GripVertical className='h-5 w-5' aria-hidden />
+                <GripVertical className="h-5 w-5" aria-hidden />
             </button>
             <button
-                type='button'
+                type="button"
                 onClick={onSelect}
-                className='flex min-h-[3.5rem] min-w-0 flex-1 flex-col justify-center py-2 text-left'
+                className="flex min-h-[3.5rem] min-w-0 flex-1 flex-col justify-center py-2 text-left"
             >
-                <span className='flex items-center gap-2'>
-                    <span className='truncate font-medium'>{slot.exercise.name}</span>
+                <span className="flex items-center gap-2">
+                    <span className="truncate font-medium">{slot.exercise.name}</span>
                     {slot.exercise.archivedAt && (
-                        <Badge variant='destructive' className='shrink-0'>
+                        <Badge variant="destructive" className="shrink-0">
                             Archived
                         </Badge>
                     )}
                 </span>
-                <span className='text-xs text-muted-foreground'>{describeTargets(slot)}</span>
+                <span className="text-xs text-muted-foreground">{describeTargets(slot)}</span>
             </button>
         </Reorder.Item>
     );

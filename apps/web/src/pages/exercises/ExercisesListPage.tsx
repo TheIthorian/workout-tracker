@@ -1,9 +1,8 @@
-import { useState, type ChangeEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ChevronRight, Plus, Search } from 'lucide-react';
+import { ArrowUpRight, BookOpen, Check, ChevronRight, Dumbbell, Plus, Search, X } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { LoadingState } from '@/components/common/LoadingState';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -15,214 +14,310 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useDebounce } from '@/hooks/use-debounce';
+import { Switch } from '@/components/ui/switch';
 import { useCreateExercise, useExercises } from '@/hooks/use-exercises';
 import { toast } from '@/hooks/use-toast';
 import { TRACKING_TYPE_META, TrackingType, type Exercise } from '@/models/exercise';
 
-/**
- * The exercise library: a searchable, single-column list built to be scanned one-handed at the
- * gym. The library starts empty, so a fresh workspace's common first view is the create prompt,
- * not a blank list.
- */
+/** A paginated library with a quick search and visible, accessible creation controls. */
 export default function ExercisesListPage(): JSX.Element {
     const { workspaceId = '' } = useParams<{ workspaceId: string }>();
     const navigate = useNavigate();
-
     const [isCreateOpen, setCreateOpen] = useState(false);
     const [name, setName] = useState('');
-    const [trackingType, setTrackingType] = useState<TrackingType>(TrackingType.WeightReps);
-
+    const [trackingType, setTrackingType] = useState(TrackingType.WeightReps);
     const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');
-    // Trimmed once here, upstream of everywhere `search` is read (the query key, the request
-    // filter, and `isSearching` below) — so those three can never disagree about whether a
-    // whitespace-only box counts as "searching".
-    const debouncedSetSearch = useDebounce((value: string) => setSearch(value.trim()), 300);
-
-    const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useExercises({
+    const [includeArchived, setIncludeArchived] = useState(false);
+    useEffect(() => {
+        const timeout = window.setTimeout(() => setSearch(searchInput.trim()), 180);
+        return () => window.clearTimeout(timeout);
+    }, [searchInput]);
+    const { data, isLoading, isError, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useExercises({
         workspaceId,
         search,
+        includeArchived,
     });
     const createExercise = useCreateExercise({ workspaceId });
-
-    const exercises = data?.pages.flatMap(page => page.data) ?? [];
+    const exercises = data?.pages.flatMap((page) => page.data) ?? [];
     const totalCount = data?.pages[0]?.totalCount ?? 0;
-    const isSearching = search.length > 0;
-    const hasNoExercisesAtAll = !isLoading && exercises.length === 0 && !isSearching;
-    const hasNoSearchResults = !isLoading && exercises.length === 0 && isSearching;
-
-    const handleSearchChange = (event: ChangeEvent<HTMLInputElement>): void => {
-        setSearchInput(event.target.value);
-        debouncedSetSearch(event.target.value);
-    };
-
-    const handleClearSearch = (): void => {
+    const clearSearch = (): void => {
         setSearchInput('');
         setSearch('');
     };
-
-    const openCreateDialog = (): void => {
+    const openCreate = (): void => {
         setName('');
         setTrackingType(TrackingType.WeightReps);
         setCreateOpen(true);
     };
-
-    const handleCreate = (): void => {
+    const handleCreate = (event: React.FormEvent): void => {
+        event.preventDefault();
+        if (!name.trim() || createExercise.isPending) return;
         createExercise.mutate(
             { name: name.trim(), trackingType },
             {
-                onSuccess: created => {
-                    toast({ title: 'Exercise created' });
+                onSuccess: (created) => {
+                    toast({ title: 'Exercise added. Make it yours.' });
                     setCreateOpen(false);
                     navigate(`/workspaces/${workspaceId}/exercises/${created.id}`);
                 },
             },
         );
     };
-
     return (
-        <div className='pb-6'>
-            <div className='sticky top-0 z-20 border-b border-border bg-background/95 px-4 pb-4 pt-6 backdrop-blur-sm md:top-[4.5rem] md:px-8'>
-                <div className='mx-auto flex max-w-2xl flex-wrap items-start justify-between gap-4'>
-                    <div>
-                        <h1 className='font-heading text-3xl text-foreground'>Exercises</h1>
-                        <p className='mt-1.5 text-muted-foreground'>The movements you train.</p>
-                    </div>
-                    <Button onClick={openCreateDialog} className='gap-2'>
-                        <Plus className='h-4 w-4' aria-hidden />
-                        New exercise
-                    </Button>
+        <div className="page-shell">
+            <div className="mb-8 flex flex-wrap items-end justify-between gap-5">
+                <div>
+                    <p className="eyebrow mb-3">Your training toolkit</p>
+                    <h1 className="page-title">
+                        Exercise library<span className="text-primary">.</span>
+                    </h1>
+                    <p className="mt-3 text-muted-foreground">Find your movement. Make every rep count.</p>
                 </div>
-                <div className='relative mx-auto mt-4 max-w-2xl'>
-                    <Search
-                        className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground'
-                        aria-hidden
-                    />
-                    <Input
-                        value={searchInput}
-                        onChange={handleSearchChange}
-                        placeholder='Search exercises'
-                        aria-label='Search exercises'
-                        className='h-11 pl-9'
-                    />
-                </div>
+                <Button onClick={openCreate} className="gap-2 rounded-xl px-5">
+                    <Plus aria-hidden />
+                    New exercise
+                </Button>
             </div>
-
-            <div className='mx-auto max-w-2xl px-4 pt-6 md:px-8'>
-                {isLoading ? (
-                    <LoadingState label='Loading exercises…' />
-                ) : hasNoExercisesAtAll ? (
-                    <EmptyState
-                        title='Build your exercise library'
-                        description="Add the first movement you want to track. You'll be able to log sets against it right away."
-                        actionLabel='Add exercise'
-                        onAction={openCreateDialog}
-                    />
-                ) : hasNoSearchResults ? (
-                    <div className='rounded-2xl border border-dashed border-border bg-card p-8 text-center'>
-                        <h3 className='text-lg font-semibold tracking-tight'>No exercises match "{search}"</h3>
-                        <p className='mt-2 text-sm text-muted-foreground'>Try a different name, or clear the search.</p>
-                        <Button variant='ghost' className='mt-4' onClick={handleClearSearch}>
-                            Clear search
-                        </Button>
-                    </div>
-                ) : (
-                    <>
-                        <ul className='space-y-2'>
-                            {exercises.map(exercise => (
-                                <ExerciseRow key={exercise.id} exercise={exercise} workspaceId={workspaceId} />
-                            ))}
-                        </ul>
-
-                        {hasNextPage && (
-                            <div className='mt-4 flex flex-col items-center gap-2'>
-                                <Button variant='outline' onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
-                                    {isFetchingNextPage ? 'Loading…' : 'Load more'}
-                                </Button>
-                                <p className='text-xs text-muted-foreground'>
-                                    Showing {exercises.length} of {totalCount}
-                                </p>
-                            </div>
+            <div className="grid items-start gap-7 lg:grid-cols-[minmax(0,1fr)_260px]">
+                <section aria-label="Exercise library" className="min-w-0">
+                    <div className="relative">
+                        <Search
+                            className="pointer-events-none absolute left-4 top-4 h-5 w-5 text-muted-foreground"
+                            aria-hidden
+                        />
+                        <Input
+                            value={searchInput}
+                            onChange={(event) => setSearchInput(event.target.value)}
+                            placeholder="Search your exercises…"
+                            aria-label="Search exercises"
+                            className="h-14 rounded-xl border-border bg-card pl-12 pr-14 shadow-sm"
+                        />
+                        {searchInput && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={clearSearch}
+                                aria-label="Clear search"
+                                className="absolute right-1 top-1"
+                            >
+                                <X />
+                            </Button>
                         )}
-                    </>
-                )}
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-3 py-5">
+                        <h2 className="text-sm font-semibold tracking-normal">
+                            {search ? 'Search results' : 'All exercises'}
+                            {!isLoading && !isError && (
+                                <span className="ml-2 rounded-md bg-secondary px-2 py-1 text-xs font-medium text-muted-foreground">
+                                    {totalCount}
+                                </span>
+                            )}
+                        </h2>
+                        <div className="flex items-center gap-2">
+                            <Switch
+                                id="include-archived"
+                                checked={includeArchived}
+                                onCheckedChange={setIncludeArchived}
+                            />
+                            <Label
+                                htmlFor="include-archived"
+                                className="cursor-pointer py-2 text-xs text-muted-foreground"
+                            >
+                                Include archived
+                            </Label>
+                        </div>
+                    </div>
+                    {isLoading ? (
+                        <LoadingState label="Finding your exercises…" />
+                    ) : isError ? (
+                        <EmptyState
+                            title="Your library couldn’t load"
+                            description="Check your connection and try again. Your exercises are still safe."
+                            actionLabel="Try again"
+                            onAction={() => void refetch()}
+                        />
+                    ) : exercises.length === 0 ? (
+                        <EmptyState
+                            title={search ? 'No matching movements' : 'Your next workout starts here'}
+                            description={
+                                search
+                                    ? `Nothing matches “${search}”. Try another name or clear your search.`
+                                    : 'Add an exercise you love. Choose how to track it, then keep your technique notes close at hand.'
+                            }
+                            actionLabel={search ? 'Clear search' : 'Add your first exercise'}
+                            onAction={search ? clearSearch : openCreate}
+                        />
+                    ) : (
+                        <>
+                            <ul className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+                                {exercises.map((exercise) => (
+                                    <ExerciseRow key={exercise.id} exercise={exercise} workspaceId={workspaceId} />
+                                ))}
+                            </ul>
+                            <div className="mt-5 flex items-center justify-between gap-3">
+                                <p className="text-xs text-muted-foreground" role="status">
+                                    Showing {exercises.length} of {totalCount} exercises
+                                </p>
+                                {hasNextPage && (
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => void fetchNextPage()}
+                                        disabled={isFetchingNextPage}
+                                    >
+                                        {isFetchingNextPage ? 'Loading…' : 'Load more'}
+                                    </Button>
+                                )}
+                            </div>
+                        </>
+                    )}
+                </section>
+                <aside className="space-y-5 lg:pt-0">
+                    <div className="training-banner p-6">
+                        <div className="training-rings opacity-60" aria-hidden />
+                        <div className="relative">
+                            <BookOpen className="mb-9 h-6 w-6 text-[#c8dfac]" aria-hidden />
+                            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[.18em] text-[#c8dfac]">
+                                A little guidance
+                            </p>
+                            <h2 className="text-2xl leading-tight">
+                                Good form.
+                                <br />
+                                Better sessions.
+                            </h2>
+                            <p className="mt-3 text-sm leading-relaxed text-[#d0dfd5]">
+                                Open any exercise for setup notes, helpful cues, and a quick refresher between sets.
+                            </p>
+                            <div className="mt-6 border-t border-white/15 pt-4 text-xs text-[#d0dfd5]">
+                                A little intention goes a long way.
+                            </div>
+                        </div>
+                    </div>
+                    <div className="rounded-2xl border p-5">
+                        <h2 className="mb-4 text-sm font-semibold tracking-normal">A way to track every movement</h2>
+                        <div className="space-y-4">
+                            {Object.values(TrackingType).map((type) => {
+                                const { icon: Icon, label } = TRACKING_TYPE_META[type];
+                                return (
+                                    <div key={type} className="flex items-center gap-3">
+                                        <span data-type={type} className="exercise-icon h-9 w-9 rounded-lg">
+                                            <Icon className="h-4 w-4" aria-hidden />
+                                        </span>
+                                        <span className="text-xs text-muted-foreground">{label}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                    <Link
+                        to={`/workspaces/${workspaceId}/routines`}
+                        className="flex min-h-12 items-center justify-between px-1 text-sm font-medium text-primary"
+                    >
+                        Put your movements into a routine
+                        <ArrowUpRight className="h-4 w-4 shrink-0" aria-hidden />
+                    </Link>
+                </aside>
             </div>
-
             <Dialog open={isCreateOpen} onOpenChange={setCreateOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>New exercise</DialogTitle>
+                        <span className="exercise-icon mb-2">
+                            <Dumbbell aria-hidden />
+                        </span>
+                        <DialogTitle className="text-2xl">Add a movement</DialogTitle>
                         <DialogDescription>
-                            Give it a name and how you'll measure it — you can add setup notes and cues later.
+                            A familiar name and a way to measure it. That’s all you need.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className='space-y-4'>
-                        <div className='space-y-2'>
-                            <Label htmlFor='exercise-name'>Name</Label>
+                    <form onSubmit={handleCreate} className="space-y-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="exercise-name">Exercise name</Label>
                             <Input
-                                id='exercise-name'
+                                id="exercise-name"
                                 value={name}
                                 maxLength={200}
-                                placeholder='e.g. Barbell back squat'
-                                onChange={event => setName(event.target.value)}
+                                required
+                                placeholder="e.g. Barbell back squat"
+                                onChange={(event) => setName(event.target.value)}
                             />
                         </div>
-                        <div className='space-y-2'>
-                            <Label htmlFor='exercise-tracking-type'>Tracked by</Label>
-                            <Select
-                                value={trackingType}
-                                onValueChange={value => setTrackingType(value as TrackingType)}
-                            >
-                                <SelectTrigger id='exercise-tracking-type'>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {Object.values(TrackingType).map(type => (
-                                        <SelectItem key={type} value={type}>
-                                            {TRACKING_TYPE_META[type].label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant='ghost' onClick={() => setCreateOpen(false)}>
-                            Cancel
-                        </Button>
-                        <Button onClick={handleCreate} disabled={name.trim().length === 0 || createExercise.isPending}>
-                            {createExercise.isPending ? 'Creating…' : 'Create'}
-                        </Button>
-                    </DialogFooter>
+                        <fieldset>
+                            <legend className="mb-3 text-sm font-medium">How will you track it?</legend>
+                            <div className="space-y-2">
+                                {Object.values(TrackingType).map((type) => {
+                                    const { icon: Icon, label } = TRACKING_TYPE_META[type];
+                                    return (
+                                        <label
+                                            key={type}
+                                            className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-colors ${trackingType === type ? 'border-primary bg-primary/5' : 'hover:bg-secondary'}`}
+                                        >
+                                            <input
+                                                className="sr-only peer"
+                                                type="radio"
+                                                name="tracking-type"
+                                                value={type}
+                                                checked={trackingType === type}
+                                                onChange={() => setTrackingType(type)}
+                                            />
+                                            <span
+                                                className="exercise-icon h-10 w-10 peer-focus-visible:ring-2 peer-focus-visible:ring-ring"
+                                                data-type={type}
+                                            >
+                                                <Icon className="h-5 w-5" aria-hidden />
+                                            </span>
+                                            <span className="flex-1 text-sm font-medium">{label}</span>
+                                            {trackingType === type && (
+                                                <Check className="h-5 w-5 text-primary" aria-hidden />
+                                            )}
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                        </fieldset>
+                        <DialogFooter>
+                            <Button type="button" variant="ghost" onClick={() => setCreateOpen(false)}>
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={!name.trim() || createExercise.isPending}>
+                                {createExercise.isPending ? 'Adding…' : 'Add exercise'}
+                                <Plus aria-hidden />
+                            </Button>
+                        </DialogFooter>
+                    </form>
                 </DialogContent>
             </Dialog>
         </div>
     );
 }
 
-/** One row in the list: name, a tracking-type badge, and a link into the detail page. */
 function ExerciseRow({ exercise, workspaceId }: { exercise: Exercise; workspaceId: string }): JSX.Element {
     const { label, icon: Icon } = TRACKING_TYPE_META[exercise.trackingType];
-
     return (
-        <li>
+        <li className="border-b last:border-0">
             <Link
                 to={`/workspaces/${workspaceId}/exercises/${exercise.id}`}
-                className='flex min-h-[3.5rem] items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                className="group flex min-h-[90px] items-center gap-4 px-4 py-4 transition-colors hover:bg-secondary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-5"
             >
-                <span className='min-w-0 flex-1 truncate font-medium text-foreground'>{exercise.name}</span>
-                {exercise.isCatalog && (
-                    <Badge variant='outline' className='shrink-0'>
-                        Catalog
-                    </Badge>
-                )}
-                <Badge variant='secondary' className='shrink-0 gap-1 whitespace-nowrap'>
-                    <Icon className='h-3 w-3' aria-hidden />
-                    {label}
-                </Badge>
-                <ChevronRight className='h-4 w-4 shrink-0 text-muted-foreground' aria-hidden />
+                <span className="exercise-icon" data-type={exercise.trackingType}>
+                    <Icon className="h-5 w-5" strokeWidth={1.7} aria-hidden />
+                </span>
+                <span className="min-w-0 flex-1">
+                    <span className="block break-words text-[15px] font-semibold leading-snug">{exercise.name}</span>
+                    <span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                        {label}
+                        {exercise.isCatalog && (
+                            <>
+                                <span aria-hidden>·</span>
+                                <span>Forma guide</span>
+                            </>
+                        )}
+                        {exercise.archivedAt && <span className="rounded bg-secondary px-1.5 py-0.5">Archived</span>}
+                    </span>
+                </span>
+                <ChevronRight
+                    className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1"
+                    aria-hidden
+                />
             </Link>
         </li>
     );

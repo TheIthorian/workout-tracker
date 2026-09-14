@@ -20,8 +20,8 @@ export default function SettingsRedirectPage() {
 
     if (isLoading) {
         return (
-            <div className='flex min-h-[40vh] items-center justify-center'>
-                <LoadingState label='Loading…' />
+            <div className="flex min-h-[40vh] items-center justify-center">
+                <LoadingState label="Loading…" />
             </div>
         );
     }
@@ -31,8 +31,8 @@ export default function SettingsRedirectPage() {
     }
 
     return (
-        <div className='flex min-h-[40vh] items-center justify-center'>
-            <LoadingState label='Loading…' />
+        <div className="flex min-h-[40vh] items-center justify-center">
+            <LoadingState label="Loading…" />
         </div>
     );
 }

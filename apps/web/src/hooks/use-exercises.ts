@@ -33,15 +33,18 @@ import type { PaginatedResponse } from '@/models/pagination';
 export function useExercises({
     workspaceId,
     search,
+    includeArchived = false,
 }: {
     workspaceId: string;
     search?: string;
+    includeArchived?: boolean;
 }): UseInfiniteQueryResult<InfiniteData<PaginatedResponse<Exercise>>, Error> {
     return useInfiniteQuery({
-        queryKey: ['exercises', workspaceId, { search: search ?? '' }],
-        queryFn: ({ pageParam }) => exercisesApi.getAll(workspaceId, { search: search || undefined, page: pageParam }),
+        queryKey: ['exercises', workspaceId, { search: search ?? '', includeArchived }],
+        queryFn: ({ pageParam }) =>
+            exercisesApi.getAll(workspaceId, { search: search || undefined, includeArchived, page: pageParam }),
         initialPageParam: 1,
-        getNextPageParam: lastPage => (lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined),
+        getNextPageParam: (lastPage) => (lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined),
         enabled: Boolean(workspaceId),
     });
 }

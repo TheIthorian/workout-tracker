@@ -62,7 +62,7 @@ export class ExercisesController {
         const exercise = await this.exercises.get({ userId: currentUser.userId, workspaceId, exerciseId });
 
         return {
-            ...toDetailResponse({ exercise, imageBaseUrl: this.catalogImageBaseUrl }),
+            ...toDetailResponse({ exercise, imageBaseUrl: this.catalogImageBaseUrl, workspaceId, urls: this.urls }),
             webUrl: this.urls.webAppUrl({ path: exerciseWebPath({ workspaceId, exerciseId }) }),
         };
     }
@@ -77,7 +77,12 @@ export class ExercisesController {
     ): Promise<ExerciseDetailResponse> {
         const created = await this.exercises.create({ userId: currentUser.userId, workspaceId, ...body });
 
-        return toDetailResponse({ exercise: created, imageBaseUrl: this.catalogImageBaseUrl });
+        return toDetailResponse({
+            exercise: created,
+            imageBaseUrl: this.catalogImageBaseUrl,
+            workspaceId,
+            urls: this.urls,
+        });
     }
 
     /** Updates an exercise. An omitted key leaves the stored value alone. */
@@ -95,7 +100,12 @@ export class ExercisesController {
             ...body,
         });
 
-        return toDetailResponse({ exercise: updated, imageBaseUrl: this.catalogImageBaseUrl });
+        return toDetailResponse({
+            exercise: updated,
+            imageBaseUrl: this.catalogImageBaseUrl,
+            workspaceId,
+            urls: this.urls,
+        });
     }
 }
 
@@ -106,9 +116,13 @@ export class ExercisesController {
 function toDetailResponse({
     exercise,
     imageBaseUrl,
+    workspaceId,
+    urls,
 }: {
     exercise: ExerciseDetail;
     imageBaseUrl: string;
+    workspaceId: string;
+    urls: ResourceUrlGenerator;
 }): ExerciseDetailResponse {
     return {
         ...exercise,
@@ -116,7 +130,11 @@ function toDetailResponse({
             id: image.id,
             caption: image.caption,
             position: image.position,
-            url: `${imageBaseUrl}/${image.storageKey}`,
+            url: exercise.isCatalog
+                ? `${imageBaseUrl}/${image.storageKey}`
+                : urls.webAppUrl({
+                      path: `/api/v1/workspaces/${workspaceId}/exercises/${exercise.id}/images/${image.id}`,
+                  }),
         })),
     };
 }

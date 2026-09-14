@@ -1,3 +1,4 @@
+export { ExerciseImagesService } from './exercise-images.service.js';
 export { CatalogSeedService, SeedOutcome, catalogImageKey } from './catalog-seed.service.js';
 export { ExerciseGuideService } from './exercise-guide.service.js';
 export { ExerciseHistoryService, type ExerciseHistory, type ExerciseHistoryEntry } from './exercise-history.service.js';

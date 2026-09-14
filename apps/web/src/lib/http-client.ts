@@ -66,7 +66,7 @@ class AppHttpClient {
     }
 
     private setupInterceptors(): void {
-        this.axiosInstance.interceptors.request.use(config => {
+        this.axiosInstance.interceptors.request.use((config) => {
             // The browser must set the multipart boundary itself, so the JSON default has to go.
             if (config.data instanceof FormData && config.headers) {
                 const headers = config.headers;
@@ -80,11 +80,11 @@ class AppHttpClient {
         });
 
         this.axiosInstance.interceptors.response.use(
-            response => response,
+            (response) => response,
             (error: AxiosError<ProblemDetails> | AxiosError<PlatformError>) => {
                 if (error.response?.status === 401) {
                     this.handleUnauthorizedError(error);
-                    return;
+                    return Promise.reject(error);
                 }
 
                 handleAxiosError(error);
@@ -94,9 +94,11 @@ class AppHttpClient {
     }
 
     private handleUnauthorizedError(error: AxiosError<ProblemDetails> | AxiosError<PlatformError>): void {
+        // Session discovery is expected to return 401 for a signed-out visitor.
+        if (error.config?.url === '/api/v1/me') return;
         const pathname = window.location.pathname;
 
-        if (!PUBLIC_PATHS.some(path => pathname.startsWith(path))) {
+        if (!PUBLIC_PATHS.some((path) => pathname.startsWith(path))) {
             // Keep the page the visitor asked for so they land back on it after signing in.
             window.location.href = buildAuthPath('/login', `${pathname}${window.location.search}`);
             return;
@@ -121,7 +123,7 @@ export function handleAxiosError(error: AxiosError<unknown>): void {
 
         if (problemDetail.errors) {
             const errorMessages = Object.values(problemDetail.errors)
-                .map(messages => messages.join(', '))
+                .map((messages) => messages.join(', '))
                 .join('\n');
 
             toast({

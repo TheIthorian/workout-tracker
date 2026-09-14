@@ -4,152 +4,158 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
-All colors MUST be HSL.
-*/
-
 @layer base {
     :root {
-        --background: 40 20% 97%;
-        --foreground: 220 15% 15%;
-
-        --card: 40 15% 99%;
-        --card-foreground: 220 15% 15%;
-
-        --popover: 40 15% 99%;
-        --popover-foreground: 220 15% 15%;
-
-        /* 36% lightness keeps white text on a primary fill at 4.82:1, and primary-as-text on the
-           page background at 4.82:1. At the previous 38% both landed on 4.40:1, under WCAG AA. */
-        --primary: 152 38% 36%;
+        --background: 45 23% 96%;
+        --foreground: 155 17% 15%;
+        --card: 0 0% 100%;
+        --card-foreground: 155 17% 15%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 155 17% 15%;
+        --primary: 155 35% 26%;
         --primary-foreground: 0 0% 100%;
-        --primary-hover: 152 38% 30%;
-
-        --secondary: 40 12% 93%;
-        --secondary-foreground: 220 15% 20%;
-
-        --muted: 40 10% 94%;
-        --muted-foreground: 220 10% 46%;
-
-        --accent: 24 80% 55%;
-        --accent-foreground: 0 0% 100%;
-
-        /* Success green for positive transactions */
-        --success: 142 71% 45%;
+        --primary-hover: 155 35% 21%;
+        --secondary: 100 14% 92%;
+        --secondary-foreground: 155 20% 25%;
+        --muted: 45 16% 92%;
+        --muted-foreground: 145 5% 43%;
+        --accent: 95 26% 91%;
+        --accent-foreground: 155 35% 22%;
+        --success: 155 35% 32%;
         --success-foreground: 0 0% 100%;
-        --success-light: 142 71% 95%;
-
-        /* Warning amber for alerts */
-        --warning: 38 92% 50%;
+        --success-light: 140 35% 94%;
+        --warning: 35 85% 40%;
         --warning-foreground: 0 0% 100%;
-        --warning-light: 38 92% 95%;
-
-        /* Error red for negative transactions */
-        --destructive: 0 84% 60%;
+        --warning-light: 38 70% 94%;
+        --destructive: 0 65% 46%;
         --destructive-foreground: 0 0% 100%;
-        --destructive-light: 0 84% 95%;
-
-        --border: 40 12% 90%;
-        --input: 40 12% 90%;
-        --ring: 152 38% 38%;
-
-        --radius: 0.75rem;
-
-        --font-heading: 'DM Serif Display', serif;
+        --destructive-light: 0 65% 96%;
+        --border: 45 12% 87%;
+        --input: 45 12% 83%;
+        --ring: 155 35% 32%;
+        --radius: 1rem;
+        --font-heading: 'DM Sans', system-ui, sans-serif;
         --font-body: 'DM Sans', system-ui, sans-serif;
-
-        /* Sidebar colors */
-        --sidebar-background: 40 15% 96%;
-        --sidebar-foreground: 220 15% 15%;
-        --sidebar-primary: 152 38% 36%;
-        --sidebar-primary-foreground: 0 0% 100%;
-        --sidebar-accent: 40 12% 93%;
-        --sidebar-accent-foreground: 220 15% 20%;
-        --sidebar-border: 40 12% 90%;
-        --sidebar-ring: 152 38% 38%;
-
-        /* Animations */
-        --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-smooth: all 0.2s ease;
     }
-
     .dark {
-        --background: 220 15% 10%;
-        --foreground: 40 10% 92%;
-
-        --card: 220 15% 13%;
-        --card-foreground: 40 10% 92%;
-
-        --popover: 220 15% 13%;
-        --popover-foreground: 40 10% 92%;
-
-        /* Dark mode uses primary two ways that pull the lightness in opposite directions: as text
-           on a dark surface (wants lighter) and as a fill behind its foreground (wants darker with
-           white text). Resolved by lightening the fill to 50% — primary-as-text now clears the
-           header background at 5.51:1 — and flipping the foreground to near-black, which reads
-           5.58:1 on the fill. White on the old 45% fill was 3.26:1. */
-        --primary: 152 38% 50%;
-        --primary-foreground: 152 45% 12%;
-        --primary-hover: 152 38% 56%;
-
-        --secondary: 220 12% 18%;
-        --secondary-foreground: 40 10% 90%;
-
-        --muted: 220 10% 20%;
-        --muted-foreground: 220 10% 60%;
-
-        --accent: 24 80% 55%;
-        --accent-foreground: 0 0% 100%;
-
-        --success: 142 71% 50%;
-        --success-foreground: 0 0% 100%;
-        --success-light: 142 71% 15%;
-
-        --warning: 38 92% 55%;
-        --warning-foreground: 0 0% 100%;
-        --warning-light: 38 92% 15%;
-
-        --destructive: 0 84% 65%;
-        --destructive-foreground: 0 0% 100%;
-        --destructive-light: 0 84% 15%;
-
-        --border: 220 12% 20%;
-        --input: 220 12% 20%;
-        --ring: 152 38% 45%;
-
-        --sidebar-background: 220 15% 8%;
-        --sidebar-foreground: 40 10% 92%;
-        --sidebar-primary: 152 38% 50%;
-        --sidebar-primary-foreground: 152 45% 12%;
-        --sidebar-accent: 220 12% 15%;
-        --sidebar-accent-foreground: 40 10% 90%;
-        --sidebar-border: 220 12% 18%;
-        --sidebar-ring: 152 38% 45%;
+        --background: 160 12% 9%;
+        --foreground: 45 18% 93%;
+        --card: 160 10% 12%;
+        --card-foreground: 45 18% 93%;
+        --popover: 160 10% 14%;
+        --popover-foreground: 45 18% 93%;
+        --primary: 100 38% 72%;
+        --primary-foreground: 155 35% 13%;
+        --primary-hover: 100 38% 80%;
+        --secondary: 155 12% 19%;
+        --secondary-foreground: 100 25% 85%;
+        --muted: 155 8% 17%;
+        --muted-foreground: 120 6% 65%;
+        --accent: 155 15% 21%;
+        --accent-foreground: 100 38% 80%;
+        --success: 140 38% 66%;
+        --success-foreground: 155 35% 13%;
+        --success-light: 140 20% 17%;
+        --warning: 38 80% 67%;
+        --warning-foreground: 30 50% 12%;
+        --warning-light: 38 25% 16%;
+        --destructive: 0 72% 68%;
+        --destructive-foreground: 0 40% 12%;
+        --destructive-light: 0 30% 17%;
+        --border: 155 8% 23%;
+        --input: 155 8% 30%;
+        --ring: 100 38% 72%;
     }
-}
-
-@layer base {
     * {
         @apply border-border;
     }
-
     html,
     body {
         @apply bg-background text-foreground;
-        /* `clip` still suppresses sideways overflow but, unlike `hidden`, does not turn the
-           document into a scroll container — which silently breaks position: sticky. */
         overflow-x: clip;
     }
-
     body {
-        min-width: 0;
+        min-width: 320px;
         font-family: var(--font-body);
+        -webkit-font-smoothing: antialiased;
     }
-
     h1,
     h2,
     h3,
     h4 {
         font-family: var(--font-heading);
+        font-weight: 600;
+        letter-spacing: -0.035em;
+    }
+    button,
+    a,
+    input,
+    textarea,
+    select {
+        -webkit-tap-highlight-color: transparent;
+    }
+    button,
+    a {
+        touch-action: manipulation;
+    }
+    ::selection {
+        background: hsl(var(--primary) / 0.18);
+    }
+}
+@layer components {
+    .page-shell {
+        @apply mx-auto w-full max-w-6xl px-5 py-7 md:px-10 md:py-12;
+    }
+    .eyebrow {
+        @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground;
+    }
+    .page-title {
+        @apply text-4xl font-semibold tracking-[-0.045em] md:text-5xl;
+    }
+    .training-banner {
+        @apply relative overflow-hidden rounded-2xl bg-[#234d3d] text-[#f5f6ed];
+    }
+    .training-rings {
+        position: absolute;
+        width: 280px;
+        height: 280px;
+        right: -70px;
+        top: -70px;
+        border: 1px solid #aec79540;
+        border-radius: 50%;
+        box-shadow:
+            0 0 0 28px #aec7950a,
+            0 0 0 56px #aec79512,
+            0 0 0 84px #aec79508;
+        pointer-events: none;
+    }
+    .exercise-icon {
+        @apply grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-secondary text-primary;
+    }
+    .exercise-icon[data-type='duration'] {
+        @apply bg-[#f6eedf] text-[#916625] dark:bg-[#352d1d] dark:text-[#e0bf80];
+    }
+    .exercise-icon[data-type='distance_time'] {
+        @apply bg-[#e8eef4] text-[#4f7191] dark:bg-[#202e3c] dark:text-[#a1bdd9];
+    }
+    .auth-shell {
+        @apply grid min-h-dvh lg:grid-cols-2;
+    }
+    .auth-story {
+        @apply relative hidden flex-col justify-between overflow-hidden bg-[#234d3d] p-14 text-[#f5f6ed] lg:flex;
+    }
+    .auth-form {
+        @apply flex items-center justify-center px-6 py-10 md:px-12;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
     }
 }
 

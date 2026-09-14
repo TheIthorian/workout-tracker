@@ -123,8 +123,6 @@ export class ExerciseGuideService {
     /**
      * Records an already-uploaded image against the exercise's guide.
      *
-     * Not reachable from any route: exercise guide images are catalog content served from a CDN.
-     * Kept for the next image-bearing feature.
      */
     async addImage({
         userId,
@@ -156,8 +154,6 @@ export class ExerciseGuideService {
     /**
      * One image record, including the storage key its bytes live under.
      *
-     * Not reachable from any route: exercise guide images are catalog content served from a CDN.
-     * Kept for the next image-bearing feature.
      *
      * @throws EntityNotFoundError when the caller is not a member, or the image is not on this
      * exercise in this workspace.
@@ -192,11 +188,40 @@ export class ExerciseGuideService {
         return row;
     }
 
+    /** Updates a caption only after verifying workspace membership and the owning exercise. */
+    async updateImage({
+        userId,
+        workspaceId,
+        exerciseId,
+        imageId,
+        caption,
+    }: {
+        userId: string;
+        workspaceId: string;
+        exerciseId: string;
+        imageId: string;
+        caption: string | null;
+    }): Promise<ExerciseGuideImage> {
+        await this.requireExercise({ userId, workspaceId, exerciseId });
+        const [row] = await this.db
+            .update(exerciseGuideImages)
+            .set({ caption })
+            .where(
+                scopedToWorkspace(
+                    exerciseGuideImages,
+                    workspaceId,
+                    eq(exerciseGuideImages.id, imageId),
+                    eq(exerciseGuideImages.exerciseId, exerciseId),
+                ),
+            )
+            .returning(IMAGE_COLUMNS);
+        if (!row) throw new EntityNotFoundError('Exercise image not found');
+        return row;
+    }
+
     /**
      * Deletes an image record.
      *
-     * Not reachable from any route: exercise guide images are catalog content served from a CDN.
-     * Kept for the next image-bearing feature.
      *
      * @returns the storage key of the deleted row, so the caller can remove the stored object.
      */

@@ -35,8 +35,8 @@ export function sanitizeReturnUrl(candidate?: string | null): string | undefined
 
     const pathname = value.split(/[?#]/)[0];
     const isAllowed =
-        allowedExactPaths.some(path => pathname === path) ||
-        allowedPathPrefixes.some(prefix => pathname.startsWith(prefix));
+        allowedExactPaths.some((path) => pathname === path) ||
+        allowedPathPrefixes.some((prefix) => pathname.startsWith(prefix));
 
     return isAllowed ? value : undefined;
 }

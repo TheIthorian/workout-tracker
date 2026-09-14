@@ -1,103 +1,151 @@
-import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowRight, Dumbbell, Play, Plus } from 'lucide-react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ArrowRight, BookOpen, Dumbbell, Play, Plus } from 'lucide-react';
 import { LoadingState } from '@/components/common/LoadingState';
+import { EmptyState } from '@/components/common/EmptyState';
 import { Button } from '@/components/ui/button';
 import { useRoutines } from '@/hooks/use-routines';
 import { useActiveSession, useStartSession } from '@/hooks/use-sessions';
-import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
-/** The workout entry point: resume the current session or begin from a routine or a blank slate. */
+/** Starts or resumes training, with quick access to saved routines and the library. */
 export default function TodayPage(): JSX.Element {
     const { workspaceId = '' } = useParams<{ workspaceId: string }>();
     const navigate = useNavigate();
-    const { data: active, isLoading: isActiveLoading } = useActiveSession({ workspaceId });
-    const { data: routinesData, isLoading: areRoutinesLoading } = useRoutines({ workspaceId });
+    const { user } = useAuth();
+    const active = useActiveSession({ workspaceId });
+    const routinesQuery = useRoutines({ workspaceId });
     const startSession = useStartSession({ workspaceId });
-    const routines = routinesData?.pages.flatMap(page => page.data).filter(routine => routine.archivedAt === null) ?? [];
-
+    const routines =
+        routinesQuery.data?.pages.flatMap((page) => page.data).filter((routine) => !routine.archivedAt) ?? [];
+    const session = active.data?.session;
     const start = (routineId?: string): void => {
-        startSession.mutate(
-            routineId ? { routineId } : {},
-            {
-                onSuccess: session => navigate(`/workspaces/${workspaceId}/sessions/${session.id}`),
-                onError: error => toast({ title: 'Could not start workout', description: error.message, variant: 'destructive' }),
-            },
-        );
+        startSession.mutate(routineId ? { routineId } : {}, {
+            onSuccess: (created) => navigate(`/workspaces/${workspaceId}/sessions/${created.id}`),
+        });
     };
-
-    if (isActiveLoading || areRoutinesLoading) {
-        return (
-            <div className='mx-auto max-w-3xl px-4 py-10 md:px-8'>
-                <LoadingState label='Getting today ready…' />
-            </div>
-        );
-    }
-
     return (
-        <div className='mx-auto max-w-3xl px-4 py-6 md:px-8 md:py-10'>
-            <p className='text-sm font-medium text-primary'>Today</p>
-            <h1 className='font-heading text-4xl'>Ready to train?</h1>
-            <p className='mt-2 max-w-xl text-muted-foreground'>Pick up where you left off, or choose how you want to train.</p>
-
-            {active?.session ? (
-                <section className='mt-8 rounded-2xl border border-primary/30 bg-primary/5 p-5 sm:p-6'>
-                    <div className='flex flex-wrap items-center justify-between gap-4'>
-                        <div>
-                            <p className='text-sm font-medium text-primary'>Workout in progress</p>
-                            <h2 className='font-heading text-2xl'>{active.session.name}</h2>
-                            <p className='mt-1 text-sm text-muted-foreground'>
-                                {active.session.state.progress.loggedSets} working sets logged
-                            </p>
-                        </div>
-                        <Button onClick={() => navigate(`/workspaces/${workspaceId}/sessions/${active.session!.id}`)} className='gap-2'>
-                            Resume workout
-                            <ArrowRight className='h-4 w-4' aria-hidden />
-                        </Button>
-                    </div>
-                </section>
+        <div className="page-shell">
+            <div className="mb-8">
+                <p className="eyebrow mb-3">One workout at a time</p>
+                <h1 className="page-title">
+                    A little stronger today<span className="text-primary">.</span>
+                </h1>
+                <p className="mt-3 text-muted-foreground">
+                    {user?.displayName ? `Good to see you, ${user.displayName.split(' ')[0]}. ` : ''}Let’s make some
+                    time for you.
+                </p>
+            </div>
+            {active.isLoading || routinesQuery.isLoading ? (
+                <LoadingState label="Getting your training space ready…" />
+            ) : active.isError || routinesQuery.isError ? (
+                <EmptyState
+                    title="Let’s try that again"
+                    description="We couldn’t load your workouts. Check your connection and try again."
+                    actionLabel="Try again"
+                    onAction={() => {
+                        void active.refetch();
+                        void routinesQuery.refetch();
+                    }}
+                />
             ) : (
                 <>
-                    <section className='mt-8 rounded-2xl border border-border bg-card p-5 sm:p-6'>
-                        <div className='flex flex-wrap items-center justify-between gap-4'>
-                            <div className='flex items-center gap-3'>
-                                <span className='grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary'>
-                                    <Dumbbell className='h-5 w-5' aria-hidden />
-                                </span>
-                                <div>
-                                    <h2 className='font-heading text-xl'>Start a blank workout</h2>
-                                    <p className='text-sm text-muted-foreground'>Add exercises as you go.</p>
-                                </div>
-                            </div>
-                            <Button onClick={() => start()} disabled={startSession.isPending} className='gap-2'>
-                                <Plus className='h-4 w-4' aria-hidden />
-                                Start blank
+                    <section className="training-banner p-7 sm:p-10">
+                        <div className="training-rings sm:right-12 sm:top-[-30px]" aria-hidden />
+                        <div className="relative max-w-lg">
+                            <span className="mb-7 flex items-center gap-2 text-xs font-medium text-[#c8dfac]">
+                                <span className="h-1.5 w-1.5 rounded-full bg-[#c8dfac]" />
+                                {session ? 'WORKOUT IN PROGRESS' : 'YOUR NEXT SESSION'}
+                            </span>
+                            <h2 className="text-3xl sm:text-4xl">
+                                {session ? session.name : 'Show up. Set your pace.'}
+                            </h2>
+                            <p className="mt-3 text-sm leading-relaxed text-[#d0dfd5]">
+                                {session
+                                    ? `${session.state.progress.loggedSets} working sets logged. Pick up right where you left off.`
+                                    : 'Start with a blank workout and add movements as you go. You bring the effort. We’ll keep track.'}
+                            </p>
+                            <Button
+                                className="mt-7 bg-[#d5e8b5] text-[#234d3d] hover:bg-[#e0edcb]"
+                                disabled={startSession.isPending}
+                                onClick={() =>
+                                    session ? navigate(`/workspaces/${workspaceId}/sessions/${session.id}`) : start()
+                                }
+                            >
+                                {session ? <ArrowRight /> : <Plus />}
+                                {startSession.isPending ? 'Starting…' : session ? 'Resume workout' : 'Start a workout'}
                             </Button>
                         </div>
                     </section>
-
-                    <section className='mt-8'>
-                        <h2 className='font-heading text-2xl'>Start from a routine</h2>
-                        {routines.length === 0 ? (
-                            <p className='mt-2 text-sm text-muted-foreground'>Create a routine to have it ready here next time.</p>
-                        ) : (
-                            <ul className='mt-3 space-y-2'>
-                                {routines.map(routine => (
-                                    <li key={routine.id} className='flex items-center gap-3 rounded-xl border border-border bg-card p-3'>
-                                        <span className='min-w-0 flex-1'>
-                                            <span className='block truncate font-medium'>{routine.name}</span>
-                                            <span className='text-xs text-muted-foreground'>
-                                                {routine.exerciseCount === 1 ? '1 exercise' : `${routine.exerciseCount} exercises`}
+                    <div className="mt-9 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
+                        <section>
+                            <div className="mb-4 flex items-center justify-between gap-3">
+                                <h2 className="text-xl">Your routines</h2>
+                                <Link
+                                    to={`/workspaces/${workspaceId}/routines`}
+                                    className="py-3 text-xs font-medium text-primary"
+                                >
+                                    View all <span aria-hidden>→</span>
+                                </Link>
+                            </div>
+                            {routines.length ? (
+                                <ul className="overflow-hidden rounded-2xl border bg-card">
+                                    {routines.map((routine) => (
+                                        <li
+                                            key={routine.id}
+                                            className="flex items-center gap-4 border-b p-4 last:border-0"
+                                        >
+                                            <span className="exercise-icon">
+                                                <Dumbbell className="h-5 w-5" />
                                             </span>
-                                        </span>
-                                        <Button size='sm' variant='outline' onClick={() => start(routine.id)} disabled={startSession.isPending} className='gap-1.5'>
-                                            <Play className='h-3.5 w-3.5' aria-hidden />
-                                            Start
-                                        </Button>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </section>
+                                            <Link
+                                                to={`/workspaces/${workspaceId}/routines/${routine.id}`}
+                                                className="min-w-0 flex-1"
+                                            >
+                                                <span className="block break-words text-sm font-semibold">
+                                                    {routine.name}
+                                                </span>
+                                                <span className="mt-1 block text-xs text-muted-foreground">
+                                                    {routine.exerciseCount}{' '}
+                                                    {routine.exerciseCount === 1 ? 'movement' : 'movements'}
+                                                </span>
+                                            </Link>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                disabled={startSession.isPending || Boolean(session)}
+                                                onClick={() => start(routine.id)}
+                                                aria-label={`Start ${routine.name}`}
+                                            >
+                                                <Play />
+                                                <span className="hidden sm:inline">Start</span>
+                                            </Button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <EmptyState
+                                    title="Make your go-to workout"
+                                    description="Group your favorite movements into a routine, ready for the next time you train."
+                                    actionLabel="Create a routine"
+                                    onAction={() => navigate(`/workspaces/${workspaceId}/routines`)}
+                                />
+                            )}
+                        </section>
+                        <Link
+                            to={`/workspaces/${workspaceId}/exercises`}
+                            className="group rounded-2xl border bg-secondary/50 p-6"
+                        >
+                            <BookOpen className="mb-6 h-6 w-6 text-primary" aria-hidden />
+                            <h2 className="text-xl">Find your next movement</h2>
+                            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                                Your exercise library and technique notes, all in one place.
+                            </p>
+                            <span className="mt-6 flex items-center justify-between text-sm font-medium text-primary">
+                                Explore the library
+                                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                            </span>
+                        </Link>
+                    </div>
                 </>
             )}
         </div>

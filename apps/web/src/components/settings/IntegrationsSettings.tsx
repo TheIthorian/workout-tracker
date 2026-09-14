@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
+import { formatDate } from '@/lib/date-format';
 import { Check, Copy, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -39,13 +40,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 
 function formatTokenTimestamp(iso: string): string {
     try {
-        return format(parseISO(iso), 'MMM d, yyyy');
+        return formatDate(iso);
     } catch {
         return iso;
     }
 }
 
-export function IntegrationsSettings() {
+export function IntegrationsSettings(): JSX.Element {
     const queryClient = useQueryClient();
     const { currentWorkspace } = useWorkspace();
     const { user } = useAuth();
@@ -95,8 +96,8 @@ export function IntegrationsSettings() {
                 ...(trimmed ? { name: trimmed } : {}),
             });
         },
-        onSuccess: data => {
-            const workspaceMeta = user?.workspaces.find(w => w.workspaceId === data.workspaceId);
+        onSuccess: (data) => {
+            const workspaceMeta = user?.workspaces.find((w) => w.workspaceId === data.workspaceId);
             capture(analyticsEvents.mcpAccessTokenCreated, withWorkspaceProperties(workspaceMeta));
             queryClient.invalidateQueries({ queryKey: ['mcp-access-tokens'] });
             setCreatedConnection(data);
@@ -108,8 +109,8 @@ export function IntegrationsSettings() {
     const revokeToken = useMutation({
         mutationFn: (tokenId: string) => mcpAccessTokensApi.revoke(tokenId),
         onSuccess: (_data, tokenId) => {
-            const row = tokens.find(t => t.id === tokenId);
-            const workspaceMeta = row ? user?.workspaces.find(w => w.workspaceId === row.workspaceId) : undefined;
+            const row = tokens.find((t) => t.id === tokenId);
+            const workspaceMeta = row ? user?.workspaces.find((w) => w.workspaceId === row.workspaceId) : undefined;
             capture(analyticsEvents.mcpAccessTokenRevoked, withWorkspaceProperties(workspaceMeta));
             queryClient.invalidateQueries({ queryKey: ['mcp-access-tokens'] });
             toast({ title: 'Connection revoked' });
@@ -117,11 +118,11 @@ export function IntegrationsSettings() {
         },
     });
 
-    async function copyMcpUrl(url: string) {
+    async function copyMcpUrl(url: string): Promise<void> {
         try {
             await navigator.clipboard.writeText(url);
             setUrlCopied(true);
-            toast({ title: 'Copied', description: 'MCP server URL copied to clipboard.' });
+            toast({ title: 'Copied to clipboard' });
         } catch {
             toast({
                 title: 'Copy failed',
@@ -138,27 +139,27 @@ export function IntegrationsSettings() {
 
     return (
         <>
-            <div className='space-y-6'>
-                <Card className='overflow-hidden border-border/80 shadow-sm'>
-                    <CardHeader className='border-b border-border/60 bg-muted/20'>
-                        <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
-                            <div className='flex min-w-0 flex-1 items-start gap-4'>
-                                <div className='shrink-0 pt-0.5'>
+            <div className="space-y-6">
+                <Card className="overflow-hidden border-border/80 shadow-sm">
+                    <CardHeader className="border-b border-border/60 bg-muted/20">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="flex min-w-0 flex-1 items-start gap-4">
+                                <div className="shrink-0 pt-0.5">
                                     <img
-                                        src='/mcp-logo-light.svg'
-                                        alt='Model Context Protocol'
-                                        className='h-8 w-auto max-w-[min(100%,280px)] dark:hidden'
+                                        src="/mcp-logo-light.svg"
+                                        alt="Model Context Protocol"
+                                        className="h-8 w-auto max-w-[min(100%,280px)] dark:hidden"
                                     />
                                     <img
-                                        src='/mcp-logo-dark.svg'
-                                        alt=''
-                                        className='hidden h-8 w-auto max-w-[min(100%,280px)] dark:block'
+                                        src="/mcp-logo-dark.svg"
+                                        alt=""
+                                        className="hidden h-8 w-auto max-w-[min(100%,280px)] dark:block"
                                         aria-hidden
                                     />
                                 </div>
-                                <div className='min-w-0'>
-                                    <CardTitle className='text-lg'>MCP server</CardTitle>
-                                    <CardDescription className='mt-1.5'>
+                                <div className="min-w-0">
+                                    <CardTitle className="text-xl">Connect your tools</CardTitle>
+                                    <CardDescription className="mt-1.5">
                                         Connect Cursor, Claude, or other MCP clients to a workspace using a personal
                                         server URL. Each URL is scoped to one workspace and can be revoked anytime.
                                     </CardDescription>
@@ -166,26 +167,26 @@ export function IntegrationsSettings() {
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent className='space-y-6 pt-6'>
+                    <CardContent className="space-y-6 pt-6">
                         {workspaces.length === 0 ? (
-                            <p className='text-sm text-muted-foreground'>
+                            <p className="text-sm text-muted-foreground">
                                 Create a workspace first, then you can generate an MCP server URL for it.
                             </p>
                         ) : (
                             <>
-                                <div className='grid gap-4 sm:max-w-md'>
-                                    <div className='space-y-2'>
-                                        <Label htmlFor='mcp-workspace'>Workspace</Label>
+                                <div className="grid gap-4 sm:max-w-md">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="mcp-workspace">Workspace</Label>
                                         <Select
                                             value={selectedWorkspaceId}
                                             onValueChange={setSelectedWorkspaceId}
                                             disabled={createToken.isPending}
                                         >
-                                            <SelectTrigger id='mcp-workspace'>
-                                                <SelectValue placeholder='Choose workspace' />
+                                            <SelectTrigger id="mcp-workspace">
+                                                <SelectValue placeholder="Choose workspace" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {workspaces.map(w => (
+                                                {workspaces.map((w) => (
                                                     <SelectItem key={w.workspaceId} value={w.workspaceId}>
                                                         {w.name}
                                                     </SelectItem>
@@ -193,22 +194,22 @@ export function IntegrationsSettings() {
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                    <div className='space-y-2'>
-                                        <Label htmlFor='mcp-label'>Label (optional)</Label>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="mcp-label">Label (optional)</Label>
                                         <Input
-                                            id='mcp-label'
-                                            placeholder='e.g. Cursor on laptop'
+                                            id="mcp-label"
+                                            placeholder="e.g. Cursor on laptop"
                                             maxLength={128}
                                             value={optionalLabel}
-                                            onChange={e => setOptionalLabel(e.target.value)}
+                                            onChange={(e) => setOptionalLabel(e.target.value)}
                                             disabled={createToken.isPending}
                                         />
-                                        <p className='text-xs text-muted-foreground'>
+                                        <p className="text-xs text-muted-foreground">
                                             Helps you tell connections apart in the list below.
                                         </p>
                                     </div>
                                     <Button
-                                        type='button'
+                                        type="button"
                                         disabled={!selectedWorkspaceId || createToken.isPending}
                                         onClick={() => createToken.mutate()}
                                     >
@@ -216,17 +217,17 @@ export function IntegrationsSettings() {
                                     </Button>
                                 </div>
 
-                                <div className='space-y-3'>
-                                    <h3 className='text-sm font-medium text-foreground'>Active connections</h3>
+                                <div className="space-y-3">
+                                    <h3 className="text-sm font-medium text-foreground">Active connections</h3>
                                     {tokensLoading ? (
-                                        <p className='text-sm text-muted-foreground'>Loading…</p>
+                                        <p className="text-sm text-muted-foreground">Loading…</p>
                                     ) : sortedTokens.length === 0 ? (
-                                        <p className='text-sm text-muted-foreground'>
+                                        <p className="text-sm text-muted-foreground">
                                             No MCP connections yet. Generate a URL to get started.
                                         </p>
                                     ) : isMobile ? (
-                                        <ul className='space-y-3'>
-                                            {sortedTokens.map(row => (
+                                        <ul className="space-y-3">
+                                            {sortedTokens.map((row) => (
                                                 <li
                                                     key={row.id}
                                                     className={cn(
@@ -234,40 +235,42 @@ export function IntegrationsSettings() {
                                                         row.revokedAt && 'opacity-60',
                                                     )}
                                                 >
-                                                    <div className='flex items-start justify-between gap-2'>
-                                                        <div className='min-w-0'>
-                                                            <p className='font-medium'>
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <div className="min-w-0">
+                                                            <p className="font-medium">
                                                                 {row.name?.trim() || 'Unnamed'}
                                                             </p>
-                                                            <p className='text-sm text-muted-foreground'>
+                                                            <p className="text-sm text-muted-foreground">
                                                                 {workspaceNameById.get(row.workspaceId) ??
                                                                     row.workspaceId}
                                                             </p>
-                                                            <p className='mt-1 text-xs text-muted-foreground'>
+                                                            <p className="mt-1 text-xs text-muted-foreground">
                                                                 Created {formatTokenTimestamp(row.createdAt)}
                                                                 {row.lastUsedAt
                                                                     ? ` · Last used ${formatTokenTimestamp(row.lastUsedAt)}`
                                                                     : ''}
                                                             </p>
                                                         </div>
-                                                        <div className='flex shrink-0 flex-col items-end gap-2'>
+                                                        <div className="flex shrink-0 flex-col items-end gap-2">
                                                             {row.revokedAt ? (
-                                                                <Badge variant='secondary'>Revoked</Badge>
+                                                                <Badge variant="secondary">Revoked</Badge>
                                                             ) : (
                                                                 <Tooltip>
                                                                     <TooltipTrigger asChild>
                                                                         <Button
-                                                                            variant='ghost'
-                                                                            size='icon'
-                                                                            className='h-8 w-8'
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            className="h-8 w-8"
                                                                             onClick={() => setTokenToRevoke(row)}
                                                                             disabled={revokeToken.isPending}
-                                                                            aria-label='Revoke connection'
+                                                                            aria-label="Revoke connection"
                                                                         >
-                                                                            <Trash2 className='h-4 w-4 text-destructive' />
+                                                                            <Trash2 className="h-4 w-4 text-destructive" />
                                                                         </Button>
                                                                     </TooltipTrigger>
-                                                                    <TooltipContent side='bottom'>Revoke connection</TooltipContent>
+                                                                    <TooltipContent side="bottom">
+                                                                        Revoke connection
+                                                                    </TooltipContent>
                                                                 </Tooltip>
                                                             )}
                                                         </div>
@@ -283,35 +286,35 @@ export function IntegrationsSettings() {
                                                     <TableHead>Workspace</TableHead>
                                                     <TableHead>Created</TableHead>
                                                     <TableHead>Last used</TableHead>
-                                                    <TableHead className='w-[100px]'>Status</TableHead>
-                                                    <TableHead className='w-[80px]' />
+                                                    <TableHead className="w-[100px]">Status</TableHead>
+                                                    <TableHead className="w-[80px]" />
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
-                                                {sortedTokens.map(row => (
+                                                {sortedTokens.map((row) => (
                                                     <TableRow
                                                         key={row.id}
                                                         className={row.revokedAt ? 'opacity-60' : undefined}
                                                     >
-                                                        <TableCell className='font-medium'>
+                                                        <TableCell className="font-medium">
                                                             {row.name?.trim() || 'Unnamed'}
                                                         </TableCell>
                                                         <TableCell>
                                                             {workspaceNameById.get(row.workspaceId) ?? row.workspaceId}
                                                         </TableCell>
-                                                        <TableCell className='whitespace-nowrap'>
+                                                        <TableCell className="whitespace-nowrap">
                                                             {formatTokenTimestamp(row.createdAt)}
                                                         </TableCell>
-                                                        <TableCell className='whitespace-nowrap'>
+                                                        <TableCell className="whitespace-nowrap">
                                                             {row.lastUsedAt
                                                                 ? formatTokenTimestamp(row.lastUsedAt)
                                                                 : '—'}
                                                         </TableCell>
                                                         <TableCell>
                                                             {row.revokedAt ? (
-                                                                <Badge variant='secondary'>Revoked</Badge>
+                                                                <Badge variant="secondary">Revoked</Badge>
                                                             ) : (
-                                                                <Badge variant='outline'>Active</Badge>
+                                                                <Badge variant="outline">Active</Badge>
                                                             )}
                                                         </TableCell>
                                                         <TableCell>
@@ -319,16 +322,18 @@ export function IntegrationsSettings() {
                                                                 <Tooltip>
                                                                     <TooltipTrigger asChild>
                                                                         <Button
-                                                                            variant='ghost'
-                                                                            size='icon'
+                                                                            variant="ghost"
+                                                                            size="icon"
                                                                             onClick={() => setTokenToRevoke(row)}
                                                                             disabled={revokeToken.isPending}
-                                                                            aria-label='Revoke connection'
+                                                                            aria-label="Revoke connection"
                                                                         >
-                                                                            <Trash2 className='h-4 w-4 text-destructive' />
+                                                                            <Trash2 className="h-4 w-4 text-destructive" />
                                                                         </Button>
                                                                     </TooltipTrigger>
-                                                                    <TooltipContent side='bottom'>Revoke connection</TooltipContent>
+                                                                    <TooltipContent side="bottom">
+                                                                        Revoke connection
+                                                                    </TooltipContent>
                                                                 </Tooltip>
                                                             )}
                                                         </TableCell>
@@ -346,50 +351,70 @@ export function IntegrationsSettings() {
 
             <Dialog
                 open={createdConnection !== null}
-                onOpenChange={open => {
+                onOpenChange={(open) => {
                     if (!open) {
                         setCreatedConnection(null);
                         setUrlCopied(false);
                     }
                 }}
             >
-                <DialogContent className='sm:max-w-lg'>
+                <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
-                        <DialogTitle>MCP server URL</DialogTitle>
+                        <DialogTitle>Your connection is ready</DialogTitle>
                         <DialogDescription>
-                            Add this URL in your MCP client as the server address. Store it securely; anyone with
-                            the URL can access this workspace.
+                            Copy your URL or access token now — they’re only shown once. Keep them private; they give
+                            access to this workspace.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className='space-y-2'>
-                        <Label htmlFor='mcp-url-copy'>Server URL</Label>
-                        <div className='flex min-w-0 gap-2'>
+                    <div className="space-y-2">
+                        <Label htmlFor="mcp-url-copy">Server URL</Label>
+                        <div className="flex min-w-0 gap-2">
                             <Input
-                                id='mcp-url-copy'
+                                id="mcp-url-copy"
                                 readOnly
                                 value={createdConnection?.mcpUrl ?? ''}
-                                className='min-w-0 flex-1 font-mono text-xs'
+                                className="min-w-0 flex-1 font-mono text-xs"
                             />
                             <Button
-                                type='button'
-                                variant='secondary'
-                                className='shrink-0 gap-1.5'
+                                type="button"
+                                variant="secondary"
+                                className="shrink-0 gap-1.5"
                                 onClick={() => createdConnection && copyMcpUrl(createdConnection.mcpUrl)}
                             >
-                                {urlCopied ? <Check className='h-4 w-4' /> : <Copy className='h-4 w-4' />}
+                                {urlCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                                 Copy
                             </Button>
                         </div>
                     </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="access-token-copy">Personal access token</Label>
+                        <div className="flex gap-2">
+                            <Input
+                                id="access-token-copy"
+                                readOnly
+                                value={createdConnection?.token ?? ''}
+                                className="min-w-0 font-mono text-xs"
+                            />
+                            <Button
+                                variant="secondary"
+                                aria-label="Copy access token"
+                                onClick={() => {
+                                    if (createdConnection) void copyMcpUrl(createdConnection.token);
+                                }}
+                            >
+                                <Copy />
+                            </Button>
+                        </div>
+                    </div>
                     <DialogFooter>
-                        <Button type='button' onClick={() => setCreatedConnection(null)}>
+                        <Button type="button" onClick={() => setCreatedConnection(null)}>
                             Done
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
 
-            <AlertDialog open={tokenToRevoke !== null} onOpenChange={open => !open && setTokenToRevoke(null)}>
+            <AlertDialog open={tokenToRevoke !== null} onOpenChange={(open) => !open && setTokenToRevoke(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Revoke this connection?</AlertDialogTitle>
@@ -400,7 +425,7 @@ export function IntegrationsSettings() {
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
-                            className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             onClick={() => tokenToRevoke && revokeToken.mutate(tokenToRevoke.id)}
                             disabled={revokeToken.isPending}
                         >

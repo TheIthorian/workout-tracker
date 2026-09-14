@@ -23,15 +23,15 @@ export function RestTimer({ session }: { session: SessionDetail }): JSX.Element 
     if (!timer || timer.isFinished || isDismissed) return null;
 
     return (
-        <div className='sticky bottom-20 z-20 mx-auto mt-5 flex max-w-3xl items-center justify-between rounded-xl border border-primary/30 bg-primary px-4 py-3 text-primary-foreground shadow-lg md:bottom-5'>
-            <span className='flex items-center gap-2 text-sm font-medium'>
-                <Timer className='h-4 w-4' aria-hidden />
+        <div className="sticky bottom-20 z-20 mx-auto mt-5 flex max-w-3xl items-center justify-between rounded-xl border border-primary/30 bg-primary px-4 py-3 text-primary-foreground shadow-lg md:bottom-5">
+            <span className="flex items-center gap-2 text-sm font-medium">
+                <Timer className="h-4 w-4" aria-hidden />
                 Rest timer
             </span>
-            <time className='font-heading text-2xl tabular-nums' dateTime={timer.endsAt}>
+            <time className="font-heading text-2xl tabular-nums" dateTime={timer.endsAt}>
                 {formatSessionClock(timer.remainingSeconds)}
             </time>
-            <Button variant='secondary' size='sm' onClick={() => setDismissed(true)}>
+            <Button variant="secondary" size="sm" onClick={() => setDismissed(true)}>
                 Skip rest
             </Button>
         </div>

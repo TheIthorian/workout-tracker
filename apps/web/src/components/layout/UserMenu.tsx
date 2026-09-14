@@ -39,31 +39,31 @@ export function UserMenu({ workspaceId, align = 'end', side = 'bottom' }: UserMe
     return (
         <DropdownMenu>
             <DropdownMenuTrigger
-                aria-label='Open account menu'
-                className='shrink-0 rounded-full outline-none ring-offset-background transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+                aria-label="Open account menu"
+                className="grid h-12 w-12 place-items-center shrink-0 rounded-full outline-none ring-offset-background transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-                <Avatar className='h-8 w-8'>
-                    <AvatarFallback className='bg-primary/10 text-xs font-semibold text-primary'>
+                <Avatar className="h-8 w-8">
+                    <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
                         {initialsFor(name)}
                     </AvatarFallback>
                 </Avatar>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align={align} side={side} className='w-56'>
+            <DropdownMenuContent align={align} side={side} className="w-56">
                 {name && (
                     <>
-                        <DropdownMenuLabel className='truncate font-normal'>
-                            <span className='block text-xs text-muted-foreground'>Signed in as</span>
-                            <span className='block truncate font-medium'>{name}</span>
+                        <DropdownMenuLabel className="truncate font-normal">
+                            <span className="block text-xs text-muted-foreground">Signed in as</span>
+                            <span className="block truncate font-medium">{name}</span>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
                     </>
                 )}
                 <DropdownMenuItem onSelect={() => navigate(settingsPath)}>
-                    <Settings className='mr-2 h-4 w-4' aria-hidden />
+                    <Settings className="mr-2 h-4 w-4" aria-hidden />
                     Settings
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => void logout()}>
-                    <LogOut className='mr-2 h-4 w-4' aria-hidden />
+                    <LogOut className="mr-2 h-4 w-4" aria-hidden />
                     Log out
                 </DropdownMenuItem>
             </DropdownMenuContent>

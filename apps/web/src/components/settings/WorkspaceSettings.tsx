@@ -1,16 +1,13 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Check, Pencil, Plus, Trash2, UserPlus, Users } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useAuth } from '@/contexts/AuthContext';
-import { useWorkspace } from '@/contexts/WorkspaceContext';
-import { Plus, UserPlus, Trash2, Pencil } from 'lucide-react';
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { workspacesApi } from '@/lib/api';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
     Dialog,
     DialogContent,
@@ -19,585 +16,474 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { LoadingState } from '@/components/common/LoadingState';
+import { EmptyState } from '@/components/common/EmptyState';
+import { useAuth } from '@/contexts/AuthContext';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
+import { workspacesApi } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
-import { useIsMobile } from '@/hooks/use-mobile';
-import * as z from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { WorkspaceRole, type MemberListItem } from '@/models/workspace';
-import { analyticsEvents, useAnalytics, withWorkspaceProperties } from '@/lib/analytics';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { WorkspaceRole, type MemberListItem, type WorkspaceListItem } from '@/models/workspace';
 
-const workspaceSchema = z.object({
-    name: z.string().min(1, 'Name is required'),
-});
-
-const inviteMemberSchema = z.object({
-    email: z.string().email('Invalid email address'),
-    role: z.enum(WorkspaceRole),
-});
-
-export function WorkspaceSettings() {
-    const isMobile = useIsMobile();
-    const { user } = useAuth();
+/** Workspace and member management, with controls matched to the caller’s role. */
+export function WorkspaceSettings(): JSX.Element {
+    const { user, refreshUser } = useAuth();
     const { currentWorkspace } = useWorkspace();
+    const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const { capture } = useAnalytics();
-
-    const [isAddWorkspaceModalOpen, setIsAddWorkspaceModalOpen] = useState(false);
-    const [isInviteMemberModalOpen, setIsInviteMemberModalOpen] = useState(false);
-    const [isEditWorkspaceModalOpen, setIsEditWorkspaceModalOpen] = useState(false);
-    const [isDeleteWorkspaceModalOpen, setIsDeleteWorkspaceModalOpen] = useState(false);
-    const [workspaceToEdit, setWorkspaceToEdit] = useState<{
-        workspaceId: string;
-        name: string;
-        isOwner: boolean;
-    } | null>(null);
-    const [deleteConfirmation, setDeleteConfirmation] = useState('');
-
-    const { data: workspaces } = useQuery({
-        queryKey: ['workspaces'],
-        queryFn: () => workspacesApi.getAll(),
-        initialData: [],
+    const {
+        data: workspaces = [],
+        isLoading,
+        isError,
+        refetch,
+    } = useQuery({ queryKey: ['workspaces'], queryFn: () => workspacesApi.getAll() });
+    const {
+        data: active,
+        isLoading: membersLoading,
+        isError: membersError,
+        refetch: refetchMembers,
+    } = useQuery({
+        queryKey: ['workspaces', currentWorkspace?.workspaceId],
+        queryFn: () => workspacesApi.getById(currentWorkspace!.workspaceId),
+        enabled: Boolean(currentWorkspace),
     });
-
-    const members = workspaces.find(workspace => workspace.workspaceId === currentWorkspace.workspaceId)?.members || [];
-
-    const form = useForm<z.infer<typeof workspaceSchema>>({
-        resolver: zodResolver(workspaceSchema),
-        defaultValues: {
-            name: '',
+    const canManage = active?.role === WorkspaceRole.Admin || active?.role === WorkspaceRole.Owner;
+    const isOwner = active?.role === WorkspaceRole.Owner;
+    const [createOpen, setCreateOpen] = useState(false);
+    const [editing, setEditing] = useState<WorkspaceListItem | null>(null);
+    const [name, setName] = useState('');
+    const [deleting, setDeleting] = useState<WorkspaceListItem | null>(null);
+    const [confirmation, setConfirmation] = useState('');
+    const [inviteOpen, setInviteOpen] = useState(false);
+    const [email, setEmail] = useState('');
+    const [role, setRole] = useState(WorkspaceRole.Member);
+    const [removing, setRemoving] = useState<MemberListItem | null>(null);
+    const refresh = async (): Promise<void> => {
+        await Promise.all([queryClient.invalidateQueries({ queryKey: ['workspaces'] }), refreshUser()]);
+    };
+    const create = useMutation({
+        mutationFn: () => workspacesApi.create({ name: name.trim() }),
+        onSuccess: async (workspace) => {
+            await refresh();
+            setCreateOpen(false);
+            toast({ title: 'Your workspace is ready' });
+            navigate(`/workspaces/${workspace.workspaceId}/settings?tab=workspaces`);
         },
     });
-
-    const inviteForm = useForm<z.infer<typeof inviteMemberSchema>>({
-        resolver: zodResolver(inviteMemberSchema),
-        defaultValues: {
-            email: '',
-            role: WorkspaceRole.Member,
+    const rename = useMutation({
+        mutationFn: () => workspacesApi.update(editing!.workspaceId, { name: name.trim() }),
+        onSuccess: async () => {
+            await refresh();
+            setEditing(null);
+            toast({ title: 'Workspace renamed' });
         },
     });
-
-    const updateForm = useForm<z.infer<typeof workspaceSchema>>({
-        resolver: zodResolver(workspaceSchema),
-        defaultValues: {
-            name: '',
-        },
-    });
-
-    const createWorkspace = useMutation({
-        mutationFn: (values: z.infer<typeof workspaceSchema>) => workspacesApi.create({ name: values.name }),
-        onSuccess: workspace => {
-            capture(
-                analyticsEvents.workspaceCreated,
-                withWorkspaceProperties(
-                    { workspaceId: workspace.workspaceId, name: workspace.name, role: WorkspaceRole.Owner },
-                    { member_count: workspace.members.length },
-                ),
-            );
-            queryClient.invalidateQueries({ queryKey: ['workspaces'] });
-            toast({
-                title: 'Workspace created',
-                description: 'The workspace has been successfully created.',
-            });
-            setIsAddWorkspaceModalOpen(false);
-            form.reset();
-        },
-    });
-
-    const inviteMember = useMutation({
-        mutationFn: (values: z.infer<typeof inviteMemberSchema>) =>
-            workspacesApi.addMember(currentWorkspace!.workspaceId, { email: values.email, role: values.role }),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['workspaces'] });
-            toast({
-                title: 'Member invited',
-                description: 'The member has been successfully invited.',
-            });
-            setIsInviteMemberModalOpen(false);
-            inviteForm.reset();
-        },
-    });
-
-    const updateMemberRole = useMutation({
-        mutationFn: ({ userId, role }: { userId: string; role: WorkspaceRole }) =>
-            workspacesApi.updateMemberRole(currentWorkspace!.workspaceId, userId, role),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['workspaces'] });
-            toast({
-                title: 'Role updated',
-                description: 'The member role has been updated.',
-            });
-        },
-    });
-
-    const removeMember = useMutation({
-        mutationFn: (userId: string) => workspacesApi.removeMember(currentWorkspace!.workspaceId, userId),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['workspaces'] });
-            toast({
-                title: 'Member removed',
-                description: 'The member has been removed from the workspace.',
-            });
-        },
-    });
-
-    const updateWorkspace = useMutation({
-        mutationFn: (values: { id: string; name: string }) => workspacesApi.update(values.id, { name: values.name }),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['workspaces'] });
-            toast({
-                title: 'Workspace updated',
-                description: 'The workspace has been successfully updated.',
-            });
-            setIsEditWorkspaceModalOpen(false);
-            updateForm.reset();
-            setWorkspaceToEdit(null);
-        },
-    });
-
-    const deleteWorkspace = useMutation({
-        mutationFn: (id: string) => workspacesApi.remove(id),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['workspaces'] });
-            toast({
-                title: 'Workspace deleted',
-                description: 'The workspace has been successfully deleted.',
-            });
-            setIsDeleteWorkspaceModalOpen(false);
-            setWorkspaceToEdit(null);
-            setDeleteConfirmation('');
-
-            // If current workspace was deleted, switch to another one or reload
-            if (workspaceToEdit?.workspaceId === currentWorkspace?.workspaceId) {
-                window.location.reload();
+    const remove = useMutation({
+        mutationFn: (workspaceId: string) => workspacesApi.remove(workspaceId),
+        onSuccess: async (_data, removedId) => {
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ['workspaces'], exact: true }),
+                refreshUser(),
+            ]);
+            setDeleting(null);
+            toast({ title: 'Workspace deleted' });
+            if (removedId === currentWorkspace?.workspaceId) {
+                const next = workspaces.find((workspace) => workspace.workspaceId !== removedId);
+                navigate(
+                    next ? `/workspaces/${next.workspaceId}/settings?tab=workspaces` : '/settings?tab=workspaces',
+                    { replace: true },
+                );
             }
         },
     });
-
-    const onSubmit = (values: z.infer<typeof workspaceSchema>) => {
-        createWorkspace.mutate(values);
-    };
-
-    const onInviteSubmit = (values: z.infer<typeof inviteMemberSchema>) => {
-        inviteMember.mutate(values);
-    };
-
-    const onUpdateSubmit = (values: z.infer<typeof workspaceSchema>) => {
-        if (workspaceToEdit) {
-            updateWorkspace.mutate({ id: workspaceToEdit.workspaceId, name: values.name });
-        }
-    };
-
-    const handleDeleteWorkspace = () => {
-        if (workspaceToEdit && deleteConfirmation === workspaceToEdit.name) {
-            deleteWorkspace.mutate(workspaceToEdit.workspaceId);
-        }
-    };
-
-    const handleEditClick = (workspace: { workspaceId: string; name: string; members: MemberListItem[] }) => {
-        const isOwner = workspace.members.find(m => m.userId === user?.userId)?.role === WorkspaceRole.Owner;
-        setWorkspaceToEdit({ workspaceId: workspace.workspaceId, name: workspace.name, isOwner });
-        updateForm.reset({ name: workspace.name });
-        setDeleteConfirmation('');
-        setIsEditWorkspaceModalOpen(true);
-    };
-
-    const getRoleBadgeVariant = (role: WorkspaceRole): 'default' | 'secondary' | 'outline' => {
-        switch (role) {
-            case WorkspaceRole.Owner:
-                return 'default';
-            case WorkspaceRole.Admin:
-                return 'secondary';
-            default:
-                return 'outline';
-        }
-    };
-
+    const invite = useMutation({
+        mutationFn: () => workspacesApi.addMember(active!.workspaceId, { email: email.trim(), role }),
+        onSuccess: async () => {
+            await refresh();
+            setInviteOpen(false);
+            toast({ title: 'Member added to your workspace' });
+        },
+    });
+    const changeRole = useMutation({
+        mutationFn: ({ userId, role: nextRole }: { userId: string; role: WorkspaceRole }) =>
+            workspacesApi.updateMemberRole(active!.workspaceId, userId, nextRole),
+        onSuccess: async () => {
+            await refresh();
+            toast({ title: 'Member role updated' });
+        },
+    });
+    const removeMember = useMutation({
+        mutationFn: () => workspacesApi.removeMember(active!.workspaceId, removing!.userId),
+        onSuccess: async () => {
+            await refresh();
+            setRemoving(null);
+            toast({ title: 'Member removed' });
+        },
+    });
+    if (isLoading) return <LoadingState label="Loading your shared spaces…" />;
+    if (isError)
+        return (
+            <EmptyState
+                title="Workspaces couldn’t load"
+                description="Check your connection and try again."
+                actionLabel="Try again"
+                onAction={() => void refetch()}
+            />
+        );
     return (
-        <>
-            <div className='space-y-6'>
-                <Card className='overflow-hidden border-border/80 shadow-sm'>
-                    <CardHeader className='border-b border-border/60 bg-muted/20'>
-                        <CardTitle className='text-lg'>Workspaces</CardTitle>
-                        <CardDescription>
-                            Create workspaces to separate your data for home, work, or a team.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className='space-y-4 pt-6'>
-                        <ul className='space-y-2'>
-                            {workspaces.map(workspace => (
-                                <li
-                                    key={workspace.workspaceId}
-                                    className='flex items-center justify-between gap-3 rounded-xl border border-border/80 bg-card px-4 py-3 transition-colors hover:border-primary/25 hover:bg-muted/30'
-                                >
-                                    <div className='min-w-0'>
-                                        <p className='font-medium text-foreground'>{workspace.name}</p>
-                                        <p className='text-sm text-muted-foreground'>
-                                            {workspace.members.length}{' '}
-                                            {workspace.members.length === 1 ? 'member' : 'members'}
-                                        </p>
-                                    </div>
-                                    <div className='flex shrink-0 items-center gap-2'>
-                                        {workspace.workspaceId === currentWorkspace?.workspaceId && (
-                                            <Badge className='font-normal'>Current</Badge>
-                                        )}
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button
-                                                    variant='ghost'
-                                                    size='icon'
-                                                    className='h-9 w-9'
-                                                    onClick={() => handleEditClick(workspace)}
-                                                    aria-label={`Edit ${workspace.name}`}
-                                                >
-                                                    <Pencil className='h-4 w-4' />
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent side='bottom'>Edit workspace</TooltipContent>
-                                        </Tooltip>
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
-                        <Button type='button' onClick={() => setIsAddWorkspaceModalOpen(true)}>
-                            <Plus className='mr-2 h-4 w-4' />
+        <div className="space-y-6">
+            <Card className="shadow-none">
+                <CardHeader>
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div>
+                            <CardTitle className="text-xl">Your shared spaces</CardTitle>
+                            <CardDescription className="mt-2">
+                                Train on your own, or keep a library with your people.
+                            </CardDescription>
+                        </div>
+                        <Button
+                            onClick={() => {
+                                setName('');
+                                setCreateOpen(true);
+                            }}
+                        >
+                            <Plus aria-hidden />
                             New workspace
                         </Button>
-                    </CardContent>
-                </Card>
-
-                {currentWorkspace && (
-                    <Card className='overflow-hidden border-border/80 shadow-sm'>
-                        <CardHeader className='border-b border-border/60 bg-muted/20'>
-                            <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
-                                <div className='min-w-0'>
-                                    <CardTitle className='text-lg'>Members</CardTitle>
-                                    <CardDescription>Who can access “{currentWorkspace.name}”</CardDescription>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <ul className="divide-y">
+                        {workspaces.map((workspace) => (
+                            <li key={workspace.workspaceId} className="flex items-center gap-3 py-4">
+                                <span className="exercise-icon h-10 w-10">
+                                    <Users className="h-4 w-4" aria-hidden />
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                    <p className="break-words text-sm font-semibold">{workspace.name}</p>
+                                    <p className="mt-1 text-xs capitalize text-muted-foreground">{workspace.role}</p>
                                 </div>
-                                <Button size='sm' className='shrink-0' onClick={() => setIsInviteMemberModalOpen(true)}>
-                                    <UserPlus className='mr-2 h-4 w-4' />
-                                    Invite Member
-                                </Button>
+                                {workspace.workspaceId === active?.workspaceId ? (
+                                    <Check className="h-4 w-4 text-primary" aria-label="Current workspace" />
+                                ) : (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() =>
+                                            navigate(`/workspaces/${workspace.workspaceId}/settings?tab=workspaces`)
+                                        }
+                                    >
+                                        Switch
+                                    </Button>
+                                )}
+                                {workspace.role !== WorkspaceRole.Member && (
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        aria-label={`Edit ${workspace.name}`}
+                                        onClick={() => {
+                                            setName(workspace.name);
+                                            setEditing(workspace);
+                                        }}
+                                    >
+                                        <Pencil />
+                                    </Button>
+                                )}
+                            </li>
+                        ))}
+                    </ul>
+                    {!workspaces.length && (
+                        <p className="py-4 text-sm text-muted-foreground">
+                            Create your first workspace to start building your exercise library.
+                        </p>
+                    )}
+                </CardContent>
+            </Card>
+            {membersLoading && currentWorkspace && <LoadingState label="Loading members…" />}
+            {membersError && (
+                <EmptyState
+                    title="Members couldn’t load"
+                    description="Try again to see who has access."
+                    actionLabel="Try again"
+                    onAction={() => void refetchMembers()}
+                />
+            )}
+            {active && (
+                <Card className="shadow-none">
+                    <CardHeader>
+                        <div className="flex flex-wrap items-center justify-between gap-4">
+                            <div>
+                                <CardTitle className="text-xl">Training is better together</CardTitle>
+                                <CardDescription className="mt-2">Members of {active.name}</CardDescription>
                             </div>
-                        </CardHeader>
-                        <CardContent>
-                            {isMobile ? (
-                                <ul className='space-y-3'>
-                                    {members.map(member => {
-                                        const isCurrentUser = member.userId === user?.userId;
-                                        const isOwner = member.role === WorkspaceRole.Owner;
-                                        return (
-                                            <li
-                                                key={member.userId}
-                                                className='flex flex-col gap-2 rounded-lg border p-3'
-                                            >
-                                                <div className='flex min-w-0 items-start justify-between gap-2'>
-                                                    <div className='min-w-0'>
-                                                        <p className='font-medium truncate'>{member.displayName}</p>
-                                                        <p className='text-sm text-muted-foreground truncate'>
-                                                            {member.email}
-                                                        </p>
-                                                    </div>
-                                                    <div className='flex shrink-0 items-center gap-2'>
-                                                        {isOwner || isCurrentUser ? (
-                                                            <Badge variant={getRoleBadgeVariant(member.role)}>
-                                                                {member.role}
-                                                            </Badge>
-                                                        ) : (
-                                                            <>
-                                                                <Select
-                                                                    defaultValue={member.role}
-                                                                    onValueChange={value =>
-                                                                        updateMemberRole.mutate({
-                                                                            userId: member.userId,
-                                                                            role: value as WorkspaceRole,
-                                                                        })
-                                                                    }
-                                                                >
-                                                                    <SelectTrigger className='h-8 w-[100px]'>
-                                                                        <SelectValue />
-                                                                    </SelectTrigger>
-                                                                    <SelectContent>
-                                                                        <SelectItem value={WorkspaceRole.Admin}>Admin</SelectItem>
-                                                                        <SelectItem value={WorkspaceRole.Member}>Member</SelectItem>
-                                                                    </SelectContent>
-                                                                </Select>
-                                                                <Tooltip>
-                                                                    <TooltipTrigger asChild>
-                                                                        <Button
-                                                                            variant='ghost'
-                                                                            size='icon'
-                                                                            className='h-8 w-8'
-                                                                            onClick={() => removeMember.mutate(member.userId)}
-                                                                            aria-label={`Remove ${member.displayName}`}
-                                                                        >
-                                                                            <Trash2 className='h-4 w-4 text-destructive' />
-                                                                        </Button>
-                                                                    </TooltipTrigger>
-                                                                    <TooltipContent side='bottom'>Remove member</TooltipContent>
-                                                                </Tooltip>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </li>
-                                        );
-                                    })}
-                                </ul>
-                            ) : (
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>User</TableHead>
-                                            <TableHead>Email</TableHead>
-                                            <TableHead>Role</TableHead>
-                                            <TableHead className='w-[100px]'>Actions</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {members.map(member => {
-                                            const isCurrentUser = member.userId === user?.userId;
-                                            const isOwner = member.role === WorkspaceRole.Owner;
-
-                                            return (
-                                                <TableRow key={member.userId}>
-                                                    <TableCell className='font-medium'>{member.displayName}</TableCell>
-                                                    <TableCell>{member.email}</TableCell>
-                                                    <TableCell>
-                                                        {isOwner || isCurrentUser ? (
-                                                            <Badge variant={getRoleBadgeVariant(member.role)}>
-                                                                {member.role}
-                                                            </Badge>
-                                                        ) : (
-                                                            <Select
-                                                                defaultValue={member.role}
-                                                                onValueChange={value =>
-                                                                    updateMemberRole.mutate({
-                                                                        userId: member.userId,
-                                                                        role: value as WorkspaceRole,
-                                                                    })
-                                                                }
-                                                            >
-                                                                <SelectTrigger className='w-[120px]'>
-                                                                    <SelectValue />
-                                                                </SelectTrigger>
-                                                                <SelectContent>
-                                                                    <SelectItem value={WorkspaceRole.Admin}>Admin</SelectItem>
-                                                                    <SelectItem value={WorkspaceRole.Member}>Member</SelectItem>
-                                                                </SelectContent>
-                                                            </Select>
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {!isOwner && !isCurrentUser && (
-                                                            <Tooltip>
-                                                                <TooltipTrigger asChild>
-                                                                    <Button
-                                                                        variant='ghost'
-                                                                        size='icon'
-                                                                        onClick={() => removeMember.mutate(member.userId)}
-                                                                        aria-label={`Remove ${member.displayName}`}
-                                                                    >
-                                                                        <Trash2 className='h-4 w-4 text-destructive' />
-                                                                    </Button>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent side='bottom'>Remove member</TooltipContent>
-                                                            </Tooltip>
-                                                        )}
-                                                    </TableCell>
-                                                </TableRow>
-                                            );
-                                        })}
-                                    </TableBody>
-                                </Table>
+                            {canManage && (
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        setEmail('');
+                                        setRole(WorkspaceRole.Member);
+                                        setInviteOpen(true);
+                                    }}
+                                >
+                                    <UserPlus />
+                                    Invite member
+                                </Button>
                             )}
-                        </CardContent>
-                    </Card>
-                )}
-            </div>
-
-            <Dialog open={isAddWorkspaceModalOpen} onOpenChange={setIsAddWorkspaceModalOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Create Workspace</DialogTitle>
-                        <DialogDescription>
-                            Create a workspace to hold a separate set of data and members.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-                            <FormField
-                                control={form.control}
-                                name='name'
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Workspace Name</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder='My Workspace' {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <DialogFooter>
-                                <Button type='submit' disabled={createWorkspace.isPending}>
-                                    Create Workspace
-                                </Button>
-                            </DialogFooter>
-                        </form>
-                    </Form>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isEditWorkspaceModalOpen} onOpenChange={setIsEditWorkspaceModalOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Edit Workspace</DialogTitle>
-                        <DialogDescription>Update or remove your workspace.</DialogDescription>
-                    </DialogHeader>
-                    <Form {...updateForm}>
-                        <form onSubmit={updateForm.handleSubmit(onUpdateSubmit)} className='space-y-4'>
-                            <FormField
-                                control={updateForm.control}
-                                name='name'
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Workspace Name</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder='My Workspace' {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <DialogFooter>
-                                <Button type='submit' disabled={updateWorkspace.isPending}>
-                                    Save
-                                </Button>
-                            </DialogFooter>
-                            {workspaceToEdit?.isOwner && (
-                                <div className='pt-6 border-t mt-6'>
-                                    <div className='space-y-4'>
-                                        <div>
-                                            <h4 className='text-sm font-medium text-destructive'>Delete Workspace</h4>
-                                            <p className='text-sm text-muted-foreground'>
-                                                This action cannot be undone. This will permanently delete the workspace
-                                                and all associated data.
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <ul className="divide-y">
+                            {active.members.map((member) => {
+                                const editable =
+                                    canManage &&
+                                    member.userId !== user?.userId &&
+                                    (isOwner || member.role === WorkspaceRole.Member);
+                                return (
+                                    <li key={member.userId} className="flex flex-wrap items-center gap-3 py-4">
+                                        <div className="min-w-[120px] flex-1">
+                                            <p className="break-words text-sm font-medium">
+                                                {member.displayName || member.email}
+                                                {member.userId === user?.userId && (
+                                                    <span className="ml-1 text-xs text-muted-foreground">(you)</span>
+                                                )}
+                                            </p>
+                                            <p className="mt-1 break-all text-xs text-muted-foreground">
+                                                {member.email}
                                             </p>
                                         </div>
-                                        <Button
-                                            type='button'
-                                            variant='outline'
-                                            className='w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground'
-                                            onClick={() => {
-                                                setIsEditWorkspaceModalOpen(false);
-                                                setIsDeleteWorkspaceModalOpen(true);
-                                            }}
-                                        >
-                                            Delete Workspace
-                                        </Button>
-                                    </div>
-                                </div>
-                            )}
-                        </form>
-                    </Form>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isDeleteWorkspaceModalOpen} onOpenChange={setIsDeleteWorkspaceModalOpen}>
+                                        {editable ? (
+                                            <Select
+                                                value={member.role}
+                                                disabled={changeRole.isPending}
+                                                onValueChange={(value) => {
+                                                    const next = Object.values(WorkspaceRole).find(
+                                                        (item) => item === value,
+                                                    );
+                                                    if (next) changeRole.mutate({ userId: member.userId, role: next });
+                                                }}
+                                            >
+                                                <SelectTrigger
+                                                    className="w-28 capitalize"
+                                                    aria-label={`Role for ${member.displayName || member.email}`}
+                                                >
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value={WorkspaceRole.Member}>Member</SelectItem>
+                                                    <SelectItem value={WorkspaceRole.Admin}>Admin</SelectItem>
+                                                    {isOwner && (
+                                                        <SelectItem value={WorkspaceRole.Owner}>Owner</SelectItem>
+                                                    )}
+                                                </SelectContent>
+                                            </Select>
+                                        ) : (
+                                            <Badge variant="secondary" className="capitalize">
+                                                {member.role}
+                                            </Badge>
+                                        )}
+                                        {editable && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                aria-label={`Remove ${member.displayName || member.email}`}
+                                                onClick={() => setRemoving(member)}
+                                            >
+                                                <Trash2 className="text-muted-foreground" />
+                                            </Button>
+                                        )}
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                        {!canManage && (
+                            <p className="mt-4 border-t pt-4 text-xs text-muted-foreground">
+                                An owner or admin can invite people and manage access.
+                            </p>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
+            <Dialog
+                open={createOpen || editing !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setCreateOpen(false);
+                        setEditing(null);
+                    }
+                }}
+            >
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Delete Workspace</DialogTitle>
+                        <DialogTitle>{editing ? 'Edit workspace' : 'A new space to train'}</DialogTitle>
                         <DialogDescription>
-                            This action cannot be undone. This will permanently delete the workspace{' '}
-                            <span className='font-bold'>{workspaceToEdit?.name}</span> and all associated data.
+                            {editing
+                                ? 'Give your shared space a name that feels like yours.'
+                                : 'Your exercises and routines will have a home here.'}
                         </DialogDescription>
                     </DialogHeader>
-                    <div className='space-y-4'>
-                        <div className='space-y-2'>
-                            <Label>Type "{workspaceToEdit?.name}" to confirm</Label>
+                    <form
+                        className="space-y-5"
+                        onSubmit={(event) => {
+                            event.preventDefault();
+                            if (name.trim()) {
+                                if (editing) rename.mutate();
+                                else create.mutate();
+                            }
+                        }}
+                    >
+                        <div className="space-y-2">
+                            <Label htmlFor="workspace-name">Workspace name</Label>
                             <Input
-                                value={deleteConfirmation}
-                                onChange={e => setDeleteConfirmation(e.target.value)}
-                                placeholder={workspaceToEdit?.name}
+                                id="workspace-name"
+                                value={name}
+                                maxLength={200}
+                                required
+                                onChange={(event) => setName(event.target.value)}
+                                placeholder="e.g. The garage gym"
                             />
                         </div>
                         <DialogFooter>
-                            <Button
-                                variant='outline'
-                                onClick={() => {
-                                    setIsDeleteWorkspaceModalOpen(false);
-                                    setIsEditWorkspaceModalOpen(true);
-                                }}
-                                disabled={deleteWorkspace.isPending}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                variant='destructive'
-                                disabled={deleteConfirmation !== workspaceToEdit?.name || deleteWorkspace.isPending}
-                                onClick={handleDeleteWorkspace}
-                            >
-                                {deleteWorkspace.isPending ? 'Deleting...' : 'Delete Workspace'}
+                            <Button type="submit" disabled={!name.trim() || create.isPending || rename.isPending}>
+                                {create.isPending || rename.isPending
+                                    ? 'Saving…'
+                                    : editing
+                                      ? 'Save name'
+                                      : 'Create workspace'}
                             </Button>
                         </DialogFooter>
-                    </div>
+                    </form>
+                    {editing?.role === WorkspaceRole.Owner && (
+                        <div className="mt-3 border-t pt-5">
+                            <Button
+                                variant="ghost"
+                                className="text-destructive"
+                                onClick={() => {
+                                    setDeleting(editing);
+                                    setEditing(null);
+                                    setConfirmation('');
+                                }}
+                            >
+                                <Trash2 />
+                                Delete workspace
+                            </Button>
+                        </div>
+                    )}
                 </DialogContent>
             </Dialog>
-
-            <Dialog open={isInviteMemberModalOpen} onOpenChange={setIsInviteMemberModalOpen}>
+            <Dialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Invite Member</DialogTitle>
-                        <DialogDescription>Invite a new member to this workspace.</DialogDescription>
+                        <DialogTitle>Delete {deleting?.name}?</DialogTitle>
+                        <DialogDescription>
+                            This permanently removes its exercises, routines, and workout history for everyone. This
+                            cannot be undone.
+                        </DialogDescription>
                     </DialogHeader>
-                    <Form {...inviteForm}>
-                        <form onSubmit={inviteForm.handleSubmit(onInviteSubmit)} className='space-y-4'>
-                            <FormField
-                                control={inviteForm.control}
-                                name='email'
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Email</FormLabel>
-                                        <FormControl>
-                                            <Input type='email' placeholder='user@example.com' {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={inviteForm.control}
-                                name='role'
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Role</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder='Select role' />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value={WorkspaceRole.Admin}>Admin</SelectItem>
-                                                <SelectItem value={WorkspaceRole.Member}>Member</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <DialogFooter>
-                                <Button type='submit' disabled={inviteMember.isPending}>
-                                    Invite Member
-                                </Button>
-                            </DialogFooter>
-                        </form>
-                    </Form>
+                    <Label htmlFor="delete-workspace">Type “{deleting?.name}” to confirm</Label>
+                    <Input
+                        id="delete-workspace"
+                        autoComplete="off"
+                        value={confirmation}
+                        onChange={(event) => setConfirmation(event.target.value)}
+                    />
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setDeleting(null)}>
+                            Keep workspace
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            disabled={confirmation !== deleting?.name || remove.isPending}
+                            onClick={() => {
+                                if (deleting) remove.mutate(deleting.workspaceId);
+                            }}
+                        >
+                            {remove.isPending ? 'Deleting…' : 'Delete permanently'}
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </>
+            <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Bring your people</DialogTitle>
+                        <DialogDescription>
+                            Add someone by the email they use for Forma. They’ll need an account first; access is
+                            available immediately.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form
+                        className="space-y-5"
+                        onSubmit={(event) => {
+                            event.preventDefault();
+                            invite.mutate();
+                        }}
+                    >
+                        <div className="space-y-2">
+                            <Label htmlFor="invite-email">Email address</Label>
+                            <Input
+                                id="invite-email"
+                                type="email"
+                                required
+                                value={email}
+                                autoComplete="email"
+                                onChange={(event) => setEmail(event.target.value)}
+                                placeholder="friend@example.com"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="invite-role">Their role</Label>
+                            <Select
+                                value={role}
+                                onValueChange={(value) => {
+                                    const next = Object.values(WorkspaceRole).find((item) => item === value);
+                                    if (next) setRole(next);
+                                }}
+                            >
+                                <SelectTrigger id="invite-role">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value={WorkspaceRole.Member}>
+                                        Member — train and edit exercises
+                                    </SelectItem>
+                                    <SelectItem value={WorkspaceRole.Admin}>Admin — also manage members</SelectItem>
+                                    {isOwner && (
+                                        <SelectItem value={WorkspaceRole.Owner}>
+                                            Owner — full control, including deletion
+                                        </SelectItem>
+                                    )}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <DialogFooter>
+                            <Button type="submit" disabled={!email.trim() || invite.isPending}>
+                                {invite.isPending ? 'Adding…' : 'Add to workspace'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+            <Dialog open={removing !== null} onOpenChange={(open) => !open && setRemoving(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Remove {removing?.displayName || removing?.email}?</DialogTitle>
+                        <DialogDescription>
+                            They’ll lose access to {active?.name}. Their past workouts will stay in the workspace.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setRemoving(null)}>
+                            Keep member
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            disabled={removeMember.isPending}
+                            onClick={() => removeMember.mutate()}
+                        >
+                            {removeMember.isPending ? 'Removing…' : 'Remove member'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </div>
     );
 }

@@ -1,14 +1,19 @@
 import { type Db } from '@app/db';
 import {
     ExerciseGuideService,
+    ExerciseImagesService,
     ExerciseHistoryService,
     ExercisesService,
     type WorkspaceMembershipService,
 } from '@app/services';
 import type { Provider } from '@nestjs/common';
-import { DB, WORKSPACE_MEMBERSHIP_SERVICE } from '../providers.js';
+import type { StorageService } from '@app/storage';
+import { DB, STORAGE_SERVICE, WORKSPACE_MEMBERSHIP_SERVICE } from '../providers.js';
 
-/** DI token for the `ExercisesService` factory provider below. */
+/** DI token for private exercise-image storage. */
+export const EXERCISE_IMAGES_SERVICE = Symbol('EXERCISE_IMAGES_SERVICE');
+
+/** DI token for the exercise library. */
 export const EXERCISES_SERVICE = Symbol('EXERCISES_SERVICE');
 
 /** DI token for the `ExerciseGuideService` factory provider below. */
@@ -19,6 +24,12 @@ export const EXERCISE_HISTORY_SERVICE = Symbol('EXERCISE_HISTORY_SERVICE');
 
 /** Split out from `exercises.module.ts` to avoid a circular import between that module and its controllers. */
 export const exerciseServiceProviders: Provider[] = [
+    {
+        provide: EXERCISE_IMAGES_SERVICE,
+        useFactory: (guides: ExerciseGuideService, storage: StorageService): ExerciseImagesService =>
+            new ExerciseImagesService({ guides, storage }),
+        inject: [EXERCISE_GUIDE_SERVICE, STORAGE_SERVICE],
+    },
     {
         provide: EXERCISES_SERVICE,
         useFactory: (db: Db, membership: WorkspaceMembershipService): ExercisesService =>
