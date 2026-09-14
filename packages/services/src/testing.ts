@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { schema, type Db } from '@app/db';
-import { TrackingType } from '@app/domain';
+import { TrackingType, type Equipment } from '@app/domain';
 import { WorkspaceRole } from './workspace-membership.service.js';
 
 const { exercises, user, workspaceUsers, workspaces } = schema;
@@ -35,7 +35,7 @@ export async function seedMembership(
 /** Inserts a catalog exercise (no workspace) directly. Returns its id. */
 export async function seedCatalogExercise(
     db: Db,
-    params: { slug: string; name?: string; trackingType?: TrackingType },
+    params: { slug: string; name?: string; trackingType?: TrackingType; equipment?: Equipment[] },
 ): Promise<string> {
     const [row] = await db
         .insert(exercises)
@@ -44,6 +44,7 @@ export async function seedCatalogExercise(
             slug: params.slug,
             name: params.name ?? params.slug,
             trackingType: params.trackingType ?? TrackingType.WeightReps,
+            equipment: params.equipment ?? [],
         })
         .returning({ id: exercises.id });
 

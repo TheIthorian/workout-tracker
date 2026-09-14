@@ -1,7 +1,7 @@
 import { schema, scopedToWorkspace, scopedToWorkspaceOrGlobal, type Db } from '@app/db';
-import type { TrackingType } from '@app/domain';
+import type { Equipment, TrackingType } from '@app/domain';
 import { EntityNotFoundError } from '@app/errors';
-import { asc, count, desc, eq, ilike, isNull, sql } from 'drizzle-orm';
+import { asc, count, desc, eq, ilike, isNull, sql, type SQL } from 'drizzle-orm';
 import type { WorkspaceMembershipService } from './workspace-membership.service.js';
 
 const { exerciseGuideImages, exerciseLinks, exercises } = schema;
@@ -12,6 +12,7 @@ export type ExerciseSummary = {
     slug: string | null;
     isCatalog: boolean;
     trackingType: TrackingType;
+    equipment: Equipment[];
     notes: string | null;
     archivedAt: string | null;
     createdAt: string;
@@ -72,6 +73,8 @@ export class ExercisesService {
      * A page of the exercises the workspace can see — catalog and custom — by name.
      *
      * @param search matches anywhere in the name, case-insensitively.
+     * @param equipment when given, keeps only exercises whose required equipment is a subset of it
+     * (bodyweight exercises always match, including against an empty list).
      * @throws EntityNotFoundError when the caller is not a member of the workspace.
      */
     async list({
@@ -81,6 +84,7 @@ export class ExercisesService {
         pageSize,
         search,
         includeArchived,
+        equipment,
     }: {
         userId: string;
         workspaceId: string;
@@ -88,6 +92,7 @@ export class ExercisesService {
         pageSize: number;
         search?: string;
         includeArchived?: boolean;
+        equipment?: Equipment[];
     }): Promise<PaginatedExercises> {
         await this.membership.require({ userId, workspaceId });
 
@@ -96,6 +101,7 @@ export class ExercisesService {
             workspaceId,
             search === undefined || search === '' ? undefined : ilike(exercises.name, `%${search}%`),
             includeArchived === true ? undefined : isNull(exercises.archivedAt),
+            equipment === undefined ? undefined : requiresOnly(equipment),
         );
 
         const [data, [totals]] = await Promise.all([
@@ -144,6 +150,7 @@ export class ExercisesService {
         workspaceId,
         name,
         trackingType,
+        equipment,
         notes,
         guideSetup,
         guideExecution,
@@ -154,6 +161,7 @@ export class ExercisesService {
         workspaceId: string;
         name: string;
         trackingType: TrackingType;
+        equipment?: Equipment[];
         notes?: string | null;
         guideSetup?: string | null;
         guideExecution?: string | null;
@@ -169,6 +177,7 @@ export class ExercisesService {
                 createdByUserId: userId,
                 name,
                 trackingType,
+                equipment: equipment ?? [],
                 notes: notes ?? null,
                 guideSetup: guideSetup ?? null,
                 guideExecution: guideExecution ?? null,
@@ -193,6 +202,7 @@ export class ExercisesService {
         exerciseId,
         name,
         trackingType,
+        equipment,
         notes,
         guideSetup,
         guideExecution,
@@ -205,6 +215,7 @@ export class ExercisesService {
         exerciseId: string;
         name?: string;
         trackingType?: TrackingType;
+        equipment?: Equipment[];
         notes?: string | null;
         guideSetup?: string | null;
         guideExecution?: string | null;
@@ -221,6 +232,7 @@ export class ExercisesService {
             .set({
                 ...(name === undefined ? {} : { name }),
                 ...(trackingType === undefined ? {} : { trackingType }),
+                ...(equipment === undefined ? {} : { equipment }),
                 ...(notes === undefined ? {} : { notes }),
                 ...(guideSetup === undefined ? {} : { guideSetup }),
                 ...(guideExecution === undefined ? {} : { guideExecution }),
@@ -285,12 +297,26 @@ export class ExercisesService {
     }
 }
 
+/**
+ * Admits an exercise only if everything it needs is in `available`. Bodyweight rows (`'{}'`) are a
+ * subset of any list, including an empty one, so they always pass.
+ *
+ * The literal is built explicitly rather than passed as a bound array parameter: `node-postgres`
+ * serialises a JS array bound through `sql` as a bare comma-joined scalar (e.g. `dumbbell`, or `''`
+ * for an empty list), not a `{...}` array literal, so Postgres rejects the `::equipment[]` cast.
+ * Values are enum members, never user text, so string-building them is safe.
+ */
+function requiresOnly(available: Equipment[]): SQL {
+    return sql`${exercises.equipment} <@ ${`{${available.join(',')}}`}::equipment[]`;
+}
+
 const EXERCISE_SUMMARY_COLUMNS = {
     id: exercises.id,
     name: exercises.name,
     slug: exercises.slug,
     isCatalog: sql<boolean>`${exercises.workspaceId} is null`,
     trackingType: exercises.trackingType,
+    equipment: exercises.equipment,
     notes: exercises.notes,
     archivedAt: exercises.archivedAt,
     createdAt: exercises.createdAt,

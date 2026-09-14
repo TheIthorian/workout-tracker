@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { schema, type Db } from '@app/db';
 import { startTestDatabase } from '@app/db/testing';
-import { TrackingType } from '@app/domain';
+import { Equipment, TrackingType } from '@app/domain';
 import { EntityNotFoundError } from '@app/errors';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -284,5 +284,83 @@ describe('catalog exercises', () => {
         await expect(
             exercises.get({ userId, workspaceId: otherWorkspaceId, exerciseId: catalogId }),
         ).rejects.toBeInstanceOf(EntityNotFoundError);
+    });
+});
+
+describe('equipment', () => {
+    it('stores equipment on create and update', async () => {
+        const created = await exercises.create({
+            userId,
+            workspaceId,
+            name: 'Front squat',
+            trackingType: TrackingType.WeightReps,
+            equipment: [Equipment.Barbell, Equipment.SquatRack],
+        });
+        expect(created.equipment).toEqual([Equipment.Barbell, Equipment.SquatRack]);
+
+        const updated = await exercises.update({ userId, workspaceId, exerciseId: created.id, equipment: [] });
+        expect(updated.equipment).toEqual([]);
+    });
+
+    it('defaults to bodyweight', async () => {
+        const created = await exercises.create({
+            userId,
+            workspaceId,
+            name: 'Burpee',
+            trackingType: TrackingType.WeightReps,
+        });
+        expect(created.equipment).toEqual([]);
+    });
+
+    describe('list filter', () => {
+        const prefix = `filter-${randomUUID().slice(0, 8)}`;
+
+        beforeAll(async () => {
+            await seedCatalogExercise(db, { slug: `${prefix}-bw`, name: `${prefix} bodyweight`, equipment: [] });
+            await seedCatalogExercise(db, {
+                slug: `${prefix}-db`,
+                name: `${prefix} dumbbell`,
+                equipment: [Equipment.Dumbbell],
+            });
+            await seedCatalogExercise(db, {
+                slug: `${prefix}-bb`,
+                name: `${prefix} barbell bench`,
+                equipment: [Equipment.Barbell, Equipment.Bench],
+            });
+        });
+
+        const names = async (equipment?: Equipment[]): Promise<string[]> =>
+            (await exercises.list({ userId, workspaceId, ...page, search: prefix, equipment })).data
+                .map((e) => e.name)
+                .sort();
+
+        it('applies no filter when equipment is absent', async () => {
+            expect(await names()).toEqual([`${prefix} barbell bench`, `${prefix} bodyweight`, `${prefix} dumbbell`]);
+        });
+
+        it('keeps only exercises whose equipment is a subset', async () => {
+            expect(await names([Equipment.Dumbbell])).toEqual([`${prefix} bodyweight`, `${prefix} dumbbell`]);
+            expect(await names([Equipment.Barbell])).toEqual([`${prefix} bodyweight`]);
+            expect(await names([Equipment.Barbell, Equipment.Bench, Equipment.Dumbbell])).toEqual([
+                `${prefix} barbell bench`,
+                `${prefix} bodyweight`,
+                `${prefix} dumbbell`,
+            ]);
+        });
+
+        it('returns bodyweight only for an empty list', async () => {
+            expect(await names([])).toEqual([`${prefix} bodyweight`]);
+        });
+
+        it('counts only the filtered rows', async () => {
+            const result = await exercises.list({
+                userId,
+                workspaceId,
+                ...page,
+                search: prefix,
+                equipment: [Equipment.Dumbbell],
+            });
+            expect(result.totalCount).toBe(2);
+        });
     });
 });
