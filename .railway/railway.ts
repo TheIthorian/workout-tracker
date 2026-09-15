@@ -1,13 +1,12 @@
-import { bucket, defineRailway, github, postgres, preserve, project, redis, service, volume } from 'railway/iac';
+import { bucket, defineRailway, github, postgres, preserve, project, service, volume } from 'railway/iac';
 
-// Infrastructure as code for this project's Railway deployment. Rename the repo, project and
-// service names below for your own app; `preserve()` keeps whatever value Railway already holds for
-// a variable, so no secret is ever written into this file.
+// Infrastructure as code for this project's Railway deployment. `preserve()` keeps whatever value
+// Railway already holds for a variable, so no secret is ever written into this file.
 //
 // The web app is NOT declared here - it deploys to Cloudflare Pages from `apps/web` (see
 // `docs/deployment.md`).
 export default defineRailway(() => {
-    const repo = github('your-org/your-repo', { checkSuites: true });
+    const repo = github('TheIthorian/workout-tracker', { checkSuites: true });
 
     const region = 'europe-west4-drams3a';
 
@@ -18,23 +17,7 @@ export default defineRailway(() => {
     };
     database.networking = { privateNetworkEndpoint: 'postgres' };
 
-    const cache = redis('Redis', { region });
-    cache.deploy = {
-        limitOverride: { containers: { cpu: 0.5, memoryBytes: 1_000_000_000 } },
-        sleepApplication: true,
-        // Redis refuses to start if the volume mount has a lost+found directory.
-        startCommand:
-            '/bin/sh -c "rm -rf $RAILWAY_VOLUME_MOUNT_PATH/lost+found/ && exec docker-entrypoint.sh redis-server --requirepass $REDIS_PASSWORD --save 60 1 --dir $RAILWAY_VOLUME_MOUNT_PATH"',
-    };
-    cache.networking = { privateNetworkEndpoint: 'redis' };
-
     const volumeAlerts = { usage: { '80': {}, '95': {}, '100': {} } };
-    const redisVolume = volume('redis-volume', {
-        alerts: volumeAlerts,
-        allowOnlineResize: true,
-        region,
-        sizeMB: 5000,
-    });
     const postgresVolume = volume('postgres-volume', {
         alerts: volumeAlerts,
         allowOnlineResize: true,
@@ -110,7 +93,7 @@ export default defineRailway(() => {
         },
     });
 
-    return project('node-app-base', {
-        resources: [api, mcp, database, cache, redisVolume, postgresVolume, fileBucket],
+    return project('workout-tracker', {
+        resources: [api, mcp, database, postgresVolume, fileBucket],
     });
 });

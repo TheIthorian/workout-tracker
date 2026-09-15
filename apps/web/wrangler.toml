@@ -5,4 +5,4 @@ pages_build_output_dir = "dist"
 # Read at request time by functions/api/[[path]].ts, not baked into the SPA bundle.
 # Not a secret — it is the public URL of the deployed API.
 [vars]
-API_ORIGIN = "https://your-api.up.railway.app"
+API_ORIGIN = "https://api-production-ac4e.up.railway.app"

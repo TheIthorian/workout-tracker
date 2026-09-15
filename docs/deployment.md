@@ -1,11 +1,15 @@
-# Deployment
+# Production deployment
 
-Three deployables: `apps/api` and `apps/mcp` on **Railway**, `apps/web` on **Cloudflare Pages**.
-Postgres is Railway-managed.
+The production topology is:
 
-Railway infrastructure is defined in code at `.railway/railway.ts` — rename the repo, project and
-service names in it before your first apply. See `.railway/README.md` for the `railway config`
-workflow.
+- `apps/api`, `apps/mcp`, Postgres, and the file bucket on Railway.
+- `apps/web` on Cloudflare Pages.
+- `/api/*` on Pages proxied to the public Railway API, keeping browser sessions first-party.
+
+Railway infrastructure is defined in `.railway/railway.ts`. It points at the GitHub repository and
+preserves values entered in Railway. Railway's GitHub source deploys API and MCP automatically when
+the configured branch changes; `.github/workflows/railway.yml` reviews and applies infrastructure
+changes separately.
 
 ## Before you start
 
@@ -15,131 +19,142 @@ railway login
 npx wrangler login
 ```
 
-## 1. Secrets
+Use Node 24 and pnpm 11, as declared by `.nvmrc` and `package.json`.
+
+## 1. Create or link Railway
 
 ```bash
-openssl rand -base64 48   # AUTH_SECRET
+railway init --name workout-tracker       # or: railway link <project-id>
+railway environment new production       # skip if it already exists
+railway environment link production
+railway config plan
+railway config apply
 ```
 
-Keep it out of the repo. Railway holds the value; `.railway/railway.ts` references it with
-`preserve()` so applying the config never overwrites or prints it.
+Review the plan before applying it. If services already exist, import or migrate them before using
+`.railway/railway.ts`; do not let IaC accidentally replace an existing production topology.
 
-## 2. Project and Postgres
+In Railway, connect both `api` and `mcp` to `TheIthorian/workout-tracker`, branch `main`, and confirm
+the Dockerfile paths from `.railway/railway.ts`. Generate a public domain for `api` and, only if
+external MCP clients need it, for `mcp`.
+
+Create a production-environment project token and add it to GitHub repository secrets as
+`RAILWAY_TOKEN`. This is needed by `.github/workflows/railway.yml`; never commit it.
+
+## 2. Configure Railway variables
+
+Generate a strong auth secret locally, then enter it only in Railway:
 
 ```bash
-railway init --name node-app-base    # or: railway link <projectId> for an existing project
-railway add --database postgres
-railway variables --service Postgres # note DATABASE_URL for the next step
+openssl rand -base64 48
 ```
 
-## 3. Apply the schema
+Set these on `api`:
 
-`packages/db` owns the schema. Migrations are generated from the Drizzle schema and committed, then
-applied against the deployed database:
+| Variable                                   | Value                                                  |
+| ------------------------------------------ | ------------------------------------------------------ |
+| `NODE_ENV`                                 | `production`                                           |
+| `AUTH_SECRET`                              | Generated value                                        |
+| `AUTH_BASE_URL`                            | Public API origin, e.g. `https://api.example.com`      |
+| `AUTH_TRUSTED_ORIGINS`                     | Pages/custom web origin                                |
+| `AUTH_SECURE_COOKIES`                      | `true`                                                 |
+| `CORS_ORIGIN`                              | Pages/custom web origin                                |
+| `WEB_APP_BASE_URL`                         | Pages/custom web origin                                |
+| `API_BASE_URL`                             | Public API origin                                      |
+| `MCP_BASE_URL`                             | Public MCP origin                                      |
+| `PROBLEM_TYPE_BASE`                        | Stable URI base, e.g. `https://api.example.com/errors` |
+| `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`    | Production S3/R2 catalog bucket                        |
+| `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Production bucket credentials                          |
+| `S3_FORCE_PATH_STYLE`                      | `false` for R2/AWS unless required by the provider     |
+| `CATALOG_IMAGE_BASE_URL`                   | Public CDN/custom domain for catalog images            |
+| `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL` | Optional; blank key disables LLM features              |
+
+Set `DATABASE_URL` on `api` as a Railway reference to Postgres' private URL, using the dashboard
+variable picker or `${{Postgres.DATABASE_URL}}`. Do not expose Postgres publicly.
+
+Set these on `mcp`:
+
+| Variable                | Value                                    |
+| ----------------------- | ---------------------------------------- |
+| `NODE_ENV`              | `production`                             |
+| `WEB_APP_BASE_URL`      | Pages/custom web origin                  |
+| `API_BASE_URL`          | Public API origin used in resource links |
+| `API_INTERNAL_BASE_URL` | `http://api.railway.internal:3000`       |
+| `MCP_BASE_URL`          | Public MCP origin                        |
+| `PROBLEM_TYPE_BASE`     | Same value as `api`                      |
+
+Set `LOG_PRETTY=false` and `LOG_REDACT=true`. Railway supplies `PORT`. The API health check is
+`/api/health/ready`; MCP uses `/health`. Keep these paths unchanged.
+
+## 3. Apply database migrations
+
+Run from a trusted machine after Postgres exists and before serving users:
 
 ```bash
-pnpm --filter @app/db db:generate                 # after any schema change; commit the output
-DATABASE_URL='<railway postgres url>' pnpm --filter @app/db db:migrate
+pnpm install --frozen-lockfile
+DATABASE_URL='<production DATABASE_URL>' pnpm --filter @app/db db:migrate
 ```
 
-Never point `db:migrate` at a database you have not backed up. `drizzle-kit generate` writes SQL to
-`packages/db/drizzle/` — read the generated file before applying it, especially any `DROP`.
+There is intentionally no migration-on-boot: a failed migration must not prevent a previous healthy
+version from starting. Generate and review migrations locally before committing them:
 
-### Publish the catalog
+```bash
+pnpm --filter @app/db db:generate
+```
 
-`apps/admin seed-exercises` publishes `content/exercises/` into the database — build the CLI, then
-run it with `DATABASE_URL` and the `S3_*` variables exported (or in `apps/admin/.env`):
+## 4. Publish the exercise catalog
+
+The catalog seed is idempotent and must be run manually after catalog content changes:
 
 ```bash
 pnpm --filter @app/admin build
-DATABASE_URL='<railway postgres url>' S3_ENDPOINT=... S3_BUCKET=... S3_ACCESS_KEY_ID=... S3_SECRET_ACCESS_KEY=... \
-  pnpm --filter @app/admin start seed-exercises
+DATABASE_URL='<production DATABASE_URL>' \
+S3_ENDPOINT='<production S3 endpoint>' S3_REGION='<region>' S3_BUCKET='<bucket>' \
+S3_ACCESS_KEY_ID='<access key>' S3_SECRET_ACCESS_KEY='<secret key>' \
+pnpm --filter @app/admin start seed-exercises
 ```
 
-It is idempotent — run it by hand after any deploy that changes `content/exercises/`, the same way
-`db:migrate` is run after a schema change.
+## 5. Deploy the web app to Cloudflare Pages
 
-## 4. `apps/api`
+Create the Pages project once, then build and deploy from the repository root:
 
 ```bash
-railway add --service api
+npx wrangler pages project create workout-tracker-app-web       # first deployment only
+pnpm --filter @app/web build
+npx wrangler pages deploy apps/web/dist --project-name workout-tracker-app-web
 ```
 
-Its required variables (`apps/api/src/config/load-env.ts` is the authority — an app that boots
-without one of these crashes at startup rather than running half-configured):
+Set the Pages production variable `API_ORIGIN` to the public API origin. Do not leave the
+`your-api.up.railway.app` placeholder in `apps/web/wrangler.toml`. The Pages function proxy is
+required; `VITE_API_BASE_URL` alone does not replace it.
 
-| Variable                 | Notes                                                                                                                        |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`           | From the Postgres service.                                                                                                   |
-| `AUTH_SECRET`            | The value generated above.                                                                                                   |
-| `AUTH_BASE_URL`          | The API's own public origin.                                                                                                 |
-| `AUTH_TRUSTED_ORIGINS`   | Comma-separated. Include the web app's origin.                                                                               |
-| `AUTH_SECURE_COOKIES`    | `true` behind Railway's TLS-terminating proxy.                                                                               |
-| `CORS_ORIGIN`            | The web app's origin.                                                                                                        |
-| `WEB_APP_BASE_URL`       | Used to build every `webUrl` in a response.                                                                                  |
-| `API_BASE_URL`           | Used to build every `resourceUrl`.                                                                                           |
-| `MCP_BASE_URL`           | The `apps/mcp` origin. Used to build a token's `mcpUrl`.                                                                     |
-| `PROBLEM_TYPE_BASE`      | Optional. Base URI for RFC 7807 `type` values.                                                                               |
-| `LLM_*`                  | Optional. A blank `LLM_API_KEY` disables LLM features.                                                                       |
-| `S3_*`                   | `S3_BUCKET` and both credentials are required.                                                                               |
-| `CATALOG_IMAGE_BASE_URL` | Origin the browser loads catalog exercise images from — the public custom domain in front of the catalog bucket (see below). |
+Add the exact Pages/custom web origin to the API's `AUTH_TRUSTED_ORIGINS` and `CORS_ORIGIN`.
 
-### Catalog images
-
-R2 public access is per-bucket, so `S3_BUCKET` must hold only catalog objects. Put a custom domain
-in front of it and set `CATALOG_IMAGE_BASE_URL` to that origin. A future private upload consumer
-(progress photos) needs its own bucket — never the catalog one. The R2 API token needs object read
-and write plus bucket read: the seed calls `HeadBucket` before uploading.
-
-`TZ=UTC` is set in `apps/api/Dockerfile` and must stay set — see the Auth section of `CLAUDE.md`
-for why every process touching the Better Auth tables has to agree on one timezone.
-
-The health check Railway gates the deploy on is `/api/health/ready`, which touches the database.
-`/api/health` is liveness only and answers before the database is reachable.
-
-## 5. `apps/mcp`
+## 6. Verify
 
 ```bash
-railway add --service mcp
-```
-
-It holds no database connection. Its variables are `PORT`, `NODE_ENV`, the `LOG_*` keys,
-`WEB_APP_BASE_URL`, `API_BASE_URL`, `API_INTERNAL_BASE_URL` and `MCP_BASE_URL` — no `DATABASE_URL`,
-no auth secret, no storage or LLM credential.
-
-`API_INTERNAL_BASE_URL` should use Railway's private network endpoint (`http://api.railway.internal:PORT`)
-so tool traffic never leaves the project.
-
-Its health check is `/health` (liveness), deliberately not `/health/ready` — that one dials `api`,
-and gating this deploy on another service's health means a restarting `api` takes `mcp` down too.
-
-## 6. `apps/web` on Cloudflare Pages
-
-```bash
-cd apps/web
-pnpm build
-npx wrangler pages deploy dist
-```
-
-Set `API_ORIGIN` in `apps/web/wrangler.toml` (or as a Pages environment variable) to the deployed
-`apps/api` origin. The SPA authenticates with session cookies, so the API origin must be listed in
-the API's `AUTH_TRUSTED_ORIGINS` and `CORS_ORIGIN`, and `AUTH_SECURE_COOKIES` must be `true` for the
-cookie to survive a cross-origin request over HTTPS.
-
-## 7. Verify
-
-```bash
-curl https://<api>/api/health          # -> ok
-curl https://<api>/api/health/ready    # -> ok, only once Postgres is reachable
-curl https://<mcp>/health              # -> ok
+curl -fsS https://<api>/api/health
+curl -fsS https://<api>/api/health/ready
+curl -fsS https://<mcp>/health
+curl -I https://<web>/
 ```
 
 Then sign up through the web app, create a workspace, and create an MCP personal access token from
-its settings page — the returned `mcpUrl` is what an MCP client connects to.
+Settings. The returned `mcpUrl` is the URL an MCP client connects to.
 
-## CI
+## CI/CD
 
-`.github/workflows/ci.yml` runs lint, typecheck, build, test and a format check on every push and
-pull request, and additionally builds the `api` and `mcp` Docker images on pull requests so a broken
-Dockerfile fails there rather than after merge. Nothing is pushed or tagged: Railway builds and
-probes readiness itself, and a failed probe stops the deploy.
+`.github/workflows/ci.yml` runs lint, typecheck, build, tests, formatting, and Docker image builds on
+pull requests. `checkSuites: true` makes Railway wait for repository checks before deploying API and
+MCP from `main`.
+
+`.github/workflows/railway.yml` handles infrastructure changes only:
+
+1. A pull request changing `.railway/**` receives a pinned Railway plan as a PR comment.
+2. When that PR merges, the exact reviewed plan is applied.
+
+Fork pull requests are skipped because they cannot receive production secrets. Direct edits to
+Railway infrastructure should go through a pull request; direct pushes have no reviewed plan.
+
+Code deployment is automatic from `main`. Database migrations and catalog publishing remain manual
+because they change production data and should be run after reviewing the release.

@@ -37,7 +37,7 @@ packages/
 
 ```bash
 pnpm install
-docker compose up -d                              # Postgres, Redis, MinIO
+docker compose up -d                              # Postgres, MinIO
 cp apps/api/.env.example apps/api/.env            # then fill in the values
 pnpm --filter @app/db db:migrate                  # apply the schema
 pnpm dev

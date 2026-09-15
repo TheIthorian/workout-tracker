@@ -92,7 +92,7 @@ version), revert it and re-apply only the intended lines.
 ## Docker (Development)
 
 ```bash
-docker compose up -d       # Postgres, Redis, MinIO
+docker compose up -d       # Postgres, MinIO
 ```
 
 Data lives in **bind mounts outside the repo**, never named volumes and never inside the tree, so

@@ -30,20 +30,21 @@ services:
             timeout: 5s
             retries: 10
 
-    redis:
-        image: redis:7-alpine
-        container_name: wt-app-redis
-        restart: unless-stopped
-        command: redis-server --save 60 1
-        volumes:
-            - ${DATA_DIR:?set DATA_DIR in the root .env}/redis:/data
-        ports:
-            - '6379:6379'
-        healthcheck:
-            test: ['CMD', 'redis-cli', 'ping']
-            interval: 5s
-            timeout: 5s
-            retries: 10
+    # Redis not required in this project
+    # redis:
+    #     image: redis:7-alpine
+    #     container_name: wt-app-redis
+    #     restart: unless-stopped
+    #     command: redis-server --save 60 1
+    #     volumes:
+    #         - ${DATA_DIR:?set DATA_DIR in the root .env}/redis:/data
+    #     ports:
+    #         - '6379:6379'
+    #     healthcheck:
+    #         test: ['CMD', 'redis-cli', 'ping']
+    #         interval: 5s
+    #         timeout: 5s
+    #         retries: 10
 
     # S3-compatible object storage. Exercise guide images live here, so `apps/api` refuses to boot
     # without `S3_BUCKET` and credentials.
