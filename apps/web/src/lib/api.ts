@@ -7,6 +7,7 @@ import type {
     PatchExerciseLinkRequest,
     PatchExerciseRequest,
     SaveExerciseLinkRequest,
+    SaveExercisePreferencesRequest,
     SaveExerciseRequest,
 } from '@/models/exercise';
 import type { McpAccessTokenCreated, McpAccessTokenListItem } from '@/models/mcp';
@@ -74,6 +75,16 @@ export const exercisesApi = {
         httpClient.post<ExerciseDetail>(`/api/v1/workspaces/${workspaceId}/exercises`, data),
     update: (workspaceId: string, exerciseId: string, data: PatchExerciseRequest) =>
         httpClient.patch<ExerciseDetail>(`/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}`, data),
+    setPreferences: ({
+        workspaceId,
+        exerciseId,
+        data,
+    }: {
+        workspaceId: string;
+        exerciseId: string;
+        data: SaveExercisePreferencesRequest;
+    }) =>
+        httpClient.put<ExerciseDetail>(`/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/preferences`, data),
     addLink: ({
         workspaceId,
         exerciseId,

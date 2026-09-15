@@ -4,7 +4,7 @@ import { EntityNotFoundError } from '@app/errors';
 import { asc, count, desc, eq, ilike, isNull, sql, type SQL } from 'drizzle-orm';
 import type { WorkspaceMembershipService } from './workspace-membership.service.js';
 
-const { exerciseGuideImages, exerciseLinks, exercises } = schema;
+const { exerciseGuideImages, exerciseLinks, exercisePreferences, exercises } = schema;
 
 export type ExerciseSummary = {
     id: string;
@@ -14,6 +14,7 @@ export type ExerciseSummary = {
     trackingType: TrackingType;
     equipment: Equipment[];
     notes: string | null;
+    restSeconds: number | null;
     archivedAt: string | null;
     createdAt: string;
     updatedAt: string;
@@ -108,6 +109,7 @@ export class ExercisesService {
             this.db
                 .select(EXERCISE_SUMMARY_COLUMNS)
                 .from(exercises)
+                .leftJoin(exercisePreferences, preferencesFor(workspaceId))
                 .where(where)
                 .orderBy(asc(exercises.name), desc(exercises.createdAt))
                 .limit(pageSize)
@@ -249,6 +251,45 @@ export class ExercisesService {
         return this.loadDetail({ workspaceId, exerciseId });
     }
 
+    /**
+     * Sets the workspace's rest between sets for an exercise, catalog or custom.
+     *
+     * @throws EntityNotFoundError when the caller is not a member, or the exercise is not visible to
+     * this workspace.
+     */
+    async setPreferences({
+        userId,
+        workspaceId,
+        exerciseId,
+        restSeconds,
+    }: {
+        userId: string;
+        workspaceId: string;
+        exerciseId: string;
+        restSeconds: number;
+    }): Promise<ExerciseDetail> {
+        await this.membership.require({ userId, workspaceId });
+
+        const [exercise] = await this.db
+            .select({ id: exercises.id })
+            .from(exercises)
+            .where(scopedToWorkspaceOrGlobal(exercises, workspaceId, eq(exercises.id, exerciseId)));
+
+        if (!exercise) throw new EntityNotFoundError('Exercise not found');
+
+        const now = new Date().toISOString();
+
+        await this.db
+            .insert(exercisePreferences)
+            .values({ workspaceId, exerciseId, restSeconds, updatedAt: now })
+            .onConflictDoUpdate({
+                target: [exercisePreferences.workspaceId, exercisePreferences.exerciseId],
+                set: { restSeconds, updatedAt: now },
+            });
+
+        return this.loadDetail({ workspaceId, exerciseId });
+    }
+
     private async loadDetail({
         workspaceId,
         exerciseId,
@@ -259,6 +300,7 @@ export class ExercisesService {
         const [exercise] = await this.db
             .select(EXERCISE_DETAIL_COLUMNS)
             .from(exercises)
+            .leftJoin(exercisePreferences, preferencesFor(workspaceId))
             .where(scopedToWorkspaceOrGlobal(exercises, workspaceId, eq(exercises.id, exerciseId)));
 
         if (!exercise) throw new EntityNotFoundError('Exercise not found');
@@ -318,6 +360,7 @@ const EXERCISE_SUMMARY_COLUMNS = {
     trackingType: exercises.trackingType,
     equipment: exercises.equipment,
     notes: exercises.notes,
+    restSeconds: exercisePreferences.restSeconds,
     archivedAt: exercises.archivedAt,
     createdAt: exercises.createdAt,
     updatedAt: exercises.updatedAt,
@@ -330,3 +373,8 @@ const EXERCISE_DETAIL_COLUMNS = {
     guideCues: exercises.guideCues,
     guideMistakes: exercises.guideMistakes,
 };
+
+/** The join that attaches the caller's own preference row, if any, to each exercise. */
+function preferencesFor(workspaceId: string): SQL {
+    return scopedToWorkspace(exercisePreferences, workspaceId, eq(exercisePreferences.exerciseId, exercises.id));
+}

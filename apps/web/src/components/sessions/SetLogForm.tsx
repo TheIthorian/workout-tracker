@@ -1,11 +1,10 @@
-import { useEffect, useState, type ComponentProps } from 'react';
+import { useEffect, useState } from 'react';
 import { Check, Plus } from 'lucide-react';
+import { StepperField } from '@/components/common/StepperField';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { TrackingType } from '@/models/exercise';
-import type { LogSetRequest, SessionExercise, SessionSet } from '@/models/session';
+import { formatSessionClock, type LogSetRequest, type SessionExercise, type SessionSet } from '@/models/session';
 
 type SetLogFormProps = {
     exercise: SessionExercise;
@@ -14,24 +13,30 @@ type SetLogFormProps = {
     onLog: (data: LogSetRequest) => void;
 };
 
+const WEIGHT_STEP_KG = 2.5;
+const DURATION_STEP_SECONDS = 5;
+const CARDIO_TIME_STEP_SECONDS = 30;
+const DISTANCE_STEP_M = 100;
+const RPE_STEP = 0.5;
+
 /** The one-tap logging form, with only the fields valid for the exercise's tracking type. */
 export function SetLogForm({ exercise, previousSet, isPending, onLog }: SetLogFormProps): JSX.Element {
-    const [weightKg, setWeightKg] = useState(numberDraft(previousSet?.weightKg ?? exercise.targetWeightKg));
-    const [reps, setReps] = useState(numberDraft(previousSet?.reps ?? exercise.targetReps));
+    const [weightKg, setWeightKg] = useState(previousSet?.weightKg ?? exercise.targetWeightKg);
+    const [reps, setReps] = useState(previousSet?.reps ?? exercise.targetReps);
     const [durationSeconds, setDurationSeconds] = useState(
-        numberDraft(previousSet?.durationSeconds ?? exercise.targetDurationSeconds),
+        previousSet?.durationSeconds ?? exercise.targetDurationSeconds,
     );
-    const [distanceM, setDistanceM] = useState(numberDraft(previousSet?.distanceM ?? exercise.targetDistanceM));
+    const [distanceM, setDistanceM] = useState(previousSet?.distanceM ?? exercise.targetDistanceM);
     const [isWarmup, setWarmup] = useState(false);
-    const [rpe, setRpe] = useState('');
+    const [rpe, setRpe] = useState<number | null>(null);
 
     useEffect(() => {
-        setWeightKg(numberDraft(previousSet?.weightKg ?? exercise.targetWeightKg));
-        setReps(numberDraft(previousSet?.reps ?? exercise.targetReps));
-        setDurationSeconds(numberDraft(previousSet?.durationSeconds ?? exercise.targetDurationSeconds));
-        setDistanceM(numberDraft(previousSet?.distanceM ?? exercise.targetDistanceM));
+        setWeightKg(previousSet?.weightKg ?? exercise.targetWeightKg);
+        setReps(previousSet?.reps ?? exercise.targetReps);
+        setDurationSeconds(previousSet?.durationSeconds ?? exercise.targetDurationSeconds);
+        setDistanceM(previousSet?.distanceM ?? exercise.targetDistanceM);
         setWarmup(false);
-        setRpe('');
+        setRpe(null);
     }, [
         exercise.id,
         exercise.targetDistanceM,
@@ -45,71 +50,71 @@ export function SetLogForm({ exercise, previousSet, isPending, onLog }: SetLogFo
     ]);
 
     const log = (): void => {
-        const data: LogSetRequest = { isWarmup, rpe: optionalNumber(rpe) };
+        const data: LogSetRequest = { isWarmup, rpe };
         if (exercise.trackingType === TrackingType.WeightReps) {
-            data.reps = requiredNumber(reps);
-            data.weightKg = optionalNumber(weightKg);
+            data.reps = reps;
+            data.weightKg = weightKg;
         }
-        if (exercise.trackingType === TrackingType.Duration) data.durationSeconds = requiredNumber(durationSeconds);
+        if (exercise.trackingType === TrackingType.Duration) data.durationSeconds = durationSeconds;
         if (exercise.trackingType === TrackingType.DistanceTime) {
-            data.distanceM = requiredNumber(distanceM);
-            data.durationSeconds = requiredNumber(durationSeconds);
+            data.distanceM = distanceM;
+            data.durationSeconds = durationSeconds;
         }
         onLog(data);
     };
 
     const valid =
         exercise.trackingType === TrackingType.WeightReps
-            ? requiredNumber(reps) !== null
+            ? reps !== null
             : exercise.trackingType === TrackingType.Duration
-              ? requiredNumber(durationSeconds) !== null
-              : requiredNumber(distanceM) !== null && requiredNumber(durationSeconds) !== null;
+              ? durationSeconds !== null
+              : distanceM !== null && durationSeconds !== null;
 
     return (
-        <div className="space-y-3 rounded-xl bg-secondary/50 p-3">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="space-y-4 rounded-xl bg-secondary/50 p-3">
+            <div className="grid gap-4 sm:grid-cols-2">
                 {exercise.trackingType === TrackingType.WeightReps && (
-                    <NumberField label="Weight (kg)" value={weightKg} onChange={setWeightKg} step="0.25" min="0" />
+                    <StepperField label="Weight (kg)" value={weightKg} onChange={setWeightKg} step={WEIGHT_STEP_KG} />
                 )}
                 {exercise.trackingType === TrackingType.WeightReps && (
-                    <NumberField label="Reps" value={reps} onChange={setReps} min="0" required />
-                )}
-                {exercise.trackingType === TrackingType.Duration && (
-                    <NumberField
-                        label="Seconds"
-                        value={durationSeconds}
-                        onChange={setDurationSeconds}
-                        min="0"
-                        required
-                    />
+                    <StepperField label="Reps" value={reps} onChange={setReps} step={1} required />
                 )}
                 {exercise.trackingType === TrackingType.DistanceTime && (
-                    <NumberField
+                    <StepperField
                         label="Distance (m)"
                         value={distanceM}
                         onChange={setDistanceM}
-                        step="0.1"
-                        min="0"
+                        step={DISTANCE_STEP_M}
                         required
                     />
                 )}
-                {exercise.trackingType === TrackingType.DistanceTime && (
-                    <NumberField
-                        label="Seconds"
+                {exercise.trackingType !== TrackingType.WeightReps && (
+                    <StepperField
+                        label="Time"
                         value={durationSeconds}
                         onChange={setDurationSeconds}
-                        min="0"
+                        step={
+                            exercise.trackingType === TrackingType.Duration
+                                ? DURATION_STEP_SECONDS
+                                : CARDIO_TIME_STEP_SECONDS
+                        }
+                        format={formatSessionClock}
                         required
                     />
                 )}
-                <NumberField label="RPE" value={rpe} onChange={setRpe} step="0.5" min="0" max="10" />
+                <StepperField label="RPE" value={rpe} onChange={setRpe} step={RPE_STEP} max={10} />
             </div>
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <label className="flex min-h-9 items-center gap-2 text-sm text-muted-foreground">
+                <label className="flex min-h-11 items-center gap-2 text-sm text-muted-foreground">
                     <Checkbox checked={isWarmup} onCheckedChange={(checked) => setWarmup(checked === true)} />
                     Warm-up set
                 </label>
-                <Button onClick={log} disabled={!valid || isPending} className="min-w-32 gap-2">
+                <Button
+                    onClick={log}
+                    disabled={!valid || isPending}
+                    size="lg"
+                    className="min-w-40 flex-1 gap-2 sm:flex-none"
+                >
                     {isPending ? (
                         <Plus className="h-4 w-4 animate-spin" aria-hidden />
                     ) : (
@@ -120,51 +125,4 @@ export function SetLogForm({ exercise, previousSet, isPending, onLog }: SetLogFo
             </div>
         </div>
     );
-}
-
-/** A consistently labelled numeric set field. */
-function NumberField({
-    label,
-    value,
-    onChange,
-    required = false,
-    ...inputProps
-}: {
-    label: string;
-    value: string;
-    onChange: (value: string) => void;
-    required?: boolean;
-} & Omit<ComponentProps<typeof Input>, 'value' | 'onChange'>): JSX.Element {
-    return (
-        <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">
-                {label}
-                {required && <span className="text-destructive"> *</span>}
-            </Label>
-            <Input
-                type="number"
-                inputMode="decimal"
-                value={value}
-                onChange={(event) => onChange(event.target.value)}
-                className="h-10 bg-background"
-                {...inputProps}
-            />
-        </div>
-    );
-}
-
-/** Converts a filled-in number input to an API value. */
-function optionalNumber(value: string): number | null {
-    const parsed = Number(value);
-    return value.trim() === '' || !Number.isFinite(parsed) ? null : parsed;
-}
-
-/** Converts a required number input to an API value. */
-function requiredNumber(value: string): number | null {
-    return optionalNumber(value);
-}
-
-/** Makes a nullable stored measurement suitable for a controlled numeric input. */
-function numberDraft(value: number | null | undefined): string {
-    return value?.toString() ?? '';
 }

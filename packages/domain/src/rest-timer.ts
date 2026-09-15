@@ -2,6 +2,23 @@ import { lastLoggedSet, type SessionLike } from './session-state.js';
 
 export type RestTimer = { endsAt: string; remainingSeconds: number; isFinished: boolean };
 
+/** Rest between sets when neither the exercise nor the plan says otherwise. */
+export const DEFAULT_REST_SECONDS = 90;
+
+/**
+ * Picks the rest an exercise gets in a session: the workspace's per-exercise setting wins over the
+ * plan's slot, and a zero from either means no timer.
+ */
+export function resolveRestSeconds({
+    preferred,
+    planned,
+}: {
+    preferred: number | null;
+    planned: number | null;
+}): number {
+    return preferred ?? planned ?? DEFAULT_REST_SECONDS;
+}
+
 /** Calculates rest from a persisted set timestamp rather than a live interval. */
 export function restTimer({
     startedAt,

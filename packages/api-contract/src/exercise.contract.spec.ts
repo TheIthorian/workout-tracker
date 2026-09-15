@@ -6,6 +6,7 @@ import {
     patchExerciseRequestSchema,
     postExerciseLinkRequestSchema,
     postExerciseRequestSchema,
+    putExercisePreferencesRequestSchema,
 } from './exercise.contract.js';
 
 describe('postExerciseRequestSchema', () => {
@@ -80,6 +81,7 @@ describe('exerciseResponseSchema', () => {
             name: 'x',
             trackingType: 'weight_reps',
             notes: null,
+            restSeconds: null,
             archivedAt: null,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -113,5 +115,16 @@ describe('exercise equipment', () => {
             Equipment.Bench,
         ]);
         expect(exerciseListQuerySchema.safeParse({ equipment: 'barbell,vibes' }).success).toBe(false);
+    });
+});
+
+describe('putExercisePreferencesRequestSchema', () => {
+    it('accepts zero rest, meaning no timer', () => {
+        expect(putExercisePreferencesRequestSchema.parse({ restSeconds: 0 })).toEqual({ restSeconds: 0 });
+    });
+
+    it('rejects a negative or fractional rest', () => {
+        expect(putExercisePreferencesRequestSchema.safeParse({ restSeconds: -1 }).success).toBe(false);
+        expect(putExercisePreferencesRequestSchema.safeParse({ restSeconds: 1.5 }).success).toBe(false);
     });
 });

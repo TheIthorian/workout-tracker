@@ -35,6 +35,8 @@ export const exerciseResponseSchema = z.object({
     trackingType: z.enum(TrackingType),
     equipment: z.array(z.enum(Equipment)),
     notes: z.string().nullable(),
+    /** This workspace's rest between sets for the exercise; null until it sets one. */
+    restSeconds: z.number().int().nullable(),
     archivedAt: z.string().nullable(),
     createdAt: z.string(),
     updatedAt: z.string(),
@@ -102,6 +104,14 @@ export const patchExerciseRequestSchema = z
     })
     .refine((body) => Object.keys(body).length > 0, { message: 'At least one field must be provided' });
 
+/**
+ * The body of `PUT /api/v1/workspaces/{workspaceId}/exercises/{exerciseId}/preferences`. Applies to
+ * catalog exercises too, since the setting is the workspace's rather than the exercise's.
+ */
+export const putExercisePreferencesRequestSchema = z.object({
+    restSeconds: z.number().int().min(0).max(3600),
+});
+
 export const postExerciseLinkRequestSchema = z.object({
     url: z.url().max(2000),
     label: z.string().max(200).nullable().optional(),
@@ -123,6 +133,7 @@ export type ExerciseGuideImageResponse = z.infer<typeof exerciseGuideImageRespon
 export type ExerciseLinkResponse = z.infer<typeof exerciseLinkResponseSchema>;
 export type PostExerciseRequest = z.infer<typeof postExerciseRequestSchema>;
 export type PatchExerciseRequest = z.infer<typeof patchExerciseRequestSchema>;
+export type PutExercisePreferencesRequest = z.infer<typeof putExercisePreferencesRequestSchema>;
 export type PostExerciseLinkRequest = z.infer<typeof postExerciseLinkRequestSchema>;
 export type PatchExerciseLinkRequest = z.infer<typeof patchExerciseLinkRequestSchema>;
 

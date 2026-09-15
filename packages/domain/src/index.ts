@@ -1,6 +1,6 @@
 export { Decimal } from './decimal.js';
 export { Equipment, OnboardingStage } from './equipment.js';
-export { restTimer, sessionRestTimer, type RestTimer } from './rest-timer.js';
+export { DEFAULT_REST_SECONDS, resolveRestSeconds, restTimer, sessionRestTimer, type RestTimer } from './rest-timer.js';
 export {
     SessionExerciseSource,
     SessionExerciseStatus,

@@ -113,7 +113,7 @@ export class ExercisesController {
  * Storage keys become absolute CDN urls here, and only here: the service returns keys because the
  * base origin is deployment configuration, which belongs to the app.
  */
-function toDetailResponse({
+export function toDetailResponse({
     exercise,
     imageBaseUrl,
     workspaceId,

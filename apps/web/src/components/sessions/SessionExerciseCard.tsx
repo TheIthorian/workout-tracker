@@ -1,5 +1,17 @@
 import { sessionExerciseStatus, SessionExerciseStatus } from '@app/domain';
-import { ArrowDown, ArrowUp, BookOpen, CheckCircle2, MoreHorizontal, Pencil, SkipForward, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import {
+    ArrowDown,
+    ArrowUp,
+    BookOpen,
+    CheckCircle2,
+    MoreHorizontal,
+    Pencil,
+    SkipForward,
+    Timer,
+    Trash2,
+} from 'lucide-react';
+import { RestTimeSheet } from '@/components/exercises/RestTimeSheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,7 +21,8 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SetLogForm } from '@/components/sessions/SetLogForm';
-import { useExerciseHistory } from '@/hooks/use-exercises';
+import { useExerciseHistory, useSetExercisePreferences } from '@/hooks/use-exercises';
+import { toast } from '@/hooks/use-toast';
 import { formatSessionClock, formatSessionNumber, type LogSetRequest, type SessionExercise } from '@/models/session';
 
 type SessionExerciseCardProps = {
@@ -49,7 +62,12 @@ export function SessionExerciseCard({
     isSetMutating,
 }: SessionExerciseCardProps): JSX.Element {
     const { data: history } = useExerciseHistory({ workspaceId, exerciseId: exercise.exercise.id });
-    const previousSet = latestWorkingSet(history?.data ?? []);
+    const setPreferences = useSetExercisePreferences({ workspaceId });
+    const [isRestOpen, setRestOpen] = useState(false);
+    const lastWorkoutSet = latestWorkingSet(history?.data ?? []);
+    // The set just logged is the best guess for the next one; last workout only seeds the first.
+    const previousSet = latestWorkingSet([exercise]) ?? lastWorkoutSet;
+    const restSeconds = exercise.restSeconds ?? 0;
     const status = sessionExerciseStatus(exercise);
     const workingSets = exercise.sets.filter((set) => !set.isWarmup).length;
     const isSkipped = status === SessionExerciseStatus.Skipped;
@@ -74,15 +92,26 @@ export function SessionExerciseCard({
                         )}
                         {isSkipped && <Badge variant="secondary">Skipped</Badge>}
                     </div>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        {workingSets} of {exercise.targetSets} working sets
-                        {exercise.restSeconds && exercise.restSeconds > 0
-                            ? ` · ${formatSessionClock(exercise.restSeconds)} rest`
-                            : ''}
+                    <p className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
+                        <span>
+                            {workingSets} of {exercise.targetSets} working sets
+                        </span>
+                        {isReadOnly ? (
+                            restSeconds > 0 && <span>· {formatSessionClock(restSeconds)} rest</span>
+                        ) : (
+                            <button
+                                type="button"
+                                className="inline-flex min-h-9 items-center gap-1 rounded-md px-1 text-primary underline-offset-4 hover:underline"
+                                onClick={() => setRestOpen(true)}
+                            >
+                                <Timer className="h-3.5 w-3.5" aria-hidden />
+                                {restSeconds > 0 ? `${formatSessionClock(restSeconds)} rest` : 'No rest timer'}
+                            </button>
+                        )}
                     </p>
-                    {previousSet && !isReadOnly && (
+                    {lastWorkoutSet && !isReadOnly && (
                         <p className="mt-1 text-xs text-muted-foreground">
-                            Prefilled from your last workout: {describeSet({ exercise, set: previousSet })}
+                            Last workout: {describeSet({ exercise, set: lastWorkoutSet })}
                         </p>
                     )}
                 </div>
@@ -164,6 +193,34 @@ export function SessionExerciseCard({
                     <SetLogForm exercise={exercise} previousSet={previousSet} isPending={isLogging} onLog={onLog} />
                 </div>
             )}
+
+            <RestTimeSheet
+                open={isRestOpen}
+                exerciseName={exercise.exercise.name}
+                restSeconds={restSeconds}
+                isSaving={setPreferences.isPending}
+                onOpenChange={setRestOpen}
+                onSave={(seconds) =>
+                    setPreferences.mutate(
+                        { exerciseId: exercise.exercise.id, data: { restSeconds: seconds } },
+                        {
+                            onSuccess: () => {
+                                setRestOpen(false);
+                                toast({
+                                    title:
+                                        seconds > 0 ? `Rest set to ${formatSessionClock(seconds)}` : 'Rest timer off',
+                                });
+                            },
+                            onError: (error) =>
+                                toast({
+                                    title: 'Could not save rest time',
+                                    description: error.message,
+                                    variant: 'destructive',
+                                }),
+                        },
+                    )
+                }
+            />
         </article>
     );
 }

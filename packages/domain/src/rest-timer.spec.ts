@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { restTimer, sessionRestTimer } from './rest-timer.js';
+import { DEFAULT_REST_SECONDS, resolveRestSeconds, restTimer, sessionRestTimer } from './rest-timer.js';
 
 describe('restTimer', () => {
     it('uses persisted time and rounds fractional seconds up', () => {
@@ -40,5 +40,21 @@ describe('restTimer', () => {
         expect(
             sessionRestTimer({ session: { ...session, completedAt: '2026-09-13T10:05:00.000Z' }, now: new Date() }),
         ).toBeNull();
+    });
+});
+
+describe('resolveRestSeconds', () => {
+    it('prefers the per-exercise setting over the planned slot', () => {
+        expect(resolveRestSeconds({ preferred: 120, planned: 60 })).toBe(120);
+    });
+
+    it('keeps an explicit zero rather than treating it as unset', () => {
+        expect(resolveRestSeconds({ preferred: 0, planned: 60 })).toBe(0);
+        expect(resolveRestSeconds({ preferred: null, planned: 0 })).toBe(0);
+    });
+
+    it('falls back to the planned slot, then the default', () => {
+        expect(resolveRestSeconds({ preferred: null, planned: 45 })).toBe(45);
+        expect(resolveRestSeconds({ preferred: null, planned: null })).toBe(DEFAULT_REST_SECONDS);
     });
 });
