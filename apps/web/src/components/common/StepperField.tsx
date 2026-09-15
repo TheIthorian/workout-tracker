@@ -54,19 +54,23 @@ export function StepperField({
         if (next !== current) latest.current.onChange(next);
     };
 
-    const startHold = (direction: 1 | -1) => (event: PointerEvent<HTMLButtonElement>): void => {
-        if (disabled || event.button !== 0) return;
-        nudge(direction);
-        stopHold();
-        holdTimer.current = window.setTimeout(() => {
-            holdInterval.current = window.setInterval(() => nudge(direction), HOLD_INTERVAL_MS);
-        }, HOLD_DELAY_MS);
-    };
+    const startHold =
+        (direction: 1 | -1) =>
+        (event: PointerEvent<HTMLButtonElement>): void => {
+            if (disabled || event.button !== 0) return;
+            nudge(direction);
+            stopHold();
+            holdTimer.current = window.setTimeout(() => {
+                holdInterval.current = window.setInterval(() => nudge(direction), HOLD_INTERVAL_MS);
+            }, HOLD_DELAY_MS);
+        };
 
     // A pointer press already stepped once; only a keyboard-originated click (detail 0) still needs to.
-    const keyboardNudge = (direction: 1 | -1) => (event: MouseEvent<HTMLButtonElement>): void => {
-        if (event.detail === 0) nudge(direction);
-    };
+    const keyboardNudge =
+        (direction: 1 | -1) =>
+        (event: MouseEvent<HTMLButtonElement>): void => {
+            if (event.detail === 0) nudge(direction);
+        };
 
     function stopHold(): void {
         if (holdTimer.current !== null) window.clearTimeout(holdTimer.current);
@@ -79,17 +83,17 @@ export function StepperField({
     const atMax = max !== undefined && value !== null && value >= max;
 
     return (
-        <div className='space-y-1.5'>
-            <Label className='text-xs text-muted-foreground'>
+        <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">
                 {label}
-                {required && <span className='text-destructive'> *</span>}
+                {required && <span className="text-destructive"> *</span>}
             </Label>
-            <div className='flex items-stretch gap-2'>
+            <div className="flex items-stretch gap-2">
                 <Button
-                    type='button'
-                    variant='outline'
-                    size='icon'
-                    className='h-14 w-14 shrink-0 rounded-xl text-lg'
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-14 w-14 shrink-0 rounded-xl text-lg"
                     aria-label={`Decrease ${label}`}
                     disabled={disabled || atMin}
                     onPointerDown={startHold(-1)}
@@ -99,16 +103,16 @@ export function StepperField({
                     onClick={keyboardNudge(-1)}
                     onContextMenu={(event) => event.preventDefault()}
                 >
-                    <Minus className='h-5 w-5' aria-hidden />
+                    <Minus className="h-5 w-5" aria-hidden />
                 </Button>
                 {format ? (
-                    <output className='flex h-14 min-w-0 flex-1 items-center justify-center rounded-xl border border-input bg-background font-heading text-2xl tabular-nums'>
+                    <output className="flex h-14 min-w-0 flex-1 items-center justify-center rounded-xl border border-input bg-background font-heading text-2xl tabular-nums">
                         {value === null ? '—' : format(value)}
                     </output>
                 ) : (
                     <Input
-                        type='number'
-                        inputMode='decimal'
+                        type="number"
+                        inputMode="decimal"
                         aria-label={label}
                         value={draft}
                         min={min}
@@ -119,14 +123,14 @@ export function StepperField({
                             setDraft(event.target.value);
                             onChange(parseNumber(event.target.value));
                         }}
-                        className='h-14 min-w-0 flex-1 rounded-xl bg-background text-center font-heading text-2xl tabular-nums'
+                        className="h-14 min-w-0 flex-1 rounded-xl bg-background text-center font-heading text-2xl tabular-nums"
                     />
                 )}
                 <Button
-                    type='button'
-                    variant='outline'
-                    size='icon'
-                    className='h-14 w-14 shrink-0 rounded-xl text-lg'
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-14 w-14 shrink-0 rounded-xl text-lg"
                     aria-label={`Increase ${label}`}
                     disabled={disabled || atMax}
                     onPointerDown={startHold(1)}
@@ -136,7 +140,7 @@ export function StepperField({
                     onClick={keyboardNudge(1)}
                     onContextMenu={(event) => event.preventDefault()}
                 >
-                    <Plus className='h-5 w-5' aria-hidden />
+                    <Plus className="h-5 w-5" aria-hidden />
                 </Button>
             </div>
         </div>

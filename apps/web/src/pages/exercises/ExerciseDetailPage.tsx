@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useExercise, useExerciseHistory, useSetExercisePreferences, useUpdateExercise } from '@/hooks/use-exercises';
 import { TRACKING_TYPE_META } from '@/models/exercise';
+import { EQUIPMENT_META, EQUIPMENT_ORDER } from '@/models/equipment';
 import { formatSessionClock, type SessionSet } from '@/models/session';
 import ForbiddenError from '@/pages/ForbiddenError';
 import NotFoundError from '@/pages/NotFoundError';
@@ -108,6 +109,15 @@ export default function ExerciseDetailPage(): JSX.Element {
                             <Icon className="h-3 w-3" aria-hidden />
                             {label}
                         </Badge>
+                        {exercise.equipment.length === 0 ? (
+                            <Badge variant="outline">Bodyweight</Badge>
+                        ) : (
+                            EQUIPMENT_ORDER.filter((item) => exercise.equipment.includes(item)).map((item) => (
+                                <Badge key={item} variant="outline">
+                                    {EQUIPMENT_META[item].label}
+                                </Badge>
+                            ))
+                        )}
                         {exercise.isCatalog && <Badge variant="outline">Forma guide</Badge>}
                         {exercise.archivedAt && <Badge variant="secondary">Archived</Badge>}
                     </div>

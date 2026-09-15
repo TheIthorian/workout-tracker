@@ -52,7 +52,9 @@ export function buildExerciseTools({
                 'catalog exercises, which cannot be edited. Archived exercises are excluded unless ' +
                 "includeArchived is set. Each exercise's trackingType (weight_reps, duration, or " +
                 'distance_time) decides which fields a logged set for it carries. Each entry includes ' +
-                'webUrl, the page for that exercise in the web app.',
+                'webUrl, the page for that exercise in the web app. Pass equipment to keep only exercises ' +
+                "that need nothing beyond it; an empty list means bodyweight only. Each exercise's equipment " +
+                'lists what it requires.',
             inputSchema: listExercisesToolArgsSchema,
             handler: async (args) => {
                 const pagination = paginationQuerySchema.parse({
@@ -67,6 +69,7 @@ export function buildExerciseTools({
                         pageSize: pagination.pageSize,
                         search: args.search ?? undefined,
                         includeArchived: args.includeArchived ?? undefined,
+                        equipment: args.equipment == null ? undefined : args.equipment.join(','),
                     },
                 });
 
@@ -106,6 +109,7 @@ export function buildExerciseTools({
                             body: {
                                 name: args.name,
                                 trackingType: args.trackingType,
+                                equipment: args.equipment ?? undefined,
                                 notes: args.notes ?? null,
                                 guideSetup: args.guideSetup ?? null,
                                 guideExecution: args.guideExecution ?? null,
@@ -178,6 +182,7 @@ function buildExercisePatch(args: UpdateExerciseToolArgs): Record<string, unknow
 
     if (args.name !== undefined) patch['name'] = args.name;
     if (args.trackingType !== undefined) patch['trackingType'] = args.trackingType;
+    if (args.equipment !== undefined && args.equipment !== null) patch['equipment'] = args.equipment;
 
     for (const field of ['notes', 'guideSetup', 'guideExecution', 'guideCues', 'guideMistakes'] as const) {
         const value = args[field];

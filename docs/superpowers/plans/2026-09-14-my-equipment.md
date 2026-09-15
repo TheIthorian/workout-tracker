@@ -4,7 +4,7 @@
 
 **Goal:** Tag exercises with the equipment they require, let a workspace keep named equipment presets, filter every exercise list by the device's active preset, and capture the user's equipment during a first-run onboarding step.
 
-**Architecture:** `Equipment` and `OnboardingStage` are closed enums in `@app/domain`. `exercises.equipment` is a Postgres enum array; the list filter is a server-side `<@` subset test so pagination stays honest. Presets are workspace-scoped rows behind a plain `EquipmentPresetsService`; the *active* preset is a localStorage id on the device. Onboarding is a stage column on `workspaces` that the web app routes on.
+**Architecture:** `Equipment` and `OnboardingStage` are closed enums in `@app/domain`. `exercises.equipment` is a Postgres enum array; the list filter is a server-side `<@` subset test so pagination stays honest. Presets are workspace-scoped rows behind a plain `EquipmentPresetsService`; the _active_ preset is a localStorage id on the device. Onboarding is a stage column on `workspaces` that the web app routes on.
 
 **Tech Stack:** TypeScript monorepo (pnpm + Turborepo), Drizzle + Postgres, NestJS/Fastify, Zod (`@app/api-contract`), Vite + React + TanStack Query + shadcn/ui, vitest + testcontainers.
 
@@ -20,10 +20,10 @@
 - Tests: co-located `*.spec.ts`; services/api tests use the real Postgres via testcontainers. No browser/Playwright runs. `apps/web` unit tests are `*.test.ts` under `src/`.
 - Formatting: run `pnpm format` before each commit; run `pnpm lint` and `pnpm typecheck` before claiming a task done.
 - Commits: Conventional Commits, ending with:
-  ```
-  Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
-  Claude-Session: https://claude.ai/code/session_01232hwbrPabktwxhH3bZfxG
-  ```
+    ```
+    Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_01232hwbrPabktwxhH3bZfxG
+    ```
 - Work on the current branch (`main`); do not create branches or worktrees.
 - Docker must be running for service/e2e tests (`testcontainers`). If a test run fails with a Docker connection error, say so rather than skipping the test.
 
@@ -31,55 +31,57 @@
 
 ## File map
 
-| Area | File | Responsibility |
-| --- | --- | --- |
-| domain | `packages/domain/src/equipment.ts` (new) | `Equipment`, `OnboardingStage` enums |
-| db | `packages/db/src/schema/exercises.ts` | `equipmentEnum`, `exercises.equipment` |
-| db | `packages/db/src/schema/equipment-presets.ts` (new) | `equipmentPresets` table |
-| db | `packages/db/src/schema/workspaces.ts` | `onboardingStageEnum`, `workspaces.onboardingStage` |
-| db | `packages/db/drizzle/0007_*.sql` (generated) | migration |
-| contract | `packages/api-contract/src/exercise.contract.ts` | `equipment` on responses/requests, `equipment` list query |
-| contract | `packages/api-contract/src/equipment-preset.contract.ts` (new) | preset schemas |
-| contract | `packages/api-contract/src/onboarding.contract.ts` (new) | onboarding schemas |
-| contract | `packages/api-contract/src/workspace.contract.ts` | `onboardingStage` on `workspaceListItemSchema` |
-| contract | `packages/api-contract/src/mcp-tool.contract.ts` | `equipment` on list/create/update tool args |
-| catalog | `packages/catalog/src/exercise-entry.ts` | `equipment` field |
-| content | `content/exercises/*/exercise.json` | tagging |
-| services | `packages/services/src/exercises.service.ts` | equipment column + filter |
-| services | `packages/services/src/equipment-presets.service.ts` (new) | preset CRUD |
-| services | `packages/services/src/workspaces.service.ts` | `setOnboardingStage`, stage on list |
-| services | `packages/services/src/users.service.ts` | stage on `loadWorkspaces` |
-| services | `packages/services/src/catalog-seed.service.ts` | seed writes equipment |
-| api | `apps/api/src/exercises/exercises.controller.ts` | pass `equipment` query |
-| api | `apps/api/src/equipment-presets/*` (new) | controller, module, providers |
-| api | `apps/api/src/onboarding/*` (new) | controller, module (reuses workspace providers) |
-| api | `apps/api/test/equipment-presets.e2e.spec.ts`, `onboarding.e2e.spec.ts` (new) | e2e |
-| mcp | `apps/mcp/src/mcp/tools/exercise.tools.ts` | pass `equipment` |
-| web | `apps/web/src/models/equipment.ts` (new) | enum mirror, labels, icons, preset types |
-| web | `apps/web/src/models/exercise.ts`, `models/workspace.ts` | `equipment`, `onboardingStage` |
-| web | `apps/web/src/lib/api.ts` | `equipmentPresetsApi`, `onboardingApi`, `equipment` param |
-| web | `apps/web/src/lib/active-equipment-preset.ts` (+ `.test.ts`) (new) | localStorage id |
-| web | `apps/web/src/hooks/use-equipment-presets.ts` (new) | queries, mutations, `useActiveEquipmentPreset` |
-| web | `apps/web/src/hooks/use-exercises.ts` | `equipment` param |
-| web | `apps/web/src/components/equipment/EquipmentTileGrid.tsx` (new) | multi-select tiles |
-| web | `apps/web/src/components/equipment/EquipmentFilterChip.tsx` (new) | preset switcher chip |
-| web | `apps/web/src/components/equipment/EquipmentPresetSheet.tsx` (new) | add/edit preset |
-| web | `apps/web/src/components/settings/EquipmentSettings.tsx` (new) | settings card |
-| web | `apps/web/src/pages/WelcomePage.tsx` (new) | onboarding |
-| web | `apps/web/src/App.tsx`, `components/layout/AppLayout.tsx`, `lib/return-url.ts` | route + redirect |
-| web | `apps/web/src/pages/exercises/ExercisesListPage.tsx`, `components/routines/ExercisePickerSheet.tsx` | chip + filter + empty state |
-| web | `apps/web/src/pages/exercises/ExerciseDetailPage.tsx`, `components/exercises/ExerciseGuideEditor.tsx` | equipment display/edit |
-| web | `apps/web/src/pages/Settings.tsx` | Equipment tab |
+| Area     | File                                                                                                  | Responsibility                                            |
+| -------- | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| domain   | `packages/domain/src/equipment.ts` (new)                                                              | `Equipment`, `OnboardingStage` enums                      |
+| db       | `packages/db/src/schema/exercises.ts`                                                                 | `equipmentEnum`, `exercises.equipment`                    |
+| db       | `packages/db/src/schema/equipment-presets.ts` (new)                                                   | `equipmentPresets` table                                  |
+| db       | `packages/db/src/schema/workspaces.ts`                                                                | `onboardingStageEnum`, `workspaces.onboardingStage`       |
+| db       | `packages/db/drizzle/0007_*.sql` (generated)                                                          | migration                                                 |
+| contract | `packages/api-contract/src/exercise.contract.ts`                                                      | `equipment` on responses/requests, `equipment` list query |
+| contract | `packages/api-contract/src/equipment-preset.contract.ts` (new)                                        | preset schemas                                            |
+| contract | `packages/api-contract/src/onboarding.contract.ts` (new)                                              | onboarding schemas                                        |
+| contract | `packages/api-contract/src/workspace.contract.ts`                                                     | `onboardingStage` on `workspaceListItemSchema`            |
+| contract | `packages/api-contract/src/mcp-tool.contract.ts`                                                      | `equipment` on list/create/update tool args               |
+| catalog  | `packages/catalog/src/exercise-entry.ts`                                                              | `equipment` field                                         |
+| content  | `content/exercises/*/exercise.json`                                                                   | tagging                                                   |
+| services | `packages/services/src/exercises.service.ts`                                                          | equipment column + filter                                 |
+| services | `packages/services/src/equipment-presets.service.ts` (new)                                            | preset CRUD                                               |
+| services | `packages/services/src/workspaces.service.ts`                                                         | `setOnboardingStage`, stage on list                       |
+| services | `packages/services/src/users.service.ts`                                                              | stage on `loadWorkspaces`                                 |
+| services | `packages/services/src/catalog-seed.service.ts`                                                       | seed writes equipment                                     |
+| api      | `apps/api/src/exercises/exercises.controller.ts`                                                      | pass `equipment` query                                    |
+| api      | `apps/api/src/equipment-presets/*` (new)                                                              | controller, module, providers                             |
+| api      | `apps/api/src/onboarding/*` (new)                                                                     | controller, module (reuses workspace providers)           |
+| api      | `apps/api/test/equipment-presets.e2e.spec.ts`, `onboarding.e2e.spec.ts` (new)                         | e2e                                                       |
+| mcp      | `apps/mcp/src/mcp/tools/exercise.tools.ts`                                                            | pass `equipment`                                          |
+| web      | `apps/web/src/models/equipment.ts` (new)                                                              | enum mirror, labels, icons, preset types                  |
+| web      | `apps/web/src/models/exercise.ts`, `models/workspace.ts`                                              | `equipment`, `onboardingStage`                            |
+| web      | `apps/web/src/lib/api.ts`                                                                             | `equipmentPresetsApi`, `onboardingApi`, `equipment` param |
+| web      | `apps/web/src/lib/active-equipment-preset.ts` (+ `.test.ts`) (new)                                    | localStorage id                                           |
+| web      | `apps/web/src/hooks/use-equipment-presets.ts` (new)                                                   | queries, mutations, `useActiveEquipmentPreset`            |
+| web      | `apps/web/src/hooks/use-exercises.ts`                                                                 | `equipment` param                                         |
+| web      | `apps/web/src/components/equipment/EquipmentTileGrid.tsx` (new)                                       | multi-select tiles                                        |
+| web      | `apps/web/src/components/equipment/EquipmentFilterChip.tsx` (new)                                     | preset switcher chip                                      |
+| web      | `apps/web/src/components/equipment/EquipmentPresetSheet.tsx` (new)                                    | add/edit preset                                           |
+| web      | `apps/web/src/components/settings/EquipmentSettings.tsx` (new)                                        | settings card                                             |
+| web      | `apps/web/src/pages/WelcomePage.tsx` (new)                                                            | onboarding                                                |
+| web      | `apps/web/src/App.tsx`, `components/layout/AppLayout.tsx`, `lib/return-url.ts`                        | route + redirect                                          |
+| web      | `apps/web/src/pages/exercises/ExercisesListPage.tsx`, `components/routines/ExercisePickerSheet.tsx`   | chip + filter + empty state                               |
+| web      | `apps/web/src/pages/exercises/ExerciseDetailPage.tsx`, `components/exercises/ExerciseGuideEditor.tsx` | equipment display/edit                                    |
+| web      | `apps/web/src/pages/Settings.tsx`                                                                     | Equipment tab                                             |
 
 ---
 
 ### Task 1: Domain enums
 
 **Files:**
+
 - Create: `packages/domain/src/equipment.ts`
 - Modify: `packages/domain/src/index.ts`
 
 **Interfaces:**
+
 - Produces: `enum Equipment { Barbell='barbell', Dumbbell='dumbbell', Kettlebell='kettlebell', Cable='cable', Machine='machine', SquatRack='squat_rack', Bench='bench', PullUpBar='pull_up_bar', ResistanceBand='resistance_band', Treadmill='treadmill', StationaryBike='stationary_bike', RowingMachine='rowing_machine' }` and `enum OnboardingStage { Equipment='equipment', Complete='complete' }`, exported from `@app/domain`.
 
 - [ ] **Step 1: Create the enums**
@@ -139,6 +141,7 @@ git commit -m "feat(domain): add Equipment and OnboardingStage enums"
 ### Task 2: Database schema and migration
 
 **Files:**
+
 - Modify: `packages/db/src/schema/exercises.ts`
 - Create: `packages/db/src/schema/equipment-presets.ts`
 - Modify: `packages/db/src/schema/workspaces.ts`
@@ -146,6 +149,7 @@ git commit -m "feat(domain): add Equipment and OnboardingStage enums"
 - Generated: `packages/db/drizzle/0007_<name>.sql`, `packages/db/drizzle/meta/*`
 
 **Interfaces:**
+
 - Produces: `schema.exercises.equipment` (enum array), `schema.equipmentPresets` table (`id, workspaceId, name, equipment, createdAt, updatedAt`), `schema.workspaces.onboardingStage`, `equipmentEnum`, `onboardingStageEnum`.
 
 - [ ] **Step 1: Add the equipment enum and column to exercises**
@@ -216,10 +220,7 @@ export const equipmentPresets = pgTable(
             .notNull(),
     },
     (table) => [
-        index('equipment_presets_workspace_id_idx').using(
-            'btree',
-            table.workspaceId.asc().nullsLast().op('uuid_ops'),
-        ),
+        index('equipment_presets_workspace_id_idx').using('btree', table.workspaceId.asc().nullsLast().op('uuid_ops')),
         uniqueIndex('equipment_presets_workspace_id_name_uidx').on(table.workspaceId, table.name),
         foreignKey({
             columns: [table.workspaceId],
@@ -257,6 +258,7 @@ export * from './equipment-presets.js';
 
 Run: `pnpm --filter @app/db db:generate`
 Expected: a new `packages/db/drizzle/0007_*.sql`. Open it and confirm it contains exactly:
+
 - `CREATE TYPE "public"."equipment" AS ENUM(...)` with the 12 values;
 - `CREATE TYPE "public"."onboarding_stage" AS ENUM('equipment', 'complete')`;
 - `CREATE TABLE "equipment_presets" ...` with the FK, index and unique index;
@@ -282,6 +284,7 @@ git commit -m "feat(db): add exercise equipment, equipment presets and onboardin
 ### Task 3: API contract
 
 **Files:**
+
 - Modify: `packages/api-contract/src/exercise.contract.ts`
 - Create: `packages/api-contract/src/equipment-preset.contract.ts`
 - Create: `packages/api-contract/src/onboarding.contract.ts`
@@ -291,6 +294,7 @@ git commit -m "feat(db): add exercise equipment, equipment presets and onboardin
 - Test: `packages/api-contract/src/exercise.contract.spec.ts`, `packages/api-contract/src/equipment-preset.contract.spec.ts` (new), `packages/api-contract/src/identity-contracts.spec.ts`
 
 **Interfaces:**
+
 - Produces: `equipmentListSchema`, `exerciseListQuerySchema.equipment: Equipment[] | undefined`, `equipmentPresetResponseSchema`, `equipmentPresetListResponseSchema`, `postEquipmentPresetRequestSchema`, `patchEquipmentPresetRequestSchema`, `patchOnboardingRequestSchema`, `onboardingResponseSchema`, and types `EquipmentPresetResponse`, `EquipmentPresetListResponse`, `PostEquipmentPresetRequest`, `PatchEquipmentPresetRequest`, `PatchOnboardingRequest`, `OnboardingResponse`. `workspaceListItemSchema` gains `onboardingStage`. `ExerciseResponse` gains `equipment`.
 
 - [ ] **Step 1: Write the failing exercise contract tests**
@@ -347,22 +351,22 @@ export const equipmentListSchema = z
 
 - `exerciseResponseSchema`: add `equipment: z.array(z.enum(Equipment)),` after `trackingType`.
 - `exerciseListQuerySchema`: add
-  ```ts
-      /** Comma-separated. Absent: no filter. Empty: bodyweight only. Otherwise: only exercises needing a subset. */
-      equipment: z
-          .string()
-          .optional()
-          .transform((raw, ctx) => {
-              if (raw === undefined) return undefined;
-              const values = raw === '' ? [] : raw.split(',');
-              const parsed = equipmentListSchema.safeParse(values);
-              if (!parsed.success) {
-                  ctx.addIssue({ code: 'custom', message: 'Unknown equipment' });
-                  return z.NEVER;
-              }
-              return parsed.data;
-          }),
-  ```
+    ```ts
+        /** Comma-separated. Absent: no filter. Empty: bodyweight only. Otherwise: only exercises needing a subset. */
+        equipment: z
+            .string()
+            .optional()
+            .transform((raw, ctx) => {
+                if (raw === undefined) return undefined;
+                const values = raw === '' ? [] : raw.split(',');
+                const parsed = equipmentListSchema.safeParse(values);
+                if (!parsed.success) {
+                    ctx.addIssue({ code: 'custom', message: 'Unknown equipment' });
+                    return z.NEVER;
+                }
+                return parsed.data;
+            }),
+    ```
 - `postExerciseRequestSchema`: add `equipment: equipmentListSchema.default([]),`.
 - `patchExerciseRequestSchema`: add `equipment: equipmentListSchema.optional(),`.
 
@@ -437,6 +441,7 @@ export type OnboardingResponse = z.infer<typeof onboardingResponseSchema>;
 `packages/api-contract/src/workspace.contract.ts`: import `OnboardingStage` from `@app/domain` and add `onboardingStage: z.enum(OnboardingStage),` to `workspaceListItemSchema` after `role`. (`workspaceResponseSchema` is unchanged.)
 
 `packages/api-contract/src/mcp-tool.contract.ts`: import `Equipment` from `@app/domain` and `equipmentListSchema` from `./exercise.contract.js`; add
+
 - to `listExercisesToolArgsSchema`: `equipment: z.array(z.enum(Equipment)).nullish(),`
 - to `createExerciseToolArgsSchema`: `equipment: equipmentListSchema.nullish(),`
 
@@ -468,8 +473,10 @@ describe('equipment preset contracts', () => {
 
     it('rejects repeated or unknown equipment', () => {
         expect(
-            postEquipmentPresetRequestSchema.safeParse({ name: 'Gym', equipment: [Equipment.Barbell, Equipment.Barbell] })
-                .success,
+            postEquipmentPresetRequestSchema.safeParse({
+                name: 'Gym',
+                equipment: [Equipment.Barbell, Equipment.Barbell],
+            }).success,
         ).toBe(false);
         expect(postEquipmentPresetRequestSchema.safeParse({ name: 'Gym', equipment: ['hammer'] }).success).toBe(false);
     });
@@ -506,6 +513,7 @@ git commit -m "feat(api-contract): add equipment, equipment presets and onboardi
 ### Task 4: Catalog format, content tagging and seed
 
 **Files:**
+
 - Modify: `packages/catalog/src/exercise-entry.ts`
 - Modify: `packages/catalog/src/load-catalog.spec.ts`
 - Modify: all 28 `content/exercises/*/exercise.json`
@@ -514,6 +522,7 @@ git commit -m "feat(api-contract): add equipment, equipment presets and onboardi
 - Test: `packages/services/src/catalog-seed.service.spec.ts`
 
 **Interfaces:**
+
 - Consumes: `Equipment` (Task 1), `schema.exercises.equipment` (Task 2).
 - Produces: `ExerciseEntry.equipment: Equipment[]`.
 
@@ -552,36 +561,36 @@ Run: `pnpm --filter @app/catalog test` — expected PASS.
 
 Add an `"equipment": [...]` key to each `content/exercises/<slug>/exercise.json` directly after `"trackingType"`, using this table exactly:
 
-| slug | equipment |
-| --- | --- |
-| barbell-back-squat | `["barbell", "squat_rack"]` |
-| barbell-bench-press | `["barbell", "bench"]` |
-| barbell-deadlift | `["barbell"]` |
-| barbell-hip-thrust | `["barbell", "bench"]` |
-| barbell-overhead-press | `["barbell"]` |
-| barbell-row | `["barbell"]` |
-| cable-triceps-pushdown | `["cable"]` |
-| cycling | `[]` |
-| dumbbell-bench-press | `["dumbbell", "bench"]` |
-| dumbbell-biceps-curl | `["dumbbell"]` |
-| dumbbell-lateral-raise | `["dumbbell"]` |
-| dumbbell-row | `["dumbbell", "bench"]` |
-| dumbbell-shoulder-press | `["dumbbell"]` |
-| goblet-squat | `["dumbbell"]` |
-| lat-pulldown | `["machine"]` |
-| leg-curl | `["machine"]` |
-| leg-extension | `["machine"]` |
-| leg-press | `["machine"]` |
-| plank | `[]` |
-| pull-up | `["pull_up_bar"]` |
-| push-up | `[]` |
-| romanian-deadlift | `["barbell"]` |
-| rowing | `["rowing_machine"]` |
-| running | `[]` |
-| seated-cable-row | `["cable"]` |
-| side-plank | `[]` |
-| standing-calf-raise | `[]` |
-| walking-lunge | `[]` |
+| slug                    | equipment                   |
+| ----------------------- | --------------------------- |
+| barbell-back-squat      | `["barbell", "squat_rack"]` |
+| barbell-bench-press     | `["barbell", "bench"]`      |
+| barbell-deadlift        | `["barbell"]`               |
+| barbell-hip-thrust      | `["barbell", "bench"]`      |
+| barbell-overhead-press  | `["barbell"]`               |
+| barbell-row             | `["barbell"]`               |
+| cable-triceps-pushdown  | `["cable"]`                 |
+| cycling                 | `[]`                        |
+| dumbbell-bench-press    | `["dumbbell", "bench"]`     |
+| dumbbell-biceps-curl    | `["dumbbell"]`              |
+| dumbbell-lateral-raise  | `["dumbbell"]`              |
+| dumbbell-row            | `["dumbbell", "bench"]`     |
+| dumbbell-shoulder-press | `["dumbbell"]`              |
+| goblet-squat            | `["dumbbell"]`              |
+| lat-pulldown            | `["machine"]`               |
+| leg-curl                | `["machine"]`               |
+| leg-extension           | `["machine"]`               |
+| leg-press               | `["machine"]`               |
+| plank                   | `[]`                        |
+| pull-up                 | `["pull_up_bar"]`           |
+| push-up                 | `[]`                        |
+| romanian-deadlift       | `["barbell"]`               |
+| rowing                  | `["rowing_machine"]`        |
+| running                 | `[]`                        |
+| seated-cable-row        | `["cable"]`                 |
+| side-plank              | `[]`                        |
+| standing-calf-raise     | `[]`                        |
+| walking-lunge           | `[]`                        |
 
 A small script is fine (e.g. a Node one-off in the scratchpad that reads, sets `equipment`, and rewrites with 4-space JSON + trailing newline), but check `git diff --stat content/` shows 28 files and spot-read three.
 
@@ -615,7 +624,10 @@ Adapt `loadedExercise` to whatever fixture builder the spec already uses (it wil
 
 ```ts
 async function readEquipment(id: string): Promise<Equipment[]> {
-    const [row] = await db.select({ equipment: schema.exercises.equipment }).from(schema.exercises).where(eq(schema.exercises.id, id));
+    const [row] = await db
+        .select({ equipment: schema.exercises.equipment })
+        .from(schema.exercises)
+        .where(eq(schema.exercises.id, id));
     return row?.equipment ?? [];
 }
 ```
@@ -625,6 +637,7 @@ Run: `pnpm --filter @app/services test -- catalog-seed` — expected FAIL (equip
 - [ ] **Step 5: Seed writes equipment**
 
 In `packages/services/src/catalog-seed.service.ts`:
+
 - `desired` gains `equipment: exercise.entry.equipment,` after `trackingType`.
 - `DesiredRow` gains `equipment: LoadedExercise['entry']['equipment'];`.
 - `syncRow`'s `select` gains `equipment: exercises.equipment,` after `trackingType` so the JSON comparison sees it.
@@ -644,11 +657,13 @@ git commit -m "feat(catalog): tag exercises with required equipment"
 ### Task 5: ExercisesService equipment column and filter
 
 **Files:**
+
 - Modify: `packages/services/src/exercises.service.ts`
 - Modify: `packages/services/src/testing.ts`
 - Test: `packages/services/src/exercises.service.spec.ts`
 
 **Interfaces:**
+
 - Produces: `ExerciseSummary.equipment: Equipment[]`; `list({ ..., equipment?: Equipment[] })`; `create({ ..., equipment?: Equipment[] })`; `update({ ..., equipment?: Equipment[] })`; `seedCatalogExercise(db, { ..., equipment?: Equipment[] })`.
 
 - [ ] **Step 1: Extend the test seed helper**
@@ -676,7 +691,12 @@ describe('equipment', () => {
     });
 
     it('defaults to bodyweight', async () => {
-        const created = await exercises.create({ userId, workspaceId, name: 'Burpee', trackingType: TrackingType.WeightReps });
+        const created = await exercises.create({
+            userId,
+            workspaceId,
+            name: 'Burpee',
+            trackingType: TrackingType.WeightReps,
+        });
         expect(created.equipment).toEqual([]);
     });
 
@@ -685,7 +705,11 @@ describe('equipment', () => {
 
         beforeAll(async () => {
             await seedCatalogExercise(db, { slug: `${prefix}-bw`, name: `${prefix} bodyweight`, equipment: [] });
-            await seedCatalogExercise(db, { slug: `${prefix}-db`, name: `${prefix} dumbbell`, equipment: [Equipment.Dumbbell] });
+            await seedCatalogExercise(db, {
+                slug: `${prefix}-db`,
+                name: `${prefix} dumbbell`,
+                equipment: [Equipment.Dumbbell],
+            });
             await seedCatalogExercise(db, {
                 slug: `${prefix}-bb`,
                 name: `${prefix} barbell bench`,
@@ -694,7 +718,9 @@ describe('equipment', () => {
         });
 
         const names = async (equipment?: Equipment[]): Promise<string[]> =>
-            (await exercises.list({ userId, workspaceId, ...page, search: prefix, equipment })).data.map((e) => e.name).sort();
+            (await exercises.list({ userId, workspaceId, ...page, search: prefix, equipment })).data
+                .map((e) => e.name)
+                .sort();
 
         it('applies no filter when equipment is absent', async () => {
             expect(await names()).toEqual([`${prefix} barbell bench`, `${prefix} bodyweight`, `${prefix} dumbbell`]);
@@ -715,7 +741,13 @@ describe('equipment', () => {
         });
 
         it('counts only the filtered rows', async () => {
-            const result = await exercises.list({ userId, workspaceId, ...page, search: prefix, equipment: [Equipment.Dumbbell] });
+            const result = await exercises.list({
+                userId,
+                workspaceId,
+                ...page,
+                search: prefix,
+                equipment: [Equipment.Dumbbell],
+            });
             expect(result.totalCount).toBe(2);
         });
     });
@@ -727,24 +759,25 @@ Run: `pnpm --filter @app/services test -- exercises.service` — expected FAIL.
 - [ ] **Step 3: Implement**
 
 In `packages/services/src/exercises.service.ts`:
+
 - Import: `import type { Equipment, TrackingType } from '@app/domain';`
 - `ExerciseSummary` gains `equipment: Equipment[];` after `trackingType`.
 - `EXERCISE_SUMMARY_COLUMNS` gains `equipment: exercises.equipment,`.
 - `list` params gain `equipment?: Equipment[]`; add a filter to the `scopedToWorkspaceOrGlobal` call:
-  ```ts
-              equipment === undefined ? undefined : requiresOnly(equipment),
-  ```
-  and add a module-level helper after the class:
-  ```ts
-  /**
-   * Admits an exercise only if everything it needs is in `available`. Bodyweight rows (`'{}'`) are a
-   * subset of any list, including an empty one, so they always pass.
-   */
-  function requiresOnly(available: Equipment[]): SQL {
-      return sql`${exercises.equipment} <@ ${available}::equipment[]`;
-  }
-  ```
-  Import `type SQL` from `drizzle-orm`. `node-postgres` serialises a JS array parameter as a Postgres array literal, so the cast makes the comparison typed. If the test shows the driver sending the array as JSON instead, build the literal explicitly: ``sql`${exercises.equipment} <@ ${`{${available.join(',')}}`}::equipment[]` `` (values are enum members, never user text).
+    ```ts
+                equipment === undefined ? undefined : requiresOnly(equipment),
+    ```
+    and add a module-level helper after the class:
+    ```ts
+    /**
+     * Admits an exercise only if everything it needs is in `available`. Bodyweight rows (`'{}'`) are a
+     * subset of any list, including an empty one, so they always pass.
+     */
+    function requiresOnly(available: Equipment[]): SQL {
+        return sql`${exercises.equipment} <@ ${available}::equipment[]`;
+    }
+    ```
+    Import `type SQL` from `drizzle-orm`. `node-postgres` serialises a JS array parameter as a Postgres array literal, so the cast makes the comparison typed. If the test shows the driver sending the array as JSON instead, build the literal explicitly: ``sql`${exercises.equipment} <@ ${`{${available.join(',')}}`}::equipment[]` `` (values are enum members, never user text).
 - `create` params gain `equipment?: Equipment[]` and `.values({...})` gains `equipment: equipment ?? [],`.
 - `update` params gain `equipment?: Equipment[]` and `.set({...})` gains `...(equipment === undefined ? {} : { equipment }),`.
 - Update the `list` JSDoc `@param` to mention `equipment` semantics in one line.
@@ -764,23 +797,26 @@ git commit -m "feat(services): store exercise equipment and filter the library b
 ### Task 6: EquipmentPresetsService
 
 **Files:**
+
 - Create: `packages/services/src/equipment-presets.service.ts`
 - Create: `packages/services/src/equipment-presets.service.spec.ts`
 - Modify: `packages/services/src/index.ts`
 
 **Interfaces:**
+
 - Consumes: `schema.equipmentPresets`, `scopedToWorkspace`, `WorkspaceMembershipService`, `ConflictError`, `EntityNotFoundError`.
 - Produces:
-  ```ts
-  type EquipmentPreset = { id: string; name: string; equipment: Equipment[]; createdAt: string; updatedAt: string };
-  class EquipmentPresetsService {
-      constructor({ db, membership }: { db: Db; membership: WorkspaceMembershipService });
-      list({ userId, workspaceId }): Promise<EquipmentPreset[]>;             // ordered by name
-      create({ userId, workspaceId, name, equipment }): Promise<EquipmentPreset>;
-      update({ userId, workspaceId, presetId, name?, equipment? }): Promise<EquipmentPreset>;
-      remove({ userId, workspaceId, presetId }): Promise<void>;
-  }
-  ```
+
+    ```ts
+    type EquipmentPreset = { id: string; name: string; equipment: Equipment[]; createdAt: string; updatedAt: string };
+    class EquipmentPresetsService {
+        constructor({ db, membership }: { db: Db; membership: WorkspaceMembershipService });
+        list({ userId, workspaceId }): Promise<EquipmentPreset[]>;             // ordered by name
+        create({ userId, workspaceId, name, equipment }): Promise<EquipmentPreset>;
+        update({ userId, workspaceId, presetId, name?, equipment? }): Promise<EquipmentPreset>;
+        remove({ userId, workspaceId, presetId }): Promise<void>;
+    }
+    ```
 
 - [ ] **Step 1: Failing tests**
 
@@ -844,7 +880,9 @@ describe('create and list', () => {
     });
 
     it('refuses a workspace the caller does not belong to', async () => {
-        await expect(presets.list({ userId, workspaceId: otherWorkspaceId })).rejects.toBeInstanceOf(EntityNotFoundError);
+        await expect(presets.list({ userId, workspaceId: otherWorkspaceId })).rejects.toBeInstanceOf(
+            EntityNotFoundError,
+        );
         await expect(
             presets.create({ userId, workspaceId: otherWorkspaceId, name: 'Sneaky', equipment: [] }),
         ).rejects.toBeInstanceOf(EntityNotFoundError);
@@ -853,7 +891,12 @@ describe('create and list', () => {
 
 describe('update and remove', () => {
     it('updates only the fields given', async () => {
-        const created = await presets.create({ userId, workspaceId, name: 'Travel', equipment: [Equipment.ResistanceBand] });
+        const created = await presets.create({
+            userId,
+            workspaceId,
+            name: 'Travel',
+            equipment: [Equipment.ResistanceBand],
+        });
 
         const renamed = await presets.update({ userId, workspaceId, presetId: created.id, name: 'Hotel' });
         expect(renamed).toMatchObject({ name: 'Hotel', equipment: [Equipment.ResistanceBand] });
@@ -866,13 +909,18 @@ describe('update and remove', () => {
     it('rejects renaming onto an existing name', async () => {
         const created = await presets.create({ userId, workspaceId, name: 'Park', equipment: [] });
 
-        await expect(presets.update({ userId, workspaceId, presetId: created.id, name: 'Home' })).rejects.toBeInstanceOf(
-            ConflictError,
-        );
+        await expect(
+            presets.update({ userId, workspaceId, presetId: created.id, name: 'Home' }),
+        ).rejects.toBeInstanceOf(ConflictError);
     });
 
     it("answers 404 for another workspace's preset on update and remove", async () => {
-        const theirs = await presets.create({ userId: outsiderId, workspaceId: otherWorkspaceId, name: 'Theirs', equipment: [] });
+        const theirs = await presets.create({
+            userId: outsiderId,
+            workspaceId: otherWorkspaceId,
+            name: 'Theirs',
+            equipment: [],
+        });
 
         await expect(presets.update({ userId, workspaceId, presetId: theirs.id, name: 'Mine' })).rejects.toBeInstanceOf(
             EntityNotFoundError,
@@ -1024,7 +1072,15 @@ export class EquipmentPresetsService {
      *
      * @throws EntityNotFoundError when the caller is not a member, or the preset is not in this workspace.
      */
-    async remove({ userId, workspaceId, presetId }: { userId: string; workspaceId: string; presetId: string }): Promise<void> {
+    async remove({
+        userId,
+        workspaceId,
+        presetId,
+    }: {
+        userId: string;
+        workspaceId: string;
+        presetId: string;
+    }): Promise<void> {
         await this.membership.require({ userId, workspaceId });
 
         const [row] = await this.db
@@ -1068,11 +1124,13 @@ git commit -m "feat(services): add EquipmentPresetsService"
 ### Task 7: Onboarding stage in WorkspacesService and UsersService
 
 **Files:**
+
 - Modify: `packages/services/src/workspaces.service.ts`
 - Modify: `packages/services/src/users.service.ts`
 - Test: `packages/services/src/workspaces.service.spec.ts`, `packages/services/src/users.service.spec.ts`
 
 **Interfaces:**
+
 - Produces: `WorkspacesService.setOnboardingStage({ userId, workspaceId, stage }): Promise<{ stage: OnboardingStage }>`; `WorkspaceListItem.onboardingStage` and `UserWorkspaceListItem.onboardingStage` (both `OnboardingStage`).
 
 - [ ] **Step 1: Failing tests**
@@ -1115,38 +1173,40 @@ Run: `pnpm --filter @app/services test -- workspaces.service users.service` — 
 - [ ] **Step 2: Implement**
 
 `packages/services/src/workspaces.service.ts`:
+
 - Import `OnboardingStage` from `@app/domain`.
 - `WorkspaceListItem` type gains `onboardingStage: OnboardingStage;`.
 - `listForUser` select gains `onboardingStage: workspaces.onboardingStage,`.
 - Add method after `get`:
-  ```ts
-      /**
-       * Records where the workspace is in first-run setup. Idempotent.
-       *
-       * @throws EntityNotFoundError when the caller is not a member.
-       */
-      async setOnboardingStage({
-          userId,
-          workspaceId,
-          stage,
-      }: {
-          userId: string;
-          workspaceId: string;
-          stage: OnboardingStage;
-      }): Promise<{ stage: OnboardingStage }> {
-          await this.membership.require({ userId, workspaceId });
+    ```ts
+        /**
+         * Records where the workspace is in first-run setup. Idempotent.
+         *
+         * @throws EntityNotFoundError when the caller is not a member.
+         */
+        async setOnboardingStage({
+            userId,
+            workspaceId,
+            stage,
+        }: {
+            userId: string;
+            workspaceId: string;
+            stage: OnboardingStage;
+        }): Promise<{ stage: OnboardingStage }> {
+            await this.membership.require({ userId, workspaceId });
 
-          await this.db
-              .update(workspaces)
-              .set({ onboardingStage: stage, updatedAt: new Date().toISOString() })
-              .where(eq(workspaces.id, workspaceId));
+            await this.db
+                .update(workspaces)
+                .set({ onboardingStage: stage, updatedAt: new Date().toISOString() })
+                .where(eq(workspaces.id, workspaceId));
 
-          return { stage };
-      }
-  ```
-  (`workspaces` is not a workspace-*owned* table — it *is* the tenant — so `eq(workspaces.id, …)` after `membership.require` is the existing pattern in this file; see `get`.)
+            return { stage };
+        }
+    ```
+    (`workspaces` is not a workspace-_owned_ table — it _is_ the tenant — so `eq(workspaces.id, …)` after `membership.require` is the existing pattern in this file; see `get`.)
 
 `packages/services/src/users.service.ts`:
+
 - `UserWorkspaceListItem` gains `onboardingStage: OnboardingStage;` (import type from `@app/domain`).
 - `loadWorkspaces` select gains `onboardingStage: workspaces.onboardingStage,`.
 
@@ -1165,6 +1225,7 @@ git commit -m "feat(services): expose and update the workspace onboarding stage"
 ### Task 8: API routes — exercises filter, equipment presets, onboarding
 
 **Files:**
+
 - Modify: `apps/api/src/exercises/exercises.controller.ts`
 - Create: `apps/api/src/equipment-presets/equipment-presets.controller.ts`, `equipment-presets.module.ts`, `equipment-presets.providers.ts`
 - Create: `apps/api/src/onboarding/onboarding.controller.ts`, `onboarding.module.ts`
@@ -1174,6 +1235,7 @@ git commit -m "feat(services): expose and update the workspace onboarding stage"
 - Modify: `apps/api/test/exercises.e2e.spec.ts`
 
 **Interfaces:**
+
 - Consumes: Task 3 schemas, Task 5–7 services.
 - Produces routes: `GET/POST /api/v1/workspaces/:workspaceId/equipment-presets`, `PATCH/DELETE …/equipment-presets/:presetId`, `PATCH /api/v1/workspaces/:workspaceId/onboarding`. Session-only (`SessionAuthGuard`).
 
@@ -1208,7 +1270,10 @@ afterAll(async () => {
 
 describe('equipment preset routes', () => {
     it('returns 401 when signed out', async () => {
-        const response = await app.inject({ method: 'GET', url: `/api/v1/workspaces/${randomUUID()}/equipment-presets` });
+        const response = await app.inject({
+            method: 'GET',
+            url: `/api/v1/workspaces/${randomUUID()}/equipment-presets`,
+        });
         expect(response.statusCode).toBe(401);
     });
 
@@ -1250,7 +1315,12 @@ describe('equipment preset routes', () => {
         const base = `/api/v1/workspaces/${workspaceId}/equipment-presets`;
         await app.inject({ method: 'POST', url: base, headers: { cookie }, payload: { name: 'Gym' } });
 
-        const duplicate = await app.inject({ method: 'POST', url: base, headers: { cookie }, payload: { name: 'Gym' } });
+        const duplicate = await app.inject({
+            method: 'POST',
+            url: base,
+            headers: { cookie },
+            payload: { name: 'Gym' },
+        });
         expect(duplicate.statusCode).toBe(409);
     });
 
@@ -1298,9 +1368,9 @@ describe('onboarding route', () => {
         const { cookie, workspaceId } = await signUpUser();
 
         const before = await app.inject({ method: 'GET', url: '/api/v1/me', headers: { cookie } });
-        expect((JSON.parse(before.body) as { workspaces: { onboardingStage: string }[] }).workspaces[0]?.onboardingStage).toBe(
-            'equipment',
-        );
+        expect(
+            (JSON.parse(before.body) as { workspaces: { onboardingStage: string }[] }).workspaces[0]?.onboardingStage,
+        ).toBe('equipment');
 
         const patched = await app.inject({
             method: 'PATCH',
@@ -1312,9 +1382,9 @@ describe('onboarding route', () => {
         expect(JSON.parse(patched.body)).toEqual({ stage: 'complete' });
 
         const after = await app.inject({ method: 'GET', url: '/api/v1/me', headers: { cookie } });
-        expect((JSON.parse(after.body) as { workspaces: { onboardingStage: string }[] }).workspaces[0]?.onboardingStage).toBe(
-            'complete',
-        );
+        expect(
+            (JSON.parse(after.body) as { workspaces: { onboardingStage: string }[] }).workspaces[0]?.onboardingStage,
+        ).toBe('complete');
     });
 
     it('rejects an unknown stage and a foreign workspace', async () => {
@@ -1413,7 +1483,13 @@ import {
     type PatchEquipmentPresetRequest,
     type PostEquipmentPresetRequest,
 } from '@app/api-contract';
-import { CurrentUser, SessionAuthGuard, ValidatedBody, ValidatedParam, type CurrentUserContext } from '@app/nest-common';
+import {
+    CurrentUser,
+    SessionAuthGuard,
+    ValidatedBody,
+    ValidatedParam,
+    type CurrentUserContext,
+} from '@app/nest-common';
 import type { EquipmentPresetsService } from '@app/services';
 import { Controller, Delete, Get, HttpCode, Inject, Patch, Post, UseGuards } from '@nestjs/common';
 import { EQUIPMENT_PRESETS_SERVICE } from './equipment-presets.providers.js';
@@ -1496,7 +1572,13 @@ import {
     type OnboardingResponse,
     type PatchOnboardingRequest,
 } from '@app/api-contract';
-import { CurrentUser, SessionAuthGuard, ValidatedBody, ValidatedParam, type CurrentUserContext } from '@app/nest-common';
+import {
+    CurrentUser,
+    SessionAuthGuard,
+    ValidatedBody,
+    ValidatedParam,
+    type CurrentUserContext,
+} from '@app/nest-common';
 import type { WorkspacesService } from '@app/services';
 import { Controller, Inject, Patch, UseGuards } from '@nestjs/common';
 import { WORKSPACES_SERVICE } from '../workspaces/workspaces.providers.js';
@@ -1554,6 +1636,7 @@ git commit -m "feat(api): add equipment preset and onboarding routes, equipment 
 ### Task 9: MCP list tool passes equipment
 
 **Files:**
+
 - Modify: `apps/mcp/src/mcp/tools/exercise.tools.ts`
 - Test: `apps/mcp/src/mcp/tool-execution.spec.ts` or whichever spec exercises `ListExercises` args (grep `listExercisesToolArgsSchema` / `ListExercises` under `apps/mcp/src`).
 
@@ -1582,6 +1665,7 @@ git commit -m "feat(mcp): accept an equipment filter on list_exercises"
 ### Task 10: Web models, API client, active preset, hooks
 
 **Files:**
+
 - Create: `apps/web/src/models/equipment.ts`
 - Modify: `apps/web/src/models/exercise.ts`, `apps/web/src/models/workspace.ts`
 - Modify: `apps/web/src/lib/api.ts`
@@ -1590,12 +1674,13 @@ git commit -m "feat(mcp): accept an equipment filter on list_exercises"
 - Modify: `apps/web/src/hooks/use-exercises.ts`
 
 **Interfaces:**
+
 - Produces:
-  - `Equipment`, `OnboardingStage` (re-exported from `@app/domain`), `EQUIPMENT_META: Record<Equipment, { label: string; icon: LucideIcon }>`, `EQUIPMENT_ORDER: Equipment[]`, `type EquipmentPreset`, `type SaveEquipmentPresetRequest`, `type PatchEquipmentPresetRequest`, `summarizeEquipment(equipment: Equipment[]): string`.
-  - `readActiveEquipmentPresetId(): string | null`, `writeActiveEquipmentPresetId(id: string | null): void`, `resolveActivePreset({ storedId, presets }): EquipmentPreset | null`.
-  - `equipmentPresetsApi.{list,create,update,remove}`, `onboardingApi.setStage`.
-  - `useEquipmentPresets({ workspaceId })`, `useCreateEquipmentPreset`, `useUpdateEquipmentPreset`, `useDeleteEquipmentPreset`, `useActiveEquipmentPreset({ workspaceId }): { preset: EquipmentPreset | null; presets: EquipmentPreset[]; isLoading: boolean; setActive: (id: string | null) => void }`.
-  - `useExercises({ ..., equipment?: Equipment[] })`.
+    - `Equipment`, `OnboardingStage` (re-exported from `@app/domain`), `EQUIPMENT_META: Record<Equipment, { label: string; icon: LucideIcon }>`, `EQUIPMENT_ORDER: Equipment[]`, `type EquipmentPreset`, `type SaveEquipmentPresetRequest`, `type PatchEquipmentPresetRequest`, `summarizeEquipment(equipment: Equipment[]): string`.
+    - `readActiveEquipmentPresetId(): string | null`, `writeActiveEquipmentPresetId(id: string | null): void`, `resolveActivePreset({ storedId, presets }): EquipmentPreset | null`.
+    - `equipmentPresetsApi.{list,create,update,remove}`, `onboardingApi.setStage`.
+    - `useEquipmentPresets({ workspaceId })`, `useCreateEquipmentPreset`, `useUpdateEquipmentPreset`, `useDeleteEquipmentPreset`, `useActiveEquipmentPreset({ workspaceId }): { preset: EquipmentPreset | null; presets: EquipmentPreset[]; isLoading: boolean; setActive: (id: string | null) => void }`.
+    - `useExercises({ ..., equipment?: Equipment[] })`.
 
 - [ ] **Step 1: Models**
 
@@ -1687,28 +1772,40 @@ Verify each lucide icon name exists in the installed `lucide-react` (`grep -c "e
 - [ ] **Step 2: API client**
 
 In `apps/web/src/lib/api.ts`:
+
 - `exercisesApi.getAll` params gain `equipment?: string` (comma-joined; `''` allowed). Because axios drops `undefined` but keeps `''`, callers pass `equipment.join(',')` when filtering and `undefined` otherwise.
 - Add:
-  ```ts
-  /** Named equipment sets for the library filter. */
-  export const equipmentPresetsApi = {
-      list: async (workspaceId: string): Promise<EquipmentPreset[]> =>
-          (await httpClient.get<{ data: EquipmentPreset[] }>(`/api/v1/workspaces/${workspaceId}/equipment-presets`)).data,
-      create: (workspaceId: string, data: SaveEquipmentPresetRequest) =>
-          httpClient.post<EquipmentPreset>(`/api/v1/workspaces/${workspaceId}/equipment-presets`, data),
-      update: ({ workspaceId, presetId, data }: { workspaceId: string; presetId: string; data: PatchEquipmentPresetRequest }) =>
-          httpClient.patch<EquipmentPreset>(`/api/v1/workspaces/${workspaceId}/equipment-presets/${presetId}`, data),
-      remove: ({ workspaceId, presetId }: { workspaceId: string; presetId: string }) =>
-          httpClient.delete<void>(`/api/v1/workspaces/${workspaceId}/equipment-presets/${presetId}`),
-  };
 
-  /** First-run setup progress. */
-  export const onboardingApi = {
-      setStage: ({ workspaceId, stage }: { workspaceId: string; stage: OnboardingStage }) =>
-          httpClient.patch<{ stage: OnboardingStage }>(`/api/v1/workspaces/${workspaceId}/onboarding`, { stage }),
-  };
-  ```
-  with the matching type imports from `@/models/equipment`.
+    ```ts
+    /** Named equipment sets for the library filter. */
+    export const equipmentPresetsApi = {
+        list: async (workspaceId: string): Promise<EquipmentPreset[]> =>
+            (await httpClient.get<{ data: EquipmentPreset[] }>(`/api/v1/workspaces/${workspaceId}/equipment-presets`))
+                .data,
+        create: (workspaceId: string, data: SaveEquipmentPresetRequest) =>
+            httpClient.post<EquipmentPreset>(`/api/v1/workspaces/${workspaceId}/equipment-presets`, data),
+        update: ({
+            workspaceId,
+            presetId,
+            data,
+        }: {
+            workspaceId: string;
+            presetId: string;
+            data: PatchEquipmentPresetRequest;
+        }) =>
+            httpClient.patch<EquipmentPreset>(`/api/v1/workspaces/${workspaceId}/equipment-presets/${presetId}`, data),
+        remove: ({ workspaceId, presetId }: { workspaceId: string; presetId: string }) =>
+            httpClient.delete<void>(`/api/v1/workspaces/${workspaceId}/equipment-presets/${presetId}`),
+    };
+
+    /** First-run setup progress. */
+    export const onboardingApi = {
+        setStage: ({ workspaceId, stage }: { workspaceId: string; stage: OnboardingStage }) =>
+            httpClient.patch<{ stage: OnboardingStage }>(`/api/v1/workspaces/${workspaceId}/onboarding`, { stage }),
+    };
+    ```
+
+    with the matching type imports from `@/models/equipment`.
 
 - [ ] **Step 3: Failing active-preset test**
 
@@ -1717,7 +1814,11 @@ In `apps/web/src/lib/api.ts`:
 ```ts
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Equipment, type EquipmentPreset } from '@/models/equipment';
-import { readActiveEquipmentPresetId, resolveActivePreset, writeActiveEquipmentPresetId } from './active-equipment-preset';
+import {
+    readActiveEquipmentPresetId,
+    resolveActivePreset,
+    writeActiveEquipmentPresetId,
+} from './active-equipment-preset';
 
 const preset = (id: string): EquipmentPreset => ({
     id,
@@ -1817,7 +1918,11 @@ import type { EquipmentPreset, PatchEquipmentPresetRequest, SaveEquipmentPresetR
 const presetsKey = (workspaceId: string): [string, string] => ['equipment-presets', workspaceId];
 
 /** Every preset in the workspace, by name. */
-export function useEquipmentPresets({ workspaceId }: { workspaceId: string }): UseQueryResult<EquipmentPreset[], Error> {
+export function useEquipmentPresets({
+    workspaceId,
+}: {
+    workspaceId: string;
+}): UseQueryResult<EquipmentPreset[], Error> {
     return useQuery({
         queryKey: presetsKey(workspaceId),
         queryFn: () => equipmentPresetsApi.list(workspaceId),
@@ -1917,11 +2022,13 @@ git commit -m "feat(web): add equipment models, preset client and active-preset 
 ### Task 11: EquipmentTileGrid, onboarding page and redirect
 
 **Files:**
+
 - Create: `apps/web/src/components/equipment/EquipmentTileGrid.tsx`
 - Create: `apps/web/src/pages/WelcomePage.tsx`
 - Modify: `apps/web/src/App.tsx`, `apps/web/src/components/layout/AppLayout.tsx`, `apps/web/src/lib/return-url.ts`
 
 **Interfaces:**
+
 - Produces: `EquipmentTileGrid({ value: Equipment[]; onChange(next: Equipment[]): void; disabled?: boolean; 'aria-label'?: string })`.
 
 - [ ] **Step 1: Tile grid**
@@ -1941,7 +2048,12 @@ type EquipmentTileGridProps = {
 };
 
 /** Multi-select tiles, one per equipment value. Big targets, obvious checked state, one-thumb friendly. */
-export function EquipmentTileGrid({ value, onChange, disabled, 'aria-label': ariaLabel }: EquipmentTileGridProps): JSX.Element {
+export function EquipmentTileGrid({
+    value,
+    onChange,
+    disabled,
+    'aria-label': ariaLabel,
+}: EquipmentTileGridProps): JSX.Element {
     const toggle = (item: Equipment): void => {
         onChange(value.includes(item) ? value.filter((other) => other !== item) : [...value, item]);
     };
@@ -1962,7 +2074,9 @@ export function EquipmentTileGrid({ value, onChange, disabled, 'aria-label': ari
                         className={cn(
                             'relative flex min-h-[5.5rem] flex-col items-center justify-center gap-2 rounded-xl border p-3 text-sm font-medium transition-colors',
                             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
-                            selected ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border bg-card hover:bg-secondary',
+                            selected
+                                ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                                : 'border-border bg-card hover:bg-secondary',
                         )}
                     >
                         {selected && <Check className="absolute right-2 top-2 h-4 w-4 text-primary" aria-hidden />}
@@ -2030,7 +2144,9 @@ export default function WelcomePage(): JSX.Element {
             {
                 onSuccess: (preset) => {
                     writeActiveEquipmentPresetId(preset.id);
-                    void complete().catch(() => toast({ title: 'Saved your equipment, but couldn’t finish setup. Try again.' }));
+                    void complete().catch(() =>
+                        toast({ title: 'Saved your equipment, but couldn’t finish setup. Try again.' }),
+                    );
                 },
                 onError: () => toast({ title: 'Couldn’t save your equipment. Try again.' }),
             },
@@ -2048,14 +2164,17 @@ export default function WelcomePage(): JSX.Element {
 
     return (
         <div className="min-h-screen bg-background">
-            <form onSubmit={handleContinue} className="mx-auto flex min-h-screen w-full max-w-xl flex-col px-4 py-8 md:px-8">
+            <form
+                onSubmit={handleContinue}
+                className="mx-auto flex min-h-screen w-full max-w-xl flex-col px-4 py-8 md:px-8"
+            >
                 <Brand />
                 <div className="mt-8">
                     <p className="eyebrow mb-3">Welcome</p>
                     <h1 className="page-title">What do you train with?</h1>
                     <p className="mt-2 text-muted-foreground">
-                        Tap everything you have. We’ll hide exercises that need gear you don’t — you can add more
-                        setups later, like a home and a gym.
+                        Tap everything you have. We’ll hide exercises that need gear you don’t — you can add more setups
+                        later, like a home and a gym.
                     </p>
                 </div>
                 <div className="mt-8 space-y-2">
@@ -2069,7 +2188,12 @@ export default function WelcomePage(): JSX.Element {
                     />
                 </div>
                 <div className="mt-6">
-                    <EquipmentTileGrid value={equipment} onChange={setEquipment} disabled={busy} aria-label="Equipment you have" />
+                    <EquipmentTileGrid
+                        value={equipment}
+                        onChange={setEquipment}
+                        disabled={busy}
+                        aria-label="Equipment you have"
+                    />
                     <p className="mt-3 text-xs text-muted-foreground">Nothing selected means bodyweight only.</p>
                 </div>
                 <div className="mt-auto flex flex-col gap-3 pt-8">
@@ -2077,7 +2201,13 @@ export default function WelcomePage(): JSX.Element {
                         {createPreset.isPending ? 'Saving…' : 'Continue'}
                         <ArrowRight aria-hidden />
                     </Button>
-                    <Button type="button" variant="ghost" className="text-muted-foreground" disabled={busy} onClick={handleSkip}>
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        className="text-muted-foreground"
+                        disabled={busy}
+                        onClick={handleSkip}
+                    >
                         Skip for now
                     </Button>
                 </div>
@@ -2092,23 +2222,24 @@ Check `Brand` from `components/layout/Brand.tsx` renders standalone (read it); i
 - [ ] **Step 3: Route and redirect**
 
 `apps/web/src/App.tsx`:
+
 - `const WelcomePage = lazy(() => import('./pages/WelcomePage'));`
 - Add inside the `SessionLayout` route, before the `/` app route:
-  ```tsx
-              <Route
-                  path="/welcome"
-                  element={
-                      <ProtectedRoute>
-                          <WelcomePage />
-                      </ProtectedRoute>
-                  }
-              />
-  ```
+    ```tsx
+    <Route
+        path="/welcome"
+        element={
+            <ProtectedRoute>
+                <WelcomePage />
+            </ProtectedRoute>
+        }
+    />
+    ```
 
 `apps/web/src/components/layout/AppLayout.tsx`: import `Navigate` from `react-router-dom` and `OnboardingStage` from `@/models/equipment`; after the `NotFoundError` guard add:
 
 ```tsx
-    if (currentWorkspace?.onboardingStage === OnboardingStage.Equipment) return <Navigate to="/welcome" replace />;
+if (currentWorkspace?.onboardingStage === OnboardingStage.Equipment) return <Navigate to="/welcome" replace />;
 ```
 
 `apps/web/src/lib/return-url.ts`: leave `/welcome` **off** the allowlist (a return URL into onboarding makes no sense; the redirect handles it).
@@ -2129,11 +2260,13 @@ git commit -m "feat(web): add equipment onboarding step"
 ### Task 12: Equipment filter chip on the library and pickers
 
 **Files:**
+
 - Create: `apps/web/src/components/equipment/EquipmentFilterChip.tsx`
 - Modify: `apps/web/src/pages/exercises/ExercisesListPage.tsx`
 - Modify: `apps/web/src/components/routines/ExercisePickerSheet.tsx`
 
 **Interfaces:**
+
 - Consumes: `useActiveEquipmentPreset` (Task 10).
 - Produces: `EquipmentFilterChip({ preset, presets, onSelect(id: string | null), showManageLink?: boolean })`.
 
@@ -2158,7 +2291,12 @@ type EquipmentFilterChipProps = {
 };
 
 /** Shows which equipment preset the list is filtered by and switches it in place. */
-export function EquipmentFilterChip({ preset, presets, onSelect, showManageLink = false }: EquipmentFilterChipProps): JSX.Element | null {
+export function EquipmentFilterChip({
+    preset,
+    presets,
+    onSelect,
+    showManageLink = false,
+}: EquipmentFilterChipProps): JSX.Element | null {
     if (presets.length === 0 && !showManageLink) return null;
 
     const rows: { id: string | null; label: string; detail?: string }[] = [
@@ -2169,7 +2307,12 @@ export function EquipmentFilterChip({ preset, presets, onSelect, showManageLink 
     return (
         <Popover>
             <PopoverTrigger asChild>
-                <Button variant={preset ? 'secondary' : 'outline'} size="sm" className="h-10 gap-2 rounded-full" aria-label="Filter by equipment">
+                <Button
+                    variant={preset ? 'secondary' : 'outline'}
+                    size="sm"
+                    className="h-10 gap-2 rounded-full"
+                    aria-label="Filter by equipment"
+                >
                     <SlidersHorizontal className="h-4 w-4" aria-hidden />
                     <span className="max-w-[10rem] truncate">{preset ? preset.name : 'All equipment'}</span>
                     <ChevronDown className="h-4 w-4 opacity-60" aria-hidden />
@@ -2193,7 +2336,11 @@ export function EquipmentFilterChip({ preset, presets, onSelect, showManageLink 
                                 >
                                     <span className="min-w-0 flex-1">
                                         <span className="block truncate">{row.label}</span>
-                                        {row.detail && <span className="block truncate text-xs text-muted-foreground">{row.detail}</span>}
+                                        {row.detail && (
+                                            <span className="block truncate text-xs text-muted-foreground">
+                                                {row.detail}
+                                            </span>
+                                        )}
                                     </span>
                                     {selected && <Check className="h-4 w-4 text-primary" aria-hidden />}
                                 </button>
@@ -2219,35 +2366,37 @@ export function EquipmentFilterChip({ preset, presets, onSelect, showManageLink 
 - [ ] **Step 2: Exercises page**
 
 In `apps/web/src/pages/exercises/ExercisesListPage.tsx`:
+
 - `const active = useActiveEquipmentPreset({ workspaceId });`
 - Pass `equipment: active.preset?.equipment` to `useExercises`.
 - Render `<EquipmentFilterChip preset={active.preset} presets={active.presets} onSelect={active.setActive} showManageLink />` next to the existing archived toggle / search controls (read the JSX between the header and the list; put the chip in the same controls row).
 - Empty state: where the page renders its "no exercises" `EmptyState`, branch: if `active.preset` is set and `search` is empty and `exercises.length === 0`, render
-  ```tsx
-  <EmptyState
-      title={`Nothing matches your ${active.preset.name} equipment`}
-      description="Every exercise in your library needs something this setup doesn’t have."
-      actionLabel="Show all equipment"
-      onAction={() => active.setActive(null)}
-  />
-  ```
+    ```tsx
+    <EmptyState
+        title={`Nothing matches your ${active.preset.name} equipment`}
+        description="Every exercise in your library needs something this setup doesn’t have."
+        actionLabel="Show all equipment"
+        onAction={() => active.setActive(null)}
+    />
+    ```
 - Rows: show `summarizeEquipment(exercise.equipment)` as a muted secondary line only when `exercise.equipment.length > 0` (keep rows compact; bodyweight rows show nothing extra).
 
 - [ ] **Step 3: Picker sheet**
 
 In `apps/web/src/components/routines/ExercisePickerSheet.tsx`:
+
 - `const active = useActiveEquipmentPreset({ workspaceId });`
 - Pass `equipment: active.preset?.equipment` to `useExercises`.
 - Under the search input, render `<div className="px-4 pt-2"><EquipmentFilterChip preset={active.preset} presets={active.presets} onSelect={active.setActive} /></div>` (no manage link).
 - When `!isLoading && exercises.length === 0 && trimmed.length === 0 && active.preset`, render inside the list area:
-  ```tsx
-  <EmptyState
-      title={`Nothing matches your ${active.preset.name} equipment`}
-      description="Switch preset or show all equipment to keep adding."
-      actionLabel="Show all equipment"
-      onAction={() => active.setActive(null)}
-  />
-  ```
+    ```tsx
+    <EmptyState
+        title={`Nothing matches your ${active.preset.name} equipment`}
+        description="Switch preset or show all equipment to keep adding."
+        actionLabel="Show all equipment"
+        onAction={() => active.setActive(null)}
+    />
+    ```
 - The inline "Create" row: pass `equipment: []` explicitly is unnecessary (API defaults); leave the create call as is.
 
 - [ ] **Step 4: Verify and commit**
@@ -2266,11 +2415,13 @@ git commit -m "feat(web): filter the exercise library and pickers by the active 
 ### Task 13: Equipment settings
 
 **Files:**
+
 - Create: `apps/web/src/components/equipment/EquipmentPresetSheet.tsx`
 - Create: `apps/web/src/components/settings/EquipmentSettings.tsx`
 - Modify: `apps/web/src/pages/Settings.tsx`
 
 **Interfaces:**
+
 - Produces: `EquipmentPresetSheet({ workspaceId, open, onOpenChange, preset: EquipmentPreset | null })` (null = create).
 
 - [ ] **Step 1: Preset sheet**
@@ -2298,7 +2449,12 @@ type EquipmentPresetSheetProps = {
 };
 
 /** Name a preset and tick its equipment. One sheet serves both create and edit. */
-export function EquipmentPresetSheet({ workspaceId, open, onOpenChange, preset }: EquipmentPresetSheetProps): JSX.Element {
+export function EquipmentPresetSheet({
+    workspaceId,
+    open,
+    onOpenChange,
+    preset,
+}: EquipmentPresetSheetProps): JSX.Element {
     const [name, setName] = useState('');
     const [equipment, setEquipment] = useState<Equipment[]>([]);
     const create = useCreateEquipmentPreset({ workspaceId });
@@ -2335,7 +2491,10 @@ export function EquipmentPresetSheet({ workspaceId, open, onOpenChange, preset }
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetContent side="bottom" className="flex max-h-[90vh] flex-col rounded-t-2xl p-0 md:mx-auto md:max-w-2xl">
+            <SheetContent
+                side="bottom"
+                className="flex max-h-[90vh] flex-col rounded-t-2xl p-0 md:mx-auto md:max-w-2xl"
+            >
                 <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
                     <SheetHeader className="px-4 pt-4 text-left">
                         <SheetTitle>{preset ? 'Edit preset' : 'New preset'}</SheetTitle>
@@ -2444,19 +2603,36 @@ export function EquipmentSettings(): JSX.Element {
                 {isLoading ? (
                     <LoadingState label="Loading presets…" />
                 ) : isError ? (
-                    <EmptyState title="Presets couldn’t load" description="Check your connection and try again." actionLabel="Try again" onAction={() => void refetch()} />
+                    <EmptyState
+                        title="Presets couldn’t load"
+                        description="Check your connection and try again."
+                        actionLabel="Try again"
+                        onAction={() => void refetch()}
+                    />
                 ) : presets && presets.length > 0 ? (
                     <ul className="divide-y">
                         {presets.map((preset) => (
                             <li key={preset.id} className="flex items-center gap-3 py-3">
                                 <div className="min-w-0 flex-1">
                                     <p className="truncate font-medium">{preset.name}</p>
-                                    <p className="truncate text-sm text-muted-foreground">{summarizeEquipment(preset.equipment)}</p>
+                                    <p className="truncate text-sm text-muted-foreground">
+                                        {summarizeEquipment(preset.equipment)}
+                                    </p>
                                 </div>
-                                <Button variant="ghost" size="icon" aria-label={`Edit ${preset.name}`} onClick={() => openEdit(preset)}>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    aria-label={`Edit ${preset.name}`}
+                                    onClick={() => openEdit(preset)}
+                                >
                                     <Pencil className="h-4 w-4" aria-hidden />
                                 </Button>
-                                <Button variant="ghost" size="icon" aria-label={`Delete ${preset.name}`} onClick={() => setDeleting(preset)}>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    aria-label={`Delete ${preset.name}`}
+                                    onClick={() => setDeleting(preset)}
+                                >
                                     <Trash2 className="h-4 w-4" aria-hidden />
                                 </Button>
                             </li>
@@ -2471,7 +2647,12 @@ export function EquipmentSettings(): JSX.Element {
                     />
                 )}
             </CardContent>
-            <EquipmentPresetSheet workspaceId={workspaceId} open={sheetOpen} onOpenChange={setSheetOpen} preset={editing} />
+            <EquipmentPresetSheet
+                workspaceId={workspaceId}
+                open={sheetOpen}
+                onOpenChange={setSheetOpen}
+                preset={editing}
+            />
             <AlertDialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
@@ -2498,9 +2679,9 @@ export function EquipmentSettings(): JSX.Element {
 In `apps/web/src/pages/Settings.tsx`: import `Dumbbell` from `lucide-react` and `EquipmentSettings`; add `{ value: 'equipment', label: 'Equipment', icon: Dumbbell }` to `tabs` after `preferences`; add
 
 ```tsx
-                    <TabsContent value="equipment" className="m-0 focus-visible:outline-none">
-                        <EquipmentSettings />
-                    </TabsContent>
+<TabsContent value="equipment" className="m-0 focus-visible:outline-none">
+    <EquipmentSettings />
+</TabsContent>
 ```
 
 - [ ] **Step 4: Verify and commit**
@@ -2519,6 +2700,7 @@ git commit -m "feat(web): manage equipment presets from settings"
 ### Task 14: Equipment on custom exercises and the detail page
 
 **Files:**
+
 - Modify: `apps/web/src/pages/exercises/ExercisesListPage.tsx` (create dialog)
 - Modify: `apps/web/src/pages/exercises/ExerciseDetailPage.tsx`
 - Modify: `apps/web/src/components/exercises/ExerciseGuideEditor.tsx`
@@ -2528,11 +2710,11 @@ git commit -m "feat(web): manage equipment presets from settings"
 In `ExercisesListPage.tsx`: add `const [equipment, setEquipment] = useState<Equipment[]>([]);` reset in `openCreate`; pass `equipment` in `createExercise.mutate({ name, trackingType, equipment })`; in the dialog after the tracking-type fieldset add
 
 ```tsx
-                        <fieldset>
-                            <legend className="mb-3 text-sm font-medium">What does it need?</legend>
-                            <EquipmentTileGrid value={equipment} onChange={setEquipment} aria-label="Required equipment" />
-                            <p className="mt-2 text-xs text-muted-foreground">Leave empty for bodyweight.</p>
-                        </fieldset>
+<fieldset>
+    <legend className="mb-3 text-sm font-medium">What does it need?</legend>
+    <EquipmentTileGrid value={equipment} onChange={setEquipment} aria-label="Required equipment" />
+    <p className="mt-2 text-xs text-muted-foreground">Leave empty for bodyweight.</p>
+</fieldset>
 ```
 
 The dialog may need `max-h-[90vh] overflow-y-auto` on `DialogContent` to stay usable on a phone with the grid added.
@@ -2544,6 +2726,7 @@ In `ExerciseDetailPage.tsx`, in the header badge row, after the tracking-type ba
 - [ ] **Step 3: Guide editor**
 
 In `ExerciseGuideEditor.tsx`:
+
 - Add `const [equipment, setEquipment] = useState<Equipment[]>([]);` seeded in the same `useEffect` that seeds the guide fields: `setEquipment(exercise.equipment);`.
 - Find the `updateExercise.mutate(` call that saves the guide fields (line ~115) and include `equipment` in its data.
 - Include `equipment` in the editor's dirty check (grep `isDirty` / the comparison used for the discard confirmation) — compare sorted arrays: `[...equipment].sort().join() !== [...exercise.equipment].sort().join()`.

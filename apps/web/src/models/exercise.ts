@@ -1,4 +1,5 @@
 import { Dumbbell, Route, Timer, type LucideIcon } from 'lucide-react';
+import type { Equipment } from './equipment';
 
 /** How an exercise's work is measured. Mirrors `@app/domain`'s enum of the same name. */
 export enum TrackingType {
@@ -29,6 +30,7 @@ export type Exercise = {
     /** Shared, read-only content: no edit, archive, or link controls apply. */
     isCatalog: boolean;
     trackingType: TrackingType;
+    equipment: Equipment[];
     notes: string | null;
     /** This workspace's rest between sets; null until set, when the app's default applies. */
     restSeconds: number | null;
@@ -67,6 +69,7 @@ export type ExerciseDetail = Exercise & {
 export type SaveExerciseRequest = {
     name: string;
     trackingType: TrackingType;
+    equipment?: Equipment[];
     notes?: string | null;
     guideSetup?: string | null;
     guideExecution?: string | null;
@@ -77,6 +80,7 @@ export type SaveExerciseRequest = {
 export type PatchExerciseRequest = {
     name?: string;
     trackingType?: TrackingType;
+    equipment?: Equipment[];
     notes?: string | null;
     guideSetup?: string | null;
     guideExecution?: string | null;

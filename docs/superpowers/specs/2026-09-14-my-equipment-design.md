@@ -70,36 +70,36 @@ costs no request and the filter can differ between a gym phone and a desktop.
 `z.enum(Equipment)`. `seed-exercises` writes it on insert and update. Every entry in
 `content/exercises/` is tagged:
 
-| Slug                     | Equipment               |
-| ------------------------ | ----------------------- |
-| barbell-back-squat       | barbell, squat_rack     |
-| barbell-bench-press      | barbell, bench          |
-| barbell-deadlift         | barbell                 |
-| barbell-hip-thrust       | barbell, bench          |
-| barbell-overhead-press   | barbell                 |
-| barbell-row              | barbell                 |
-| cable-triceps-pushdown   | cable                   |
-| cycling                  | —                       |
-| dumbbell-bench-press     | dumbbell, bench         |
-| dumbbell-biceps-curl     | dumbbell                |
-| dumbbell-lateral-raise   | dumbbell                |
-| dumbbell-row             | dumbbell, bench         |
-| dumbbell-shoulder-press  | dumbbell                |
-| goblet-squat             | dumbbell                |
-| lat-pulldown             | machine                 |
-| leg-curl                 | machine                 |
-| leg-extension            | machine                 |
-| leg-press                | machine                 |
-| plank                    | —                       |
-| pull-up                  | pull_up_bar             |
-| push-up                  | —                       |
-| romanian-deadlift        | barbell                 |
-| rowing                   | rowing_machine          |
-| running                  | —                       |
-| seated-cable-row         | cable                   |
-| side-plank               | —                       |
-| standing-calf-raise      | —                       |
-| walking-lunge            | —                       |
+| Slug                    | Equipment           |
+| ----------------------- | ------------------- |
+| barbell-back-squat      | barbell, squat_rack |
+| barbell-bench-press     | barbell, bench      |
+| barbell-deadlift        | barbell             |
+| barbell-hip-thrust      | barbell, bench      |
+| barbell-overhead-press  | barbell             |
+| barbell-row             | barbell             |
+| cable-triceps-pushdown  | cable               |
+| cycling                 | —                   |
+| dumbbell-bench-press    | dumbbell, bench     |
+| dumbbell-biceps-curl    | dumbbell            |
+| dumbbell-lateral-raise  | dumbbell            |
+| dumbbell-row            | dumbbell, bench     |
+| dumbbell-shoulder-press | dumbbell            |
+| goblet-squat            | dumbbell            |
+| lat-pulldown            | machine             |
+| leg-curl                | machine             |
+| leg-extension           | machine             |
+| leg-press               | machine             |
+| plank                   | —                   |
+| pull-up                 | pull_up_bar         |
+| push-up                 | —                   |
+| romanian-deadlift       | barbell             |
+| rowing                  | rowing_machine      |
+| running                 | —                   |
+| seated-cable-row        | cable               |
+| side-plank              | —                   |
+| standing-calf-raise     | —                   |
+| walking-lunge           | —                   |
 
 ## API
 
@@ -111,20 +111,20 @@ All under `/api/v1/workspaces/{workspaceId}`. Schemas in `@app/api-contract` fir
 - `postExerciseRequestSchema` / `patchExerciseRequestSchema` accept `equipment` (optional; POST
   defaults to `[]`). Duplicates are rejected.
 - `exerciseListQuerySchema` gains `equipment`: a comma-separated list of enum values. Semantics:
-  - absent → no equipment filter;
-  - present → only exercises whose `equipment` is a subset of the given set
-    (`exercises.equipment <@ ARRAY[...]::equipment[]`), so bodyweight exercises always pass;
-  - present but empty (`equipment=`) → bodyweight exercises only.
-  Applied server-side so pagination and `totalCount` stay correct.
+    - absent → no equipment filter;
+    - present → only exercises whose `equipment` is a subset of the given set
+      (`exercises.equipment <@ ARRAY[...]::equipment[]`), so bodyweight exercises always pass;
+    - present but empty (`equipment=`) → bodyweight exercises only.
+      Applied server-side so pagination and `totalCount` stay correct.
 
 ### Equipment presets
 
-| Method | Path                       | Body / result                                          |
-| ------ | -------------------------- | ------------------------------------------------------ |
-| GET    | `/equipment-presets`       | `{ data: EquipmentPresetResponse[] }`, ordered by name |
-| POST   | `/equipment-presets`       | `{ name, equipment }` → 201 preset                     |
-| PATCH  | `/equipment-presets/{id}`  | `{ name?, equipment? }`, at least one → preset         |
-| DELETE | `/equipment-presets/{id}`  | 204                                                    |
+| Method | Path                      | Body / result                                          |
+| ------ | ------------------------- | ------------------------------------------------------ |
+| GET    | `/equipment-presets`      | `{ data: EquipmentPresetResponse[] }`, ordered by name |
+| POST   | `/equipment-presets`      | `{ name, equipment }` → 201 preset                     |
+| PATCH  | `/equipment-presets/{id}` | `{ name?, equipment? }`, at least one → preset         |
+| DELETE | `/equipment-presets/{id}` | 204                                                    |
 
 `EquipmentPresetResponse`: `{ id, name, equipment, createdAt, updatedAt }`. Name 1–60 chars.
 A duplicate name in the same workspace is a `ConflictError` (409) — check `@app/errors` for the
@@ -200,11 +200,11 @@ read-only on the detail page.
 - `packages/api-contract`: exercise `equipment` field, list query parsing (absent / empty / list /
   invalid), preset schemas, onboarding schema.
 - `packages/services`:
-  - `ExercisesService.list` filter: subset semantics, bodyweight always passes, empty list →
-    bodyweight only; create/update persist `equipment`.
-  - `EquipmentPresetsService`: CRUD, duplicate name 409, cross-workspace read/update/delete → 404.
-  - `WorkspacesService.setOnboardingStage`: persists; non-member → 404.
-  - `CatalogSeedService`: writes and updates `equipment`.
+    - `ExercisesService.list` filter: subset semantics, bodyweight always passes, empty list →
+      bodyweight only; create/update persist `equipment`.
+    - `EquipmentPresetsService`: CRUD, duplicate name 409, cross-workspace read/update/delete → 404.
+    - `WorkspacesService.setOnboardingStage`: persists; non-member → 404.
+    - `CatalogSeedService`: writes and updates `equipment`.
 - `apps/api` e2e: preset routes, onboarding route, exercise list `equipment` query; route-guard
   coverage passes without touching the MCP allowlist (except list-exercises which is already on it).
 - `apps/web` vitest: active preset resolution (missing id → null, stale id → null).

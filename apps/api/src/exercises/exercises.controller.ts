@@ -49,6 +49,7 @@ export class ExercisesController {
             pageSize: query.pageSize,
             search: query.search,
             includeArchived: query.includeArchived,
+            equipment: query.equipment,
         });
     }
 

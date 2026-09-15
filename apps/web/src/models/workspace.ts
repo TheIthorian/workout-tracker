@@ -10,6 +10,7 @@ export type WorkspaceListItem = {
     workspaceId: string;
     name: string;
     role: WorkspaceRole;
+    onboardingStage: OnboardingStage;
 };
 
 /** One member of a workspace. */
@@ -27,3 +28,4 @@ export type WorkspaceResponse = {
     role: WorkspaceRole;
     members: MemberListItem[];
 };
+import type { OnboardingStage } from './equipment';

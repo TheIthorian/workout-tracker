@@ -1,6 +1,8 @@
 import { useState, type ChangeEvent } from 'react';
 import { Plus, Search } from 'lucide-react';
 import { LoadingState } from '@/components/common/LoadingState';
+import { EmptyState } from '@/components/common/EmptyState';
+import { EquipmentFilterChip } from '@/components/equipment/EquipmentFilterChip';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useCreateExercise, useExercises } from '@/hooks/use-exercises';
+import { useActiveEquipmentPreset } from '@/hooks/use-equipment-presets';
 import { TRACKING_TYPE_META, TrackingType, type Exercise } from '@/models/exercise';
 
 type ExercisePickerSheetProps = {
@@ -36,8 +39,13 @@ export function ExercisePickerSheet({
     const [search, setSearch] = useState('');
     const [newTrackingType, setNewTrackingType] = useState<TrackingType>(TrackingType.WeightReps);
     const debouncedSetSearch = useDebounce((value: string) => setSearch(value.trim()), 250);
+    const active = useActiveEquipmentPreset({ workspaceId });
 
-    const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useExercises({ workspaceId, search });
+    const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useExercises({
+        workspaceId,
+        search,
+        equipment: active.preset?.equipment,
+    });
     const createExercise = useCreateExercise({ workspaceId });
 
     const exercises = data?.pages.flatMap((page) => page.data) ?? [];
@@ -83,9 +91,19 @@ export function ExercisePickerSheet({
                         className="h-11 pl-9"
                     />
                 </div>
+                <div className="px-4 pt-2">
+                    <EquipmentFilterChip preset={active.preset} presets={active.presets} onSelect={active.setActive} />
+                </div>
                 <div className="flex-1 overflow-y-auto px-4 pb-6 pt-3">
                     {isLoading ? (
                         <LoadingState label="Loading exercises…" />
+                    ) : exercises.length === 0 && trimmed.length === 0 && active.preset ? (
+                        <EmptyState
+                            title={`Nothing matches your ${active.preset.name} equipment`}
+                            description="Switch preset or show all equipment to keep adding."
+                            actionLabel="Show all equipment"
+                            onAction={() => active.setActive(null)}
+                        />
                     ) : (
                         <ul className="space-y-2">
                             {trimmed.length > 0 && !hasExactMatch && (

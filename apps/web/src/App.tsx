@@ -16,6 +16,7 @@ import { WorkspaceProvider } from '@/contexts/WorkspaceContext';
 // Every other page loads on demand, so they stay out of the entry chunk.
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
+const WelcomePage = lazy(() => import('./pages/WelcomePage'));
 const Settings = lazy(() => import('./pages/Settings'));
 const RoutinesListPage = lazy(() => import('./pages/routines/RoutinesListPage'));
 const RoutineDetailPage = lazy(() => import('./pages/routines/RoutineDetailPage'));
@@ -78,6 +79,14 @@ const router = createBrowserRouter(
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/403" element={<ForbiddenError />} />
+            <Route
+                path="/welcome"
+                element={
+                    <ProtectedRoute>
+                        <WelcomePage />
+                    </ProtectedRoute>
+                }
+            />
 
             <Route
                 path="/"

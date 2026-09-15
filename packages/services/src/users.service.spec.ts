@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { schema, type Db } from '@app/db';
 import { startTestDatabase } from '@app/db/testing';
+import { OnboardingStage } from '@app/domain';
 import { ForbiddenActionError, UnauthorizedError } from '@app/errors';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -37,8 +38,18 @@ describe('getUser', () => {
         expect(profile).toMatchObject({ userId, displayName: 'Alice', email: `${userId}@example.com` });
         expect(profile.workspaces).toEqual(
             expect.arrayContaining([
-                { workspaceId: ownedId, name: 'Owned', role: WorkspaceRole.Owner },
-                { workspaceId: joinedId, name: 'Joined', role: WorkspaceRole.Member },
+                {
+                    workspaceId: ownedId,
+                    name: 'Owned',
+                    role: WorkspaceRole.Owner,
+                    onboardingStage: OnboardingStage.Equipment,
+                },
+                {
+                    workspaceId: joinedId,
+                    name: 'Joined',
+                    role: WorkspaceRole.Member,
+                    onboardingStage: OnboardingStage.Equipment,
+                },
             ]),
         );
     });

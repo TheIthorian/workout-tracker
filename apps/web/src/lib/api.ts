@@ -1,6 +1,12 @@
 import { getApiBaseUrl } from './api-base-url';
 import type { LoginRequest, RegisterRequest } from '@/models/auth';
 import type {
+    EquipmentPreset,
+    OnboardingStage,
+    PatchEquipmentPresetRequest,
+    SaveEquipmentPresetRequest,
+} from '@/models/equipment';
+import type {
     Exercise,
     ExerciseDetail,
     ExerciseLink,
@@ -54,7 +60,7 @@ export const mcpAccessTokensApi = {
 export const exercisesApi = {
     getAll: (
         workspaceId: string,
-        params?: { search?: string; includeArchived?: boolean; page?: number; pageSize?: number },
+        params?: { search?: string; includeArchived?: boolean; page?: number; pageSize?: number; equipment?: string },
     ) => httpClient.get<PaginatedResponse<Exercise>>(`/api/v1/workspaces/${workspaceId}/exercises`, { params }),
     getById: async (workspaceId: string, exerciseId: string): Promise<ExerciseDetail & { webUrl: string }> => {
         const exercise = await httpClient.get<ExerciseDetail & { webUrl: string }>(
@@ -83,8 +89,7 @@ export const exercisesApi = {
         workspaceId: string;
         exerciseId: string;
         data: SaveExercisePreferencesRequest;
-    }) =>
-        httpClient.put<ExerciseDetail>(`/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/preferences`, data),
+    }) => httpClient.put<ExerciseDetail>(`/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/preferences`, data),
     addLink: ({
         workspaceId,
         exerciseId,
@@ -115,6 +120,31 @@ export const exercisesApi = {
         httpClient.get<ExerciseHistoryResponse>(`/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/history`, {
             params: { limit },
         }),
+};
+
+/** Named equipment sets for the library filter. */
+export const equipmentPresetsApi = {
+    list: async (workspaceId: string): Promise<EquipmentPreset[]> =>
+        (await httpClient.get<{ data: EquipmentPreset[] }>(`/api/v1/workspaces/${workspaceId}/equipment-presets`)).data,
+    create: (workspaceId: string, data: SaveEquipmentPresetRequest) =>
+        httpClient.post<EquipmentPreset>(`/api/v1/workspaces/${workspaceId}/equipment-presets`, data),
+    update: ({
+        workspaceId,
+        presetId,
+        data,
+    }: {
+        workspaceId: string;
+        presetId: string;
+        data: PatchEquipmentPresetRequest;
+    }) => httpClient.patch<EquipmentPreset>(`/api/v1/workspaces/${workspaceId}/equipment-presets/${presetId}`, data),
+    remove: ({ workspaceId, presetId }: { workspaceId: string; presetId: string }) =>
+        httpClient.delete<void>(`/api/v1/workspaces/${workspaceId}/equipment-presets/${presetId}`),
+};
+
+/** First-run setup progress. */
+export const onboardingApi = {
+    setStage: ({ workspaceId, stage }: { workspaceId: string; stage: OnboardingStage }) =>
+        httpClient.patch<{ stage: OnboardingStage }>(`/api/v1/workspaces/${workspaceId}/onboarding`, { stage }),
 };
 
 /** The workspace's routines. Every mutation returns the whole routine, so callers refresh from one shape. */

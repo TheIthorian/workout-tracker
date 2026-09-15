@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { schema, type Db } from '@app/db';
 import { startTestDatabase } from '@app/db/testing';
+import { OnboardingStage } from '@app/domain';
 import { EntityNotFoundError, ForbiddenActionError, InvalidOperationError, UserAlreadyMemberError } from '@app/errors';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -47,8 +48,18 @@ describe('listForUser', () => {
 
         expect(listed).toEqual(
             expect.arrayContaining([
-                { workspaceId: ownedId, name: 'Owned', role: WorkspaceRole.Owner },
-                { workspaceId: joinedId, name: 'Joined', role: WorkspaceRole.Member },
+                {
+                    workspaceId: ownedId,
+                    name: 'Owned',
+                    role: WorkspaceRole.Owner,
+                    onboardingStage: OnboardingStage.Equipment,
+                },
+                {
+                    workspaceId: joinedId,
+                    name: 'Joined',
+                    role: WorkspaceRole.Member,
+                    onboardingStage: OnboardingStage.Equipment,
+                },
             ]),
         );
         expect(listed).toHaveLength(2);
@@ -56,6 +67,33 @@ describe('listForUser', () => {
 
     it('returns nothing for a user with no memberships', async () => {
         expect(await service.listForUser(await seedUser(db))).toEqual([]);
+    });
+});
+
+describe('setOnboardingStage', () => {
+    it('starts at equipment and moves to complete', async () => {
+        const ownerId = await seedUser(db, 'Onboarding');
+        const workspaceId = await seedWorkspace(db, ownerId);
+
+        const before = await service.listForUser(ownerId);
+        expect(before[0]?.onboardingStage).toBe(OnboardingStage.Equipment);
+
+        await expect(
+            service.setOnboardingStage({ userId: ownerId, workspaceId, stage: OnboardingStage.Complete }),
+        ).resolves.toEqual({ stage: OnboardingStage.Complete });
+
+        const after = await service.listForUser(ownerId);
+        expect(after[0]?.onboardingStage).toBe(OnboardingStage.Complete);
+    });
+
+    it('refuses a non-member', async () => {
+        const ownerId = await seedUser(db);
+        const strangerId = await seedUser(db);
+        const workspaceId = await seedWorkspace(db, ownerId);
+
+        await expect(
+            service.setOnboardingStage({ userId: strangerId, workspaceId, stage: OnboardingStage.Complete }),
+        ).rejects.toBeInstanceOf(EntityNotFoundError);
     });
 });
 

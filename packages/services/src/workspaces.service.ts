@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { schema, withTransaction, type Db } from '@app/db';
+import { type OnboardingStage } from '@app/domain';
 import { EntityNotFoundError, InvalidOperationError, UserAlreadyMemberError } from '@app/errors';
 import { and, count, eq } from 'drizzle-orm';
 import { WorkspaceMembershipService, WorkspaceRole } from './workspace-membership.service.js';
@@ -24,6 +25,7 @@ export type WorkspaceListItem = {
     workspaceId: string;
     name: string;
     role: WorkspaceRole;
+    onboardingStage: OnboardingStage;
 };
 
 /** Creates workspaces and manages their membership. */
@@ -39,7 +41,12 @@ export class WorkspacesService {
     /** Every workspace the user belongs to, with the role they hold in each. */
     async listForUser(userId: string): Promise<WorkspaceListItem[]> {
         const rows = await this.db
-            .select({ workspaceId: workspaceUsers.workspaceId, name: workspaces.name, role: workspaceUsers.role })
+            .select({
+                workspaceId: workspaceUsers.workspaceId,
+                name: workspaces.name,
+                role: workspaceUsers.role,
+                onboardingStage: workspaces.onboardingStage,
+            })
             .from(workspaceUsers)
             .innerJoin(workspaces, eq(workspaceUsers.workspaceId, workspaces.id))
             .where(eq(workspaceUsers.userId, userId));
@@ -65,6 +72,30 @@ export class WorkspacesService {
             role: membership.role,
             members: await this.listMembers(workspaceId),
         };
+    }
+
+    /**
+     * Records where the workspace is in first-run setup. Idempotent.
+     *
+     * @throws EntityNotFoundError when the caller is not a member.
+     */
+    async setOnboardingStage({
+        userId,
+        workspaceId,
+        stage,
+    }: {
+        userId: string;
+        workspaceId: string;
+        stage: OnboardingStage;
+    }): Promise<{ stage: OnboardingStage }> {
+        await this.membership.require({ userId, workspaceId });
+
+        await this.db
+            .update(workspaces)
+            .set({ onboardingStage: stage, updatedAt: new Date().toISOString() })
+            .where(eq(workspaces.id, workspaceId));
+
+        return { stage };
     }
 
     /** Creates a workspace with the caller as its owner. Both writes are one transaction. */

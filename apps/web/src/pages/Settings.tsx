@@ -3,16 +3,18 @@ import { useState, useEffect } from 'react';
 import { useLogout } from '@/hooks/use-logout';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
-import { Cable, SlidersHorizontal, UserRound } from 'lucide-react';
+import { Cable, Dumbbell, SlidersHorizontal, UserRound } from 'lucide-react';
 import { useQueryString } from '@/hooks/use-query-string';
 import { ProfileSettings } from '@/components/settings/ProfileSettings';
 import { PreferencesSettings } from '@/components/settings/PreferencesSettings';
 import { IntegrationsSettings } from '@/components/settings/IntegrationsSettings';
+import { EquipmentSettings } from '@/components/settings/EquipmentSettings';
 import { cn } from '@/lib/utils';
 
 const tabs = [
     { value: 'profile', label: 'Profile', icon: UserRound },
     { value: 'preferences', label: 'Preferences', icon: SlidersHorizontal },
+    { value: 'equipment', label: 'Equipment', icon: Dumbbell },
     { value: 'integrations', label: 'Integrations', icon: Cable },
 ] as const;
 
@@ -74,6 +76,10 @@ export default function Settings(): JSX.Element {
 
                     <TabsContent value="preferences" className="m-0 focus-visible:outline-none">
                         <PreferencesSettings />
+                    </TabsContent>
+
+                    <TabsContent value="equipment" className="m-0 focus-visible:outline-none">
+                        <EquipmentSettings />
                     </TabsContent>
 
                     <TabsContent value="integrations" className="m-0 focus-visible:outline-none">

@@ -193,6 +193,40 @@ describe('exercise routes', () => {
         const body = JSON.parse(listed.body) as { data: { name: string }[] };
         expect(body.data.map((exercise) => exercise.name)).toEqual(['Bench Press']);
     });
+
+    it('filters the list by available equipment', async () => {
+        const { cookie, workspaceId } = await signUpUser();
+        const tag = randomUUID().slice(0, 8);
+        await createExercise({
+            cookie,
+            workspaceId,
+            payload: { name: `${tag} plank`, trackingType: 'duration' },
+        });
+        await createExercise({
+            cookie,
+            workspaceId,
+            payload: { name: `${tag} curl`, trackingType: 'weight_reps', equipment: ['dumbbell'] },
+        });
+
+        const filtered = await app.inject({
+            method: 'GET',
+            url: `/api/v1/workspaces/${workspaceId}/exercises?search=${tag}&equipment=`,
+            headers: { cookie },
+        });
+        const body = JSON.parse(filtered.body) as {
+            data: { name: string; equipment: string[] }[];
+            totalCount: number;
+        };
+        expect(body.totalCount).toBe(1);
+        expect(body.data[0]).toMatchObject({ name: `${tag} plank`, equipment: [] });
+
+        const invalid = await app.inject({
+            method: 'GET',
+            url: `/api/v1/workspaces/${workspaceId}/exercises?equipment=hammer`,
+            headers: { cookie },
+        });
+        expect(invalid.statusCode).toBe(400);
+    });
 });
 
 describe('catalog exercises', () => {

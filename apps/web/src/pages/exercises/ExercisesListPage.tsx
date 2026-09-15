@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowUpRight, BookOpen, Check, ChevronRight, Dumbbell, Plus, Search, X } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { LoadingState } from '@/components/common/LoadingState';
+import { EquipmentFilterChip } from '@/components/equipment/EquipmentFilterChip';
+import { EquipmentTileGrid } from '@/components/equipment/EquipmentTileGrid';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -19,6 +21,8 @@ import { useCreateExercise, useExercises } from '@/hooks/use-exercises';
 import { toast } from '@/hooks/use-toast';
 import { TRACKING_TYPE_META, TrackingType, type Exercise } from '@/models/exercise';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
+import { useActiveEquipmentPreset } from '@/hooks/use-equipment-presets';
+import { summarizeEquipment, type Equipment } from '@/models/equipment';
 
 /** A paginated library with a quick search and visible, accessible creation controls. */
 export default function ExercisesListPage(): JSX.Element {
@@ -27,9 +31,11 @@ export default function ExercisesListPage(): JSX.Element {
     const [isCreateOpen, setCreateOpen] = useState(false);
     const [name, setName] = useState('');
     const [trackingType, setTrackingType] = useState(TrackingType.WeightReps);
+    const [equipment, setEquipment] = useState<Equipment[]>([]);
     const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');
     const [includeArchived, setIncludeArchived] = useState(false);
+    const active = useActiveEquipmentPreset({ workspaceId });
     useEffect(() => {
         const timeout = window.setTimeout(() => setSearch(searchInput.trim()), 180);
         return () => window.clearTimeout(timeout);
@@ -38,6 +44,7 @@ export default function ExercisesListPage(): JSX.Element {
         workspaceId,
         search,
         includeArchived,
+        equipment: active.preset?.equipment,
     });
     const createExercise = useCreateExercise({ workspaceId });
     const exercises = data?.pages.flatMap((page) => page.data) ?? [];
@@ -49,13 +56,14 @@ export default function ExercisesListPage(): JSX.Element {
     const openCreate = (): void => {
         setName('');
         setTrackingType(TrackingType.WeightReps);
+        setEquipment([]);
         setCreateOpen(true);
     };
     const handleCreate = (event: React.FormEvent): void => {
         event.preventDefault();
         if (!name.trim() || createExercise.isPending) return;
         createExercise.mutate(
-            { name: name.trim(), trackingType },
+            { name: name.trim(), trackingType, equipment },
             {
                 onSuccess: (created) => {
                     toast({ title: 'Exercise added. Make it yours.' });
@@ -115,7 +123,13 @@ export default function ExercisesListPage(): JSX.Element {
                                 </span>
                             )}
                         </h2>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center justify-end gap-2">
+                            <EquipmentFilterChip
+                                preset={active.preset}
+                                presets={active.presets}
+                                onSelect={active.setActive}
+                                showManageLink
+                            />
                             <Switch
                                 id="include-archived"
                                 checked={includeArchived}
@@ -137,6 +151,13 @@ export default function ExercisesListPage(): JSX.Element {
                             description="Check your connection and try again. Your exercises are still safe."
                             actionLabel="Try again"
                             onAction={() => void refetch()}
+                        />
+                    ) : exercises.length === 0 && active.preset && !search ? (
+                        <EmptyState
+                            title={`Nothing matches your ${active.preset.name} equipment`}
+                            description="Every exercise in your library needs something this setup doesn’t have."
+                            actionLabel="Show all equipment"
+                            onAction={() => active.setActive(null)}
                         />
                     ) : exercises.length === 0 ? (
                         <EmptyState
@@ -220,7 +241,7 @@ export default function ExercisesListPage(): JSX.Element {
                 </aside>
             </div>
             <Dialog open={isCreateOpen} onOpenChange={setCreateOpen}>
-                <DialogContent>
+                <DialogContent className="max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <span className="exercise-icon mb-2">
                             <Dumbbell aria-hidden />
@@ -275,6 +296,15 @@ export default function ExercisesListPage(): JSX.Element {
                                 })}
                             </div>
                         </fieldset>
+                        <fieldset>
+                            <legend className="mb-3 text-sm font-medium">What does it need?</legend>
+                            <EquipmentTileGrid
+                                value={equipment}
+                                onChange={setEquipment}
+                                aria-label="Required equipment"
+                            />
+                            <p className="mt-2 text-xs text-muted-foreground">Leave empty for bodyweight.</p>
+                        </fieldset>
                         <DialogFooter>
                             <Button type="button" variant="ghost" onClick={() => setCreateOpen(false)}>
                                 Cancel
@@ -306,6 +336,12 @@ function ExerciseRow({ exercise }: { exercise: Exercise }): JSX.Element {
                     <span className="block break-words text-[15px] font-semibold leading-snug">{exercise.name}</span>
                     <span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                         {label}
+                        {exercise.equipment.length > 0 && (
+                            <>
+                                <span aria-hidden>·</span>
+                                <span>{summarizeEquipment(exercise.equipment)}</span>
+                            </>
+                        )}
                         {exercise.isCatalog && (
                             <>
                                 <span aria-hidden>·</span>

@@ -21,6 +21,7 @@ import type {
 } from '@/models/exercise';
 import type { ExerciseHistoryResponse } from '@/models/session';
 import type { PaginatedResponse } from '@/models/pagination';
+import type { Equipment } from '@/models/equipment';
 
 /**
  * The user's exercise library, optionally filtered by name, one page at a time.
@@ -35,15 +36,26 @@ export function useExercises({
     workspaceId,
     search,
     includeArchived = false,
+    equipment,
 }: {
     workspaceId: string;
     search?: string;
     includeArchived?: boolean;
+    equipment?: Equipment[];
 }): UseInfiniteQueryResult<InfiniteData<PaginatedResponse<Exercise>>, Error> {
     return useInfiniteQuery({
-        queryKey: ['exercises', workspaceId, { search: search ?? '', includeArchived }],
+        queryKey: [
+            'exercises',
+            workspaceId,
+            { search: search ?? '', includeArchived, equipment: equipment?.join(',') ?? null },
+        ],
         queryFn: ({ pageParam }) =>
-            exercisesApi.getAll(workspaceId, { search: search || undefined, includeArchived, page: pageParam }),
+            exercisesApi.getAll(workspaceId, {
+                search: search || undefined,
+                includeArchived,
+                page: pageParam,
+                equipment: equipment === undefined ? undefined : equipment.join(','),
+            }),
         initialPageParam: 1,
         getNextPageParam: (lastPage) => (lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined),
         enabled: Boolean(workspaceId),

@@ -38,39 +38,39 @@ export function RestTimeSheet({
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetContent side='bottom' className='rounded-t-2xl md:mx-auto md:max-w-md'>
-                <SheetHeader className='text-left'>
-                    <SheetTitle className='flex items-center gap-2'>
-                        <Timer className='h-5 w-5' aria-hidden />
+            <SheetContent side="bottom" className="rounded-t-2xl md:mx-auto md:max-w-md">
+                <SheetHeader className="text-left">
+                    <SheetTitle className="flex items-center gap-2">
+                        <Timer className="h-5 w-5" aria-hidden />
                         Rest between sets
                     </SheetTitle>
                     <SheetDescription>
                         {exerciseName}. Applies every time you train it, in any routine.
                     </SheetDescription>
                 </SheetHeader>
-                <div className='mt-6 space-y-4'>
+                <div className="mt-6 space-y-4">
                     <StepperField
-                        label='Rest'
+                        label="Rest"
                         value={value}
                         onChange={(next) => setDraft(next)}
                         step={REST_STEP_SECONDS}
                         max={MAX_REST_SECONDS}
                         format={describeRest}
                     />
-                    <div className='grid grid-cols-3 gap-2'>
+                    <div className="grid grid-cols-3 gap-2">
                         {QUICK_PICKS_SECONDS.map((seconds) => (
                             <Button
                                 key={seconds}
-                                type='button'
+                                type="button"
                                 variant={value === seconds ? 'default' : 'secondary'}
-                                className='h-11'
+                                className="h-11"
                                 onClick={() => setDraft(seconds)}
                             >
                                 {describeRest(seconds)}
                             </Button>
                         ))}
                     </div>
-                    <Button className='h-12 w-full' disabled={isSaving} onClick={() => onSave(value)}>
+                    <Button className="h-12 w-full" disabled={isSaving} onClick={() => onSave(value)}>
                         {isSaving ? 'Saving…' : 'Save rest time'}
                     </Button>
                 </div>

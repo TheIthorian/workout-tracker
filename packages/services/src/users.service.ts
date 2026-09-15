@@ -1,11 +1,17 @@
 import { schema, type Db } from '@app/db';
+import { type OnboardingStage } from '@app/domain';
 import { ForbiddenActionError, UnauthorizedError } from '@app/errors';
 import { and, count, eq, inArray } from 'drizzle-orm';
 import { WorkspaceRole } from './workspace-membership.service.js';
 
 const { user, workspaceUsers, workspaces } = schema;
 
-export type UserWorkspaceListItem = { workspaceId: string; name: string; role: WorkspaceRole };
+export type UserWorkspaceListItem = {
+    workspaceId: string;
+    name: string;
+    role: WorkspaceRole;
+    onboardingStage: OnboardingStage;
+};
 
 export type UserProfile = {
     userId: string;
@@ -97,7 +103,12 @@ export class UsersService {
 
     private async loadWorkspaces(userId: string): Promise<UserWorkspaceListItem[]> {
         const rows = await this.db
-            .select({ workspaceId: workspaceUsers.workspaceId, name: workspaces.name, role: workspaceUsers.role })
+            .select({
+                workspaceId: workspaceUsers.workspaceId,
+                name: workspaces.name,
+                role: workspaceUsers.role,
+                onboardingStage: workspaces.onboardingStage,
+            })
             .from(workspaceUsers)
             .innerJoin(workspaces, eq(workspaceUsers.workspaceId, workspaces.id))
             .where(eq(workspaceUsers.userId, userId));

@@ -1,13 +1,15 @@
-import { Outlet } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import { AppBottomNav } from '@/components/layout/AppBottomNav';
 import { AppTopNav } from '@/components/layout/AppTopNav';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import NotFoundError from '@/pages/NotFoundError';
+import { OnboardingStage } from '@/models/equipment';
 
 /** The signed-in shell for every app route: header, content outlet, mobile tab bar. */
 export function AppLayout(): JSX.Element {
     const { currentWorkspace, isLoading } = useWorkspace();
     if (!isLoading && !currentWorkspace) return <NotFoundError />;
+    if (currentWorkspace?.onboardingStage === OnboardingStage.Equipment) return <Navigate to="/welcome" replace />;
 
     return (
         <div className="flex min-h-screen flex-col bg-background md:flex-row">

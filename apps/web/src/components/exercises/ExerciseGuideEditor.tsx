@@ -1,5 +1,6 @@
 import { useBlocker, useBeforeUnload } from 'react-router-dom';
 import { ExerciseImagesEditor } from './ExerciseImagesEditor';
+import { EquipmentTileGrid } from '@/components/equipment/EquipmentTileGrid';
 import { useEffect, useRef, useState } from 'react';
 import { Check, Pencil, Plus, Trash2 } from 'lucide-react';
 import {
@@ -24,6 +25,7 @@ import {
 } from '@/hooks/use-exercises';
 import { toast } from '@/hooks/use-toast';
 import type { ExerciseDetail, ExerciseLink } from '@/models/exercise';
+import type { Equipment } from '@/models/equipment';
 import { ExerciseGuide } from './ExerciseGuide';
 
 /**
@@ -50,6 +52,7 @@ export function ExerciseGuideEditor({
     const [execution, setExecution] = useState('');
     const [cues, setCues] = useState('');
     const [mistakes, setMistakes] = useState('');
+    const [equipment, setEquipment] = useState<Equipment[]>([]);
 
     // Seeded once per exercise, not on every render of `exercise`: a link mutation invalidates the
     // same query and hands back a new object identity, which would otherwise wipe out guide text
@@ -63,6 +66,7 @@ export function ExerciseGuideEditor({
         setExecution(exercise.guideExecution ?? '');
         setCues(exercise.guideCues ?? '');
         setMistakes(exercise.guideMistakes ?? '');
+        setEquipment(exercise.equipment);
     }, [exercise]);
 
     const updateExercise = useUpdateExercise({ workspaceId });
@@ -83,7 +87,8 @@ export function ExerciseGuideEditor({
         setup.trim() !== (exercise.guideSetup ?? '') ||
         execution.trim() !== (exercise.guideExecution ?? '') ||
         cues.trim() !== (exercise.guideCues ?? '') ||
-        mistakes.trim() !== (exercise.guideMistakes ?? '');
+        mistakes.trim() !== (exercise.guideMistakes ?? '') ||
+        [...equipment].sort().join() !== [...exercise.equipment].sort().join();
 
     // Link mutations save immediately on their own "Add"/"Save" actions, so the only things a close
     // could still silently drop are drafts sitting in these forms that were never submitted: a
@@ -109,6 +114,7 @@ export function ExerciseGuideEditor({
         guideExecution: execution,
         guideCues: cues,
         guideMistakes: mistakes,
+        equipment,
     };
 
     const handleSaveGuide = (): void => {
@@ -120,6 +126,7 @@ export function ExerciseGuideEditor({
                     guideExecution: execution.trim() || null,
                     guideCues: cues.trim() || null,
                     guideMistakes: mistakes.trim() || null,
+                    equipment,
                 },
             },
             { onSuccess: () => toast({ title: 'Guide saved' }) },
@@ -155,6 +162,7 @@ export function ExerciseGuideEditor({
                     guideExecution: execution.trim() || null,
                     guideCues: cues.trim() || null,
                     guideMistakes: mistakes.trim() || null,
+                    equipment,
                 },
             },
             {
@@ -243,6 +251,11 @@ export function ExerciseGuideEditor({
 
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
                 <div className="space-y-8">
+                    <section className="space-y-3">
+                        <h3 className="font-heading text-lg text-foreground">Equipment</h3>
+                        <EquipmentTileGrid value={equipment} onChange={setEquipment} aria-label="Required equipment" />
+                        <p className="text-xs text-muted-foreground">Leave empty for bodyweight.</p>
+                    </section>
                     <section className="space-y-4">
                         <div className="space-y-2">
                             <Label htmlFor="guide-setup">Setup</Label>
