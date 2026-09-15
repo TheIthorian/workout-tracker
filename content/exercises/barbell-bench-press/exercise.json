@@ -10,5 +10,10 @@
         "mistakes": "Bouncing the bar; flaring elbows straight out; lifting the hips; losing shoulder-blade tension."
     },
     "links": [],
-    "images": []
+    "images": [
+        {
+            "file": "bench-press.png",
+            "caption": "Barbell bench press with the bar over the chest and shoulder blades set on the bench."
+        }
+    ]
 }

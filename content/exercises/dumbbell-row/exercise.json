@@ -10,5 +10,10 @@
         "mistakes": "Rotating the torso; shrugging; yanking with momentum; cutting the bottom stretch short."
     },
     "links": [],
-    "images": []
+    "images": [
+        {
+            "file": "dumbbell-row.png",
+            "caption": "Supported dumbbell row with the elbow driving back toward the hip."
+        }
+    ]
 }

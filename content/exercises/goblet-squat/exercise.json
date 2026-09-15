@@ -10,5 +10,10 @@
         "mistakes": "Letting the weight drift away; knees collapsing inward; heels lifting; rounding at the bottom."
     },
     "links": [],
-    "images": []
+    "images": [
+        {
+            "file": "goblet-squat.png",
+            "caption": "Goblet squat with the weight held close to the chest and knees tracking over the toes."
+        }
+    ]
 }

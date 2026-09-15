@@ -10,5 +10,10 @@
         "mistakes": "A saddle that is too low; gripping the bars tightly; grinding a hard gear; starting too fast."
     },
     "links": [],
-    "images": []
+    "images": [
+        {
+            "file": "cycling.png",
+            "caption": "Steady cycling effort with posture relaxed and cadence controlled."
+        }
+    ]
 }

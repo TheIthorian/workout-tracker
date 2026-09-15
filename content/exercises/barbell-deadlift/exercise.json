@@ -10,5 +10,10 @@
         "mistakes": "Jerking the bar; rounding the lower back; letting the bar drift forward; leaning back at lockout."
     },
     "links": [],
-    "images": []
+    "images": [
+        {
+            "file": "barbell-deadlift.png",
+            "caption": "Deadlift setup with hips hinged, back braced, and the bar close to the shins."
+        }
+    ]
 }

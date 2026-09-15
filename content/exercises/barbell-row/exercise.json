@@ -10,5 +10,10 @@
         "mistakes": "Standing up each rep; shrugging; bouncing the torso; rounding the lower back."
     },
     "links": [],
-    "images": []
+    "images": [
+        {
+            "file": "barbell-row.png",
+            "caption": "Hinged rowing position with a flat back and the bar pulled toward the lower ribs."
+        }
+    ]
 }
