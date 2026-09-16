@@ -1,0 +1,14 @@
+{
+    "name": "Hammer curl",
+    "trackingType": "weight_reps",
+    "equipment": ["dumbbell"],
+    "notes": "Neutral-grip dumbbell curl. Record the load of one dumbbell.",
+    "guide": {
+        "setup": "Stand tall holding dumbbells at the sides with palms facing in and elbows close to the ribs.",
+        "execution": "Curl toward the shoulders keeping the palms facing in, then lower slowly to full elbow extension.",
+        "cues": "Keep ribs down. Hold the neutral grip throughout. Move at the elbow.",
+        "mistakes": "Swinging the hips; elbows drifting forward; rotating the wrists to a palms-up curl; shortening the bottom range."
+    },
+    "links": [],
+    "images": []
+}
