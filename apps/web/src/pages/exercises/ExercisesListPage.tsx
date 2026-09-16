@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowUpRight, BookOpen, Check, ChevronRight, Dumbbell, Plus, Search, X } from 'lucide-react';
+import { ArrowUpRight, Check, ChevronRight, Dumbbell, Plus, Search, X } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
+import { InfoHint } from '@/components/common/InfoHint';
 import { LoadingState } from '@/components/common/LoadingState';
 import { EquipmentFilterChip } from '@/components/equipment/EquipmentFilterChip';
 import { EquipmentTileGrid } from '@/components/equipment/EquipmentTileGrid';
+import { TrackingTypeLegendCard, TrackingTypeLegendStrip } from '@/components/exercises/TrackingTypeLegend';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -114,15 +116,20 @@ export default function ExercisesListPage(): JSX.Element {
                             </Button>
                         )}
                     </div>
-                    <div className="flex flex-wrap items-center justify-between gap-3 py-5">
-                        <h2 className="text-sm font-semibold tracking-normal">
-                            {search ? 'Search results' : 'All exercises'}
-                            {!isLoading && !isError && (
-                                <span className="ml-2 rounded-md bg-secondary px-2 py-1 text-xs font-medium text-muted-foreground">
-                                    {totalCount}
-                                </span>
-                            )}
-                        </h2>
+                    <div className="flex flex-wrap items-center justify-between gap-3 py-4">
+                        <div className="flex items-center gap-1">
+                            <h2 className="text-sm font-semibold tracking-normal">
+                                {search ? 'Search results' : 'All exercises'}
+                                {!isLoading && !isError && (
+                                    <span className="ml-2 rounded-md bg-secondary px-2 py-1 text-xs font-medium text-muted-foreground">
+                                        {totalCount}
+                                    </span>
+                                )}
+                            </h2>
+                            <InfoHint label="What you get on an exercise page">
+                                Open any exercise for setup notes, helpful cues, and a quick refresher between sets.
+                            </InfoHint>
+                        </div>
                         <div className="flex flex-wrap items-center justify-end gap-2">
                             <EquipmentFilterChip
                                 preset={active.preset}
@@ -172,6 +179,7 @@ export default function ExercisesListPage(): JSX.Element {
                         />
                     ) : (
                         <>
+                            <TrackingTypeLegendStrip className="mb-3 lg:hidden" />
                             <ul className="overflow-hidden rounded-2xl border bg-card shadow-sm">
                                 {exercises.map((exercise) => (
                                     <ExerciseRow key={exercise.id} exercise={exercise} />
@@ -195,42 +203,7 @@ export default function ExercisesListPage(): JSX.Element {
                     )}
                 </section>
                 <aside className="space-y-5 lg:pt-0">
-                    <div className="training-banner p-6">
-                        <div className="training-rings opacity-60" aria-hidden />
-                        <div className="relative">
-                            <BookOpen className="mb-9 h-6 w-6 text-[#c8dfac]" aria-hidden />
-                            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[.18em] text-[#c8dfac]">
-                                A little guidance
-                            </p>
-                            <h2 className="text-2xl leading-tight">
-                                Good form.
-                                <br />
-                                Better sessions.
-                            </h2>
-                            <p className="mt-3 text-sm leading-relaxed text-[#d0dfd5]">
-                                Open any exercise for setup notes, helpful cues, and a quick refresher between sets.
-                            </p>
-                            <div className="mt-6 border-t border-white/15 pt-4 text-xs text-[#d0dfd5]">
-                                A little intention goes a long way.
-                            </div>
-                        </div>
-                    </div>
-                    <div className="rounded-2xl border p-5">
-                        <h2 className="mb-4 text-sm font-semibold tracking-normal">A way to track every movement</h2>
-                        <div className="space-y-4">
-                            {Object.values(TrackingType).map((type) => {
-                                const { icon: Icon, label } = TRACKING_TYPE_META[type];
-                                return (
-                                    <div key={type} className="flex items-center gap-3">
-                                        <span data-type={type} className="exercise-icon h-9 w-9 rounded-lg">
-                                            <Icon className="h-4 w-4" aria-hidden />
-                                        </span>
-                                        <span className="text-xs text-muted-foreground">{label}</span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
+                    <TrackingTypeLegendCard className="hidden lg:block" />
                     <Link
                         to="/routines"
                         className="flex min-h-12 items-center justify-between px-1 text-sm font-medium text-primary"
