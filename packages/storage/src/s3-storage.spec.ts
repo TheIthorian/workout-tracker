@@ -22,7 +22,12 @@ beforeAll(async () => {
     // Not MinIO, which dev uses: MinIO removed `minio/minio` from Docker Hub on 2026-09-11, so the
     // image cannot be pulled at all. Pinned to an exact tag per the repo's standing "everything is
     // pinned" rule (see `packages/db`, which pins `postgres:17`). S3Mock serves HTTP on 9090.
-    container = await new GenericContainer('adobe/s3mock:5.2.2').withExposedPorts(9090).start();
+    // It is a JVM service, and testcontainers' 60s default is not enough for it to bind while the
+    // other packages' suites are starting their own containers alongside this one.
+    container = await new GenericContainer('adobe/s3mock:5.2.2')
+        .withExposedPorts(9090)
+        .withStartupTimeout(120_000)
+        .start();
 
     const endpoint = `http://${container.getHost()}:${container.getMappedPort(9090)}`;
 
@@ -60,7 +65,7 @@ beforeAll(async () => {
         },
         logger,
     });
-}, 120_000);
+}, 180_000);
 
 afterAll(async () => {
     await container.stop();

@@ -24,7 +24,10 @@ beforeAll(async () => {
     database = await startTestDatabase();
     db = database.db;
 
-    storageContainer = await new GenericContainer('adobe/s3mock:5.2.2').withExposedPorts(9090).start();
+    storageContainer = await new GenericContainer('adobe/s3mock:5.2.2')
+        .withExposedPorts(9090)
+        .withStartupTimeout(120_000)
+        .start();
 
     const endpoint = `http://${storageContainer.getHost()}:${storageContainer.getMappedPort(9090)}`;
     const config = {
