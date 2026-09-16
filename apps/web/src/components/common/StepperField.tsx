@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
+import { useEffect, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
 import { Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,8 @@ type StepperFieldProps = {
     format?: (value: number) => string;
     required?: boolean;
     disabled?: boolean;
+    /** Rendered beside the label, for a field whose name does not explain itself. */
+    hint?: ReactNode;
 };
 
 const HOLD_DELAY_MS = 400;
@@ -34,6 +36,7 @@ export function StepperField({
     format,
     required = false,
     disabled = false,
+    hint,
 }: StepperFieldProps): JSX.Element {
     const holdTimer = useRef<number | null>(null);
     const holdInterval = useRef<number | null>(null);
@@ -84,10 +87,14 @@ export function StepperField({
 
     return (
         <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">
-                {label}
-                {required && <span className="text-destructive"> *</span>}
-            </Label>
+            {/* Every label row reserves the hint's height, so a hinted field still lines up with its neighbours. */}
+            <div className="flex min-h-8 items-center gap-1">
+                <Label className="text-xs text-muted-foreground">
+                    {label}
+                    {required && <span className="text-destructive"> *</span>}
+                </Label>
+                {hint}
+            </div>
             <div className="flex items-stretch gap-2">
                 <Button
                     type="button"
