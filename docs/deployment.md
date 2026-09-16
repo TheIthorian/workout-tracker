@@ -164,14 +164,54 @@ required; `VITE_API_BASE_URL` alone does not replace it.
 
 Add the exact Pages/custom web origin to the API's `AUTH_TRUSTED_ORIGINS` and `CORS_ORIGIN`.
 
-Create a Cloudflare API token with the **Cloudflare Pages: Edit** permission on this account and add
-it, along with the account id, to GitHub repository secrets as `CLOUDFLARE_API_TOKEN` and
-`CLOUDFLARE_ACCOUNT_ID`. The deploy job cannot run without them; never commit either value.
+### 5a. GitHub secrets for the automated deploy
 
-If the app is built with PostHog, add `VITE_PUBLIC_POSTHOG_KEY` and `VITE_PUBLIC_POSTHOG_HOST` as
-repository secrets too. Unlike `API_ORIGIN`, these are read through `import.meta.env` and are baked
-into the bundle at build time, so a Pages variable cannot supply them — left unset, the deployed app
-simply runs without analytics.
+The `deploy-web` job reads four repository secrets. The two Cloudflare ones are required; without
+them the job fails at the deploy step.
+
+| Secret                     | Required | Used for                        |
+| -------------------------- | -------- | ------------------------------- |
+| `CLOUDFLARE_API_TOKEN`     | Yes      | Authenticating `wrangler`       |
+| `CLOUDFLARE_ACCOUNT_ID`    | Yes      | Selecting the account           |
+| `VITE_PUBLIC_POSTHOG_KEY`  | No       | Analytics, baked into the build |
+| `VITE_PUBLIC_POSTHOG_HOST` | No       | Analytics, baked into the build |
+
+**Get `CLOUDFLARE_API_TOKEN`**
+
+1. Sign in to <https://dash.cloudflare.com>, open the account menu (top right) → **Profile** → **API
+   Tokens**, or go straight to <https://dash.cloudflare.com/profile/api-tokens>.
+2. **Create Token** → **Create Custom Token** (**Get started**).
+3. Name it, e.g. `github-actions-pages-deploy`.
+4. Under **Permissions**, select **Account** · **Cloudflare Pages** · **Edit**. Add nothing else —
+   this token only needs to publish Pages deployments.
+5. Under **Account Resources**, restrict it to the one account holding the Pages project.
+6. **Continue to summary** → **Create Token**, then copy the value. Cloudflare shows it once.
+
+**Get `CLOUDFLARE_ACCOUNT_ID`**
+
+```bash
+npx wrangler login      # first time only
+npx wrangler whoami     # prints the account name and its 32-character id
+```
+
+It is also on the account's **Workers & Pages** overview page in the dashboard. It is an identifier,
+not a credential, but keep it in secrets alongside the token.
+
+**Get the PostHog values (optional)**
+
+1. In PostHog, **Settings** → **Project** → **Project API key** — the value starting `phc_`. That is
+   `VITE_PUBLIC_POSTHOG_KEY`; it is a write-only public key, safe to ship in a browser bundle.
+2. `VITE_PUBLIC_POSTHOG_HOST` is your region's ingestion host, shown on the same page:
+   `https://us.i.posthog.com` or `https://eu.i.posthog.com`.
+
+Unlike `API_ORIGIN`, these are read through `import.meta.env` and baked into the bundle at build
+time, so a Pages variable cannot supply them. Left unset, the deployed app simply runs without
+analytics.
+
+**Add them to GitHub**
+
+Repository → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**. Add
+each name exactly as spelled above. Never commit any of these values.
 
 ## 6. Verify
 
