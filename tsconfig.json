@@ -43,6 +43,9 @@
             "path": "./packages/storage"
         },
         {
+            "path": "./packages/image"
+        },
+        {
             "path": "./packages/services"
         },
         {

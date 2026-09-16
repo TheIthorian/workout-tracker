@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { CreateBucketCommand, S3Client } from '@aws-sdk/client-s3';
+import { CreateBucketCommand, HeadObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { loadCatalog } from '@app/catalog';
 import { schema, type Db } from '@app/db';
 import { startTestDatabase } from '@app/db/testing';
@@ -12,7 +12,7 @@ import { StorageService } from '@app/storage';
 import { eq } from 'drizzle-orm';
 import { GenericContainer, type StartedTestContainer } from 'testcontainers';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { CatalogSeedService, SeedOutcome } from './catalog-seed.service.js';
+import { CatalogSeedService, SeedOutcome, type ImageProcessor } from './catalog-seed.service.js';
 import { seedUser, seedWorkspace } from './testing.js';
 
 const { exerciseGuideImages, exerciseLinks, exercises } = schema;
@@ -22,8 +22,28 @@ const PNG_BYTES = Buffer.from(
     'base64',
 );
 
+/**
+ * Stands in for the real WebP processor: prefixes the bytes so the test can tell processed output
+ * from the source, and reports WebP so the row and object metadata can be checked against it.
+ */
+const processor: ImageProcessor = {
+    variant: 'test-v1',
+    contentType: 'image/webp',
+    extension: '.webp',
+    async process(source) {
+        return Buffer.concat([Buffer.from('processed:'), source]);
+    },
+};
+
+/** The key the service is expected to publish `PNG_BYTES` at: hashed over the variant and the SOURCE bytes. */
+function expectedKey(slug: string): string {
+    const sha = createHash('sha256').update(`${processor.variant}\0`).update(PNG_BYTES).digest('hex');
+    return `catalog/${slug}/${sha}.webp`;
+}
+
 let database: Awaited<ReturnType<typeof startTestDatabase>>;
 let db: Db;
+let storageConfig: ConstructorParameters<typeof StorageService>[0]['config'];
 let storageContainer: StartedTestContainer;
 let storage: StorageService;
 let seed: CatalogSeedService;
@@ -47,6 +67,7 @@ beforeAll(async () => {
         secretAccessKey: 'test',
         forcePathStyle: true,
     };
+    storageConfig = config;
     const bootstrap = new S3Client({
         endpoint,
         region: config.region,
@@ -60,7 +81,7 @@ beforeAll(async () => {
         config,
         logger: createLogger({ context: 'seed-test', config: { level: 'error', pretty: false, redact: false } }),
     });
-    seed = new CatalogSeedService({ db, storage });
+    seed = new CatalogSeedService({ db, storage, processor });
 });
 
 afterAll(async () => {
@@ -137,18 +158,39 @@ describe('upsertExercise', () => {
             expect.objectContaining({ workspaceId: null, url: 'https://example.com/a', position: 0 }),
         ]);
 
-        const sha = createHash('sha256').update(PNG_BYTES).digest('hex');
         const images = await db.select().from(exerciseGuideImages).where(eq(exerciseGuideImages.exerciseId, result.id));
         expect(images).toEqual([
             expect.objectContaining({
                 workspaceId: null,
-                storageKey: `catalog/squat-create/${sha}.png`,
-                contentType: 'image/png',
+                storageKey: expectedKey('squat-create'),
+                contentType: 'image/webp',
                 caption: 'Setup',
                 position: 0,
             }),
         ]);
-        expect(await storage.fileExists(`catalog/squat-create/${sha}.png`)).toBe(true);
+        expect(await storage.fileExists(expectedKey('squat-create'))).toBe(true);
+    });
+
+    it('publishes the processed bytes, typed and cached for a CDN, not the source', async () => {
+        const dir = await writeEntry({ slug: 'squat-processed', entry: squat(), imageBytes: PNG_BYTES });
+        const [loaded] = await loadCatalog({ dir });
+
+        await seed.upsertExercise({ exercise: loaded });
+
+        const client = new S3Client({
+            endpoint: storageConfig.endpoint,
+            region: storageConfig.region,
+            forcePathStyle: true,
+            credentials: { accessKeyId: storageConfig.accessKeyId, secretAccessKey: storageConfig.secretAccessKey },
+        });
+        const head = await client.send(
+            new HeadObjectCommand({ Bucket: storageConfig.bucket, Key: expectedKey('squat-processed') }),
+        );
+        client.destroy();
+
+        expect(head.ContentType).toBe('image/webp');
+        expect(head.CacheControl).toBe('public, max-age=31536000, immutable');
+        expect(head.ContentLength).toBe('processed:'.length + PNG_BYTES.length);
     });
 
     it('is idempotent: a second run reports unchanged and uploads nothing', async () => {
@@ -217,7 +259,6 @@ describe('upsertExercise', () => {
         const dir = await writeEntry({ slug: 'squat-drop', entry: squat(), imageBytes: PNG_BYTES });
         const [first] = await loadCatalog({ dir });
         await seed.upsertExercise({ exercise: first });
-        const sha = createHash('sha256').update(PNG_BYTES).digest('hex');
 
         const dir2 = await writeEntry({ slug: 'squat-drop', entry: squat({ images: [] }) });
         const [second] = await loadCatalog({ dir: dir2 });
@@ -226,7 +267,7 @@ describe('upsertExercise', () => {
         expect(result.outcome).toBe(SeedOutcome.Updated);
         const images = await db.select().from(exerciseGuideImages).where(eq(exerciseGuideImages.exerciseId, result.id));
         expect(images).toEqual([]);
-        expect(await storage.fileExists(`catalog/squat-drop/${sha}.png`)).toBe(false);
+        expect(await storage.fileExists(expectedKey('squat-drop'))).toBe(false);
     });
 
     it('un-archives an exercise that reappears in the content', async () => {
@@ -257,8 +298,7 @@ describe('upsertExercise', () => {
             ],
         });
         const [loaded] = await loadCatalog({ dir });
-        const sha = createHash('sha256').update(PNG_BYTES).digest('hex');
-        const key = `catalog/squat-dup/${sha}.png`;
+        const key = expectedKey('squat-dup');
 
         // One spy for the whole test: vi.spyOn returns the same mock on a method that's already
         // spied, so a second vi.spyOn call here would carry over the first call's count instead

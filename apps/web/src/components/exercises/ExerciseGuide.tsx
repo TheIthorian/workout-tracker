@@ -25,9 +25,12 @@ export function ExerciseGuide({ exercise }: { exercise: ExerciseDetail }): JSX.E
         <div className="space-y-6">
             {exercise.images.length > 0 && (
                 <section aria-label="Movement references">
-                    <div className="flex gap-4 overflow-x-auto pb-3">
+                    {/* One image gets the column to itself, capped so it doesn't balloon on a wide
+                        screen; several share a two-up grid. Either way the image keeps its own
+                        aspect ratio rather than being letterboxed into a fixed box. */}
+                    <div className={exercise.images.length === 1 ? 'max-w-3xl' : 'grid gap-4 sm:grid-cols-2'}>
                         {exercise.images.map((image) => (
-                            <figure key={image.id} className="w-64 flex-none sm:w-80">
+                            <figure key={image.id}>
                                 <a
                                     href={image.url}
                                     target="_blank"
@@ -38,7 +41,7 @@ export function ExerciseGuide({ exercise }: { exercise: ExerciseDetail }): JSX.E
                                         src={image.url}
                                         alt={image.caption || `${exercise.name} reference`}
                                         loading="lazy"
-                                        className="aspect-[4/3] w-full object-contain"
+                                        className="block h-auto w-full"
                                     />
                                 </a>
                                 {image.caption && (

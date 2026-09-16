@@ -13,6 +13,7 @@
         { "path": "../../packages/db" },
         { "path": "../../packages/env" },
         { "path": "../../packages/errors" },
+        { "path": "../../packages/image" },
         { "path": "../../packages/logger" },
         { "path": "../../packages/services" },
         { "path": "../../packages/storage" }

@@ -20,6 +20,7 @@
         "@app/db": "workspace:*",
         "@app/env": "workspace:*",
         "@app/errors": "workspace:*",
+        "@app/image": "workspace:*",
         "@app/logger": "workspace:*",
         "@app/services": "workspace:*",
         "@app/storage": "workspace:*",

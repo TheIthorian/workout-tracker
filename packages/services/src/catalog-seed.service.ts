@@ -1,6 +1,5 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
-import { extname } from 'node:path';
 import type { LoadedExercise } from '@app/catalog';
 import { schema, withTransaction, type Db, type Tx } from '@app/db';
 import type { StorageService } from '@app/storage';
@@ -14,6 +13,27 @@ export enum SeedOutcome {
     Updated = 'updated',
     Unchanged = 'unchanged',
 }
+
+/**
+ * Turns a source image into the bytes that get published. Declared here rather than imported so
+ * this package (and the API that depends on it) never pulls in an image codec: `@app/image`
+ * satisfies the shape and only the admin CLI links it.
+ */
+export interface ImageProcessor {
+    /** Names the settings in effect; folded into the storage key so a settings change republishes. */
+    readonly variant: string;
+    /** Fixed per processor, so the key and row are known without decoding anything. */
+    readonly contentType: string;
+    /** Including the leading dot, e.g. `.webp`. */
+    readonly extension: string;
+    process(source: Buffer): Promise<Buffer>;
+}
+
+/**
+ * Catalog images never change at a key (content-addressed), so a browser or CDN can hold them for
+ * as long as it likes.
+ */
+const CATALOG_IMAGE_CACHE_CONTROL = 'public, max-age=31536000, immutable';
 
 /** The object-storage key for a catalog image. Content-addressed, so a changed image is a new URL. */
 export function catalogImageKey({
@@ -37,10 +57,12 @@ export function catalogImageKey({
 export class CatalogSeedService {
     private readonly db: Db;
     private readonly storage: StorageService;
+    private readonly processor: ImageProcessor;
 
-    constructor({ db, storage }: { db: Db; storage: StorageService }) {
+    constructor({ db, storage, processor }: { db: Db; storage: StorageService; processor: ImageProcessor }) {
         this.db = db;
         this.storage = storage;
+        this.processor = processor;
     }
 
     /**
@@ -133,28 +155,36 @@ export class CatalogSeedService {
         return rows.map((row) => row.slug).filter((slug): slug is string => slug !== null);
     }
 
-    /** Hashes and uploads each image that is not already stored. Returns the rows to write. */
+    /**
+     * Hashes, processes and uploads each image that is not already stored. Returns the rows to
+     * write.
+     *
+     * The key is hashed over the SOURCE bytes plus the processor's variant, not over the output:
+     * an encoder library bump can change output bytes without changing what a reader sees, and
+     * hashing the output would republish every image on each bump. Hashing the source keeps the
+     * key stable until the source or the settings actually change - and processing is skipped
+     * entirely when the key already exists.
+     */
     private async stageImages({ exercise }: { exercise: LoadedExercise }): Promise<StagedImage[]> {
         const staged: StagedImage[] = [];
 
         for (const [position, image] of exercise.images.entries()) {
-            const bytes = await readFile(image.path);
-            const sha256 = createHash('sha256').update(bytes).digest('hex');
-            const storageKey = catalogImageKey({
-                slug: exercise.slug,
-                sha256,
-                extension: extname(image.file).toLowerCase(),
-            });
+            const source = await readFile(image.path);
+            const sha256 = createHash('sha256').update(`${this.processor.variant}\0`).update(source).digest('hex');
+
+            const { contentType, extension } = this.processor;
+            const storageKey = catalogImageKey({ slug: exercise.slug, sha256, extension });
 
             if (!(await this.storage.fileExists(storageKey))) {
                 await this.storage.uploadFileAtKey({
-                    fileStream: bytes,
+                    fileStream: await this.processor.process(source),
                     key: storageKey,
-                    contentType: image.contentType,
+                    contentType,
+                    cacheControl: CATALOG_IMAGE_CACHE_CONTROL,
                 });
             }
 
-            staged.push({ storageKey, contentType: image.contentType, caption: image.caption, position });
+            staged.push({ storageKey, contentType, caption: image.caption, position });
         }
 
         return staged;

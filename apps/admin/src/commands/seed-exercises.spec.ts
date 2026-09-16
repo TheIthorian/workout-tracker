@@ -13,7 +13,13 @@ import { GenericContainer, type StartedTestContainer } from 'testcontainers';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { formatSeedReport, seedExercises } from './seed-exercises.js';
 
-const { exercises } = schema;
+const { exerciseGuideImages, exercises } = schema;
+
+/** A real 1x1 PNG, so the production image processor has something it can actually decode. */
+const PNG_BYTES = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    'base64',
+);
 
 let database: Awaited<ReturnType<typeof startTestDatabase>>;
 let db: Db;
@@ -58,12 +64,18 @@ afterAll(async () => {
     await storageContainer?.stop();
 });
 
-async function writeTree(entries: Record<string, Record<string, unknown>>): Promise<string> {
+async function writeTree(
+    entries: Record<string, Record<string, unknown>>,
+    { images = {} }: { images?: Record<string, Buffer> } = {},
+): Promise<string> {
     const dir = await mkdtemp(join(tmpdir(), 'admin-catalog-'));
 
     for (const [slug, entry] of Object.entries(entries)) {
         await mkdir(join(dir, slug, 'images'), { recursive: true });
         await writeFile(join(dir, slug, 'exercise.json'), JSON.stringify(entry));
+        for (const [file, bytes] of Object.entries(images)) {
+            await writeFile(join(dir, slug, 'images', file), bytes);
+        }
     }
 
     return dir;
@@ -95,6 +107,22 @@ describe('seedExercises', () => {
             .where(isNull(exercises.workspaceId));
         expect(rows.find((r) => r.slug === 'admin-b')?.archivedAt).not.toBeNull();
         expect(rows.find((r) => r.slug === 'admin-a')?.archivedAt).toBeNull();
+    });
+
+    it('publishes a PNG source as a WebP object, through the production image processor', async () => {
+        const dir = await writeTree(
+            { 'admin-img': { ...entry('Img'), images: [{ file: 'a.png', caption: 'Setup' }] } },
+            { images: { 'a.png': PNG_BYTES } },
+        );
+
+        await seedExercises({ db, storage, dir });
+
+        const [image] = await db
+            .select({ storageKey: exerciseGuideImages.storageKey, contentType: exerciseGuideImages.contentType })
+            .from(exerciseGuideImages);
+        expect(image.storageKey).toMatch(/^catalog\/admin-img\/[0-9a-f]{64}\.webp$/);
+        expect(image.contentType).toBe('image/webp');
+        expect(await storage.fileExists(image.storageKey)).toBe(true);
     });
 
     it('writes nothing when any entry fails to load', async () => {
