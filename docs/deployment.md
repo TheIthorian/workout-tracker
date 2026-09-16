@@ -2,8 +2,9 @@
 
 The production topology is:
 
-- `apps/api`, `apps/mcp`, Postgres, and the file bucket on Railway.
+- `apps/api`, `apps/mcp` and Postgres on Railway.
 - `apps/web` on Cloudflare Pages.
+- Catalog images in a Cloudflare R2 bucket, served publicly through Cloudflare's CDN.
 - `/api/*` on Pages proxied to the public Railway API, keeping browser sessions first-party.
 
 Railway infrastructure is defined in `.railway/railway.ts`. It points at the GitHub repository and
@@ -41,6 +42,26 @@ external MCP clients need it, for `mcp`.
 Create a production-environment project token and add it to GitHub repository secrets as
 `RAILWAY_TOKEN`. This is needed by `.github/workflows/railway.yml`; never commit it.
 
+## 1b. Create the R2 image bucket
+
+Catalog images are published by `apps/admin seed-exercises` into an R2 bucket and read by browsers
+straight from Cloudflare, never through the API. R2's free tier (10 GB, 10 million reads a month)
+covers this comfortably.
+
+1. In the Cloudflare dashboard, R2 → Create bucket. Name it (e.g. `workout-tracker-images`), leave
+   the location automatic.
+2. Bucket → Settings → Public access. Either connect a custom domain (`images.<your domain>`, if the
+   domain is on Cloudflare — this is the only way to get CDN caching and no rate limit) or enable
+   the `r2.dev` subdomain. The `r2.dev` URL is rate-limited and uncached, but fine until there is a
+   domain. Note the resulting public URL: that is `CATALOG_IMAGE_BASE_URL`.
+3. R2 → Manage API tokens → Create API token with **Object Read & Write** on this one bucket. Note
+   the access key ID and secret access key; the token page also shows the S3 endpoint
+   (`https://<account id>.r2.cloudflarestorage.com`).
+
+Every object is written with `Cache-Control: public, max-age=31536000, immutable` — safe because
+keys are content-addressed, so a changed image is a new URL. Nothing in the bucket is private:
+`catalog/` is public by design, and there are no user uploads.
+
 ## 2. Configure Railway variables
 
 Generate a strong auth secret locally, then enter it only in Railway:
@@ -63,10 +84,12 @@ Set these on `api`:
 | `API_BASE_URL`                             | Public API origin                                      |
 | `MCP_BASE_URL`                             | Public MCP origin                                      |
 | `PROBLEM_TYPE_BASE`                        | Stable URI base, e.g. `https://api.example.com/errors` |
-| `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`    | Production S3/R2 catalog bucket                        |
-| `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Production bucket credentials                          |
-| `S3_FORCE_PATH_STYLE`                      | `false` for R2/AWS unless required by the provider     |
-| `CATALOG_IMAGE_BASE_URL`                   | Public CDN/custom domain for catalog images            |
+| `S3_ENDPOINT`                              | `https://<account id>.r2.cloudflarestorage.com`        |
+| `S3_REGION`                                | `auto` (R2 accepts nothing else)                       |
+| `S3_BUCKET`                                | The R2 bucket name from step 1b                        |
+| `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | The R2 API token from step 1b                          |
+| `S3_FORCE_PATH_STYLE`                      | `false`                                                |
+| `CATALOG_IMAGE_BASE_URL`                   | The bucket's public URL from step 1b, no trailing `/`  |
 | `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL` | Optional; blank key disables LLM features              |
 
 Set `DATABASE_URL` on `api` as a Railway reference to Postgres' private URL, using the dashboard
@@ -104,15 +127,19 @@ pnpm --filter @app/db db:generate
 
 ## 4. Publish the exercise catalog
 
-The catalog seed is idempotent and must be run manually after catalog content changes:
+The catalog seed is idempotent and must be run manually after catalog content changes. It converts
+each source image to WebP (longest side 1200 px, quality 80) on the machine running the seed — the
+API never processes images — and uploads only objects that are not already in the bucket:
 
 ```bash
 pnpm --filter @app/admin build
 DATABASE_URL='<production DATABASE_URL>' \
-S3_ENDPOINT='<production S3 endpoint>' S3_REGION='<region>' S3_BUCKET='<bucket>' \
-S3_ACCESS_KEY_ID='<access key>' S3_SECRET_ACCESS_KEY='<secret key>' \
+S3_ENDPOINT='https://<account id>.r2.cloudflarestorage.com' S3_REGION='auto' S3_BUCKET='<bucket>' \
+S3_ACCESS_KEY_ID='<access key>' S3_SECRET_ACCESS_KEY='<secret key>' S3_FORCE_PATH_STYLE=false \
 pnpm --filter @app/admin start seed-exercises
 ```
+
+Sources over 10 MB or 6000 px on a side are rejected and the seed stops before writing anything.
 
 ## 5. Deploy the web app to Cloudflare Pages
 

@@ -1,7 +1,15 @@
 import { loadCatalog } from '@app/catalog';
 import type { Db } from '@app/db';
+import { createCatalogImageProcessor } from '@app/image';
 import { CatalogSeedService, type SeedOutcome } from '@app/services';
 import type { StorageService } from '@app/storage';
+
+/**
+ * How catalog images are published. Guide illustrations are viewed at phone width, so 1200 px on
+ * the longest side is already more than the screen shows. Changing either value republishes every
+ * image (the settings are part of the storage key), so this is a deliberate, one-off choice.
+ */
+const IMAGE_PROCESSOR = createCatalogImageProcessor({ maxDimension: 1200, quality: 80 });
 
 export type SeedReport = {
     results: { slug: string; outcome: SeedOutcome }[];
@@ -25,7 +33,7 @@ export async function seedExercises({
     dir: string;
 }): Promise<SeedReport> {
     const loaded = await loadCatalog({ dir });
-    const seed = new CatalogSeedService({ db, storage });
+    const seed = new CatalogSeedService({ db, storage, processor: IMAGE_PROCESSOR });
     const results: SeedReport['results'] = [];
 
     for (const exercise of loaded) {

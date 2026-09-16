@@ -40,7 +40,8 @@ packages/
   catalog/          # Exercise content file format and loader (reads the filesystem, nothing else)
   services/         # Business logic as plain classes, no framework
   auth/             # Better Auth wiring, sign-in lockout, MCP token issuing
-  storage/          # S3/MinIO access
+  storage/          # S3/MinIO/R2 access
+  image/            # sharp-based catalog image processing; linked by apps/admin only, never the API
   llm/              # OpenAI-compatible client wrapper
   nest-common/      # Zod validation pipe, exception filter, guards, interceptors
   api-contract/     # Zod schemas for every request and response — the keystone package

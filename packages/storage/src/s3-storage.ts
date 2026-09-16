@@ -103,10 +103,17 @@ export class StorageService {
         fileStream,
         key,
         contentType,
+        cacheControl,
     }: {
         fileStream: Readable | Buffer;
         key: string;
         contentType: string;
+        /**
+         * Stored on the object and echoed as the `Cache-Control` response header by S3-compatible
+         * services and the CDNs in front of them. Only safe to make long-lived when the key is
+         * content-addressed, so a changed file is a changed URL.
+         */
+        cacheControl?: string;
     }): Promise<void> {
         this.logger.info(
             { 's3.bucket': this.bucket, 's3.key': key, 'file.contentType': contentType },
@@ -125,6 +132,7 @@ export class StorageService {
                 Key: key,
                 Body: fileStream,
                 ContentType: contentType,
+                CacheControl: cacheControl,
             },
         });
         await upload.done();

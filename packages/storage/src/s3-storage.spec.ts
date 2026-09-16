@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { Readable } from 'node:stream';
-import { S3Client, CreateBucketCommand } from '@aws-sdk/client-s3';
+import { S3Client, CreateBucketCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { createLogger } from '@app/logger';
 import { GenericContainer, type StartedTestContainer } from 'testcontainers';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -11,6 +11,7 @@ const ACCESS_KEY_ID = 'minioadmin';
 const SECRET_ACCESS_KEY = 'minioadmin';
 
 let container: StartedTestContainer;
+let endpoint: string;
 let service: StorageService;
 // Points at the same MinIO container, credentials and all, but a bucket that was never created -
 // the "storage is misconfigured" case the not-found check must NOT swallow (see the Critical
@@ -34,7 +35,7 @@ beforeAll(async () => {
         .withExposedPorts(9000)
         .start();
 
-    const endpoint = `http://${container.getHost()}:${container.getMappedPort(9000)}`;
+    endpoint = `http://${container.getHost()}:${container.getMappedPort(9000)}`;
 
     const bootstrapClient = new S3Client({
         endpoint,
@@ -100,6 +101,29 @@ describe('StorageService', () => {
 
         const downloaded = await service.downloadFile(key);
         await expect(streamToString(downloaded)).resolves.toBe('hello world');
+    });
+
+    it('uploadFileAtKey stores the Cache-Control the caller asks for', async () => {
+        const key = 'catalog/cached/image.webp';
+
+        await service.uploadFileAtKey({
+            fileStream: Buffer.from('image bytes'),
+            key,
+            contentType: 'image/webp',
+            cacheControl: 'public, max-age=31536000, immutable',
+        });
+
+        const client = new S3Client({
+            endpoint,
+            region: 'us-east-1',
+            forcePathStyle: true,
+            credentials: { accessKeyId: ACCESS_KEY_ID, secretAccessKey: SECRET_ACCESS_KEY },
+        });
+        const head = await client.send(new HeadObjectCommand({ Bucket: BUCKET, Key: key }));
+        client.destroy();
+
+        expect(head.CacheControl).toBe('public, max-age=31536000, immutable');
+        expect(head.ContentType).toBe('image/webp');
     });
 
     it('uploadFileAtKey honours the caller-chosen key rather than generating one', async () => {
