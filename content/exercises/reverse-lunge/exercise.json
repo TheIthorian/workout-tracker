@@ -1,0 +1,14 @@
+{
+    "name": "Reverse lunge",
+    "trackingType": "weight_reps",
+    "equipment": [],
+    "notes": "Bodyweight or loaded reverse lunge. Count total steps unless a routine specifies otherwise.",
+    "guide": {
+        "setup": "Stand tall with feet hip width, holding dumbbells at the sides if loaded, and brace before stepping.",
+        "execution": "Step back and lower until both knees are near 90 degrees, then push through the front foot to return to standing.",
+        "cues": "Stay tall. Keep the front shin close to vertical. Step back to a consistent length.",
+        "mistakes": "Stepping back too short; front knee collapsing inward; leaning over the front thigh; landing heavily on the rear foot."
+    },
+    "links": [],
+    "images": []
+}

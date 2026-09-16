@@ -1,0 +1,14 @@
+{
+    "name": "Incline dumbbell press",
+    "trackingType": "weight_reps",
+    "equipment": ["dumbbell", "bench"],
+    "notes": "Incline dumbbell press, bench set around 30 degrees. Record the load of one dumbbell.",
+    "guide": {
+        "setup": "Lie back on a bench inclined around 30 degrees with a dumbbell in each hand, feet planted, and shoulder blades pulled together.",
+        "execution": "Lower the dumbbells to either side of the upper chest, then press them up until the arms are straight.",
+        "cues": "Keep the upper back anchored. Keep wrists over elbows. Press evenly.",
+        "mistakes": "Setting the bench too steep; flaring elbows straight out; bouncing at the bottom; lifting the hips off the bench."
+    },
+    "links": [],
+    "images": []
+}

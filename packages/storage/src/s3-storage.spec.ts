@@ -7,35 +7,30 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { StorageService } from './s3-storage.js';
 
 const BUCKET = 'storage-test-bucket';
-const ACCESS_KEY_ID = 'minioadmin';
-const SECRET_ACCESS_KEY = 'minioadmin';
+// S3Mock ignores credentials entirely, but the AWS SDK refuses to sign a request without them.
+const ACCESS_KEY_ID = 'test';
+const SECRET_ACCESS_KEY = 'test';
 
 let container: StartedTestContainer;
 let endpoint: string;
 let service: StorageService;
-// Points at the same MinIO container, credentials and all, but a bucket that was never created -
-// the "storage is misconfigured" case the not-found check must NOT swallow (see the Critical
-// fix in `isNotFoundError`).
+// Points at the same container, credentials and all, but a bucket that was never created - the
+// "storage is misconfigured" case the not-found check must NOT swallow (see the Critical fix in
+// `isNotFoundError`).
 let wrongBucketService: StorageService;
 
 beforeAll(async () => {
-    // MinIO is already the S3-compatible service this monorepo runs in dev (see the root
-    // compose.yaml `minio` service), so the image is likely already local - this throwaway
-    // container is unrelated to any long-lived local MinIO, which must never be touched by tests.
-    // Pinned to a specific release tag per the repo's standing "everything is pinned" rule (see
-    // `packages/db`, which pins `postgres:17`). `RELEASE.2025-09-07T16-13-09Z` is the last tag
-    // published to the official `minio/minio` Docker Hub image before that repo was archived.
-    container = await new GenericContainer('minio/minio:RELEASE.2025-09-07T16-13-09Z')
-        .withEntrypoint(['bash'])
-        .withCommand([
-            '-c',
-            'mkdir -p /data/drive/test && /usr/bin/minio server /data/drive/test --console-address ":9001"',
-        ])
-        .withEnvironment({ MINIO_ROOT_USER: ACCESS_KEY_ID, MINIO_ROOT_PASSWORD: SECRET_ACCESS_KEY })
-        .withExposedPorts(9000)
+    // Not MinIO, which dev uses: MinIO removed `minio/minio` from Docker Hub on 2026-09-11, so the
+    // image cannot be pulled at all. Pinned to an exact tag per the repo's standing "everything is
+    // pinned" rule (see `packages/db`, which pins `postgres:17`). S3Mock serves HTTP on 9090.
+    // It is a JVM service, and testcontainers' 60s default is not enough for it to bind while the
+    // other packages' suites are starting their own containers alongside this one.
+    container = await new GenericContainer('adobe/s3mock:5.2.2')
+        .withExposedPorts(9090)
+        .withStartupTimeout(120_000)
         .start();
 
-    endpoint = `http://${container.getHost()}:${container.getMappedPort(9000)}`;
+    endpoint = `http://${container.getHost()}:${container.getMappedPort(9090)}`;
 
     const bootstrapClient = new S3Client({
         endpoint,
@@ -71,7 +66,7 @@ beforeAll(async () => {
         },
         logger,
     });
-}, 120_000);
+}, 180_000);
 
 afterAll(async () => {
     await container.stop();
