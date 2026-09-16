@@ -23,9 +23,12 @@ pnpm --filter @app/web preview
 
 ## Deployment
 
-Deployed to Cloudflare Pages. `wrangler.toml` sets `API_ORIGIN`, which
+Deployed to Cloudflare Pages by the `deploy-web` job in `.github/workflows/ci.yml` on every merge to
+`main`. `wrangler.toml` names the Pages project and sets `API_ORIGIN`, which
 `functions/api/[[path]].ts` reads at request time to proxy `/api/*` to the API — that proxy is what
 keeps the session cookie same-origin in production.
+
+See `docs/deployment.md` for the required Cloudflare secrets and for deploying by hand.
 
 ## Where to start in a new project
 

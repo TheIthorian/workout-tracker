@@ -143,12 +143,19 @@ Sources over 10 MB or 6000 px on a side are rejected and the seed stops before w
 
 ## 5. Deploy the web app to Cloudflare Pages
 
-Create the Pages project once, then build and deploy from the repository root:
+Create the Pages project once:
 
 ```bash
 npx wrangler pages project create workout-tracker-app-web       # first deployment only
+```
+
+After that every merge to `main` deploys the web app automatically — see CI/CD below. The project
+name and build output directory come from `apps/web/wrangler.toml`, so a manual deploy runs the same
+command CI does:
+
+```bash
 pnpm --filter @app/web build
-npx wrangler pages deploy apps/web/dist --project-name workout-tracker-app-web
+pnpm --filter @app/web exec wrangler pages deploy --branch=main
 ```
 
 Set the Pages production variable `API_ORIGIN` to the public API origin. Do not leave the
@@ -156,6 +163,15 @@ Set the Pages production variable `API_ORIGIN` to the public API origin. Do not 
 required; `VITE_API_BASE_URL` alone does not replace it.
 
 Add the exact Pages/custom web origin to the API's `AUTH_TRUSTED_ORIGINS` and `CORS_ORIGIN`.
+
+Create a Cloudflare API token with the **Cloudflare Pages: Edit** permission on this account and add
+it, along with the account id, to GitHub repository secrets as `CLOUDFLARE_API_TOKEN` and
+`CLOUDFLARE_ACCOUNT_ID`. The deploy job cannot run without them; never commit either value.
+
+If the app is built with PostHog, add `VITE_PUBLIC_POSTHOG_KEY` and `VITE_PUBLIC_POSTHOG_HOST` as
+repository secrets too. Unlike `API_ORIGIN`, these are read through `import.meta.env` and are baked
+into the bundle at build time, so a Pages variable cannot supply them — left unset, the deployed app
+simply runs without analytics.
 
 ## 6. Verify
 
@@ -175,6 +191,11 @@ Settings. The returned `mcpUrl` is the URL an MCP client connects to.
 pull requests. `checkSuites: true` makes Railway wait for repository checks before deploying API and
 MCP from `main`.
 
+Its `deploy-web` job publishes `apps/web` to Cloudflare Pages on every push to `main`, after those
+same checks pass. It deploys with the wrangler version pinned in the lockfile, so CI and a manual
+deploy run identical code, and it is serialised on a `deploy-web` concurrency group so two merges
+landing together cannot race. Nothing deploys from a pull request.
+
 `.github/workflows/railway.yml` handles infrastructure changes only:
 
 1. A pull request changing `.railway/**` receives a pinned Railway plan as a PR comment.
@@ -183,5 +204,7 @@ MCP from `main`.
 Fork pull requests are skipped because they cannot receive production secrets. Direct edits to
 Railway infrastructure should go through a pull request; direct pushes have no reviewed plan.
 
-Code deployment is automatic from `main`. Database migrations and catalog publishing remain manual
-because they change production data and should be run after reviewing the release.
+Code deployment is automatic from `main` for all three apps: Railway builds and deploys `api` and
+`mcp` from its GitHub source, and `deploy-web` publishes the SPA to Pages. Database migrations and
+catalog publishing remain manual because they change production data and should be run after
+reviewing the release.
