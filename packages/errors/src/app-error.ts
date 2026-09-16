@@ -194,6 +194,24 @@ export class ActiveSessionExistsError extends AppError {
 }
 
 /**
+ * Thrown when an image is a real image but larger than anything worth decoding, by bytes or by
+ * pixel dimensions (HTTP 413). `detail` says which limit was hit.
+ */
+export class ImageTooLargeError extends AppError {
+    constructor(detail: string) {
+        super(
+            'Image is too large',
+            buildProblem({
+                errorName: 'ImageTooLargeError',
+                title: 'Image is too large',
+                status: 413,
+                detail,
+            }),
+        );
+    }
+}
+
+/**
  * Thrown when the environment a process booted with is missing or contradictory. Always fatal at
  * startup; the status code exists only because every `AppError` carries one.
  */

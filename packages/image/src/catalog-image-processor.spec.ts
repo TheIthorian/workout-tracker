@@ -1,4 +1,4 @@
-import { InvalidFormatError } from '@app/errors';
+import { ImageTooLargeError } from '@app/errors';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 import { createCatalogImageProcessor } from './catalog-image-processor.js';
@@ -42,14 +42,14 @@ describe('createCatalogImageProcessor', () => {
 
     it('rejects a source whose pixel dimensions are unreasonable', async () => {
         await expect(processor.process(await png({ width: 7000, height: 10 }))).rejects.toBeInstanceOf(
-            InvalidFormatError,
+            ImageTooLargeError,
         );
     });
 
     it('rejects a source whose byte size is unreasonable', async () => {
         const oversized = Buffer.alloc(10 * 1024 * 1024 + 1);
 
-        await expect(processor.process(oversized)).rejects.toBeInstanceOf(InvalidFormatError);
+        await expect(processor.process(oversized)).rejects.toBeInstanceOf(ImageTooLargeError);
     });
 
     it('names its variant from the settings so a changed setting changes the storage key', () => {

@@ -5,6 +5,7 @@ import {
     ConflictError,
     EntityNotFoundError,
     ForbiddenActionError,
+    ImageTooLargeError,
     InvalidFormatError,
     InvalidOperationError,
     PROBLEM_TYPE_BASE,
@@ -55,6 +56,15 @@ describe('problem bodies', () => {
             status: 400,
         });
         expect('detail' in problem).toBe(false);
+    });
+
+    it('builds the ImageTooLarge problem body as 413', () => {
+        expect(new ImageTooLargeError('Image is 7000x10 px; neither side may exceed 6000').problem).toEqual({
+            type: `${PROBLEM_TYPE_BASE}/ImageTooLargeError`,
+            title: 'Image is too large',
+            status: 413,
+            detail: 'Image is 7000x10 px; neither side may exceed 6000',
+        });
     });
 
     it('builds the RequestValidation problem body with an errors dictionary', () => {

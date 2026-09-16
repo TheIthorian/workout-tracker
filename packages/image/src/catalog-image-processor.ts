@@ -1,4 +1,4 @@
-import { InvalidFormatError } from '@app/errors';
+import { ImageTooLargeError } from '@app/errors';
 import sharp from 'sharp';
 
 /**
@@ -23,7 +23,7 @@ const MAX_SOURCE_DIMENSION = 6000;
 /**
  * Scales the longest side down to `maxDimension` (never up), re-encodes as WebP at `quality` and
  * drops all metadata. Refuses sources over 10 MB or 6000 px on either side with an
- * `InvalidFormatError` - the file is a real image, just not one worth decoding.
+ * `ImageTooLargeError`.
  */
 export function createCatalogImageProcessor({
     maxDimension,
@@ -39,16 +39,12 @@ export function createCatalogImageProcessor({
 
         async process(source: Buffer): Promise<Buffer> {
             if (source.byteLength > MAX_SOURCE_BYTES) {
-                throw new InvalidFormatError(
-                    'Image is too large',
-                    `Image is ${source.byteLength} bytes; the limit is ${MAX_SOURCE_BYTES}`,
-                );
+                throw new ImageTooLargeError(`Image is ${source.byteLength} bytes; the limit is ${MAX_SOURCE_BYTES}`);
             }
 
             const { width, height } = await sharp(source).metadata();
             if (width > MAX_SOURCE_DIMENSION || height > MAX_SOURCE_DIMENSION) {
-                throw new InvalidFormatError(
-                    'Image is too large',
+                throw new ImageTooLargeError(
                     `Image is ${width}x${height} px; neither side may exceed ${MAX_SOURCE_DIMENSION}`,
                 );
             }
