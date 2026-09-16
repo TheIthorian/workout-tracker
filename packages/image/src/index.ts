@@ -1,1 +1,1 @@
-export { createCatalogImageProcessor, ImageTooLargeError, type ImageProcessor } from './catalog-image-processor.js';
+export { createCatalogImageProcessor, type ImageProcessor } from './catalog-image-processor.js';

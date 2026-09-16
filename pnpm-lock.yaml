@@ -751,6 +751,9 @@ importers:
 
   packages/image:
     dependencies:
+      '@app/errors':
+        specifier: workspace:*
+        version: link:../errors
       sharp:
         specifier: 0.35.4
         version: 0.35.4(@types/node@26.2.0)

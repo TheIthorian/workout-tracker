@@ -1,6 +1,7 @@
+import { InvalidFormatError } from '@app/errors';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
-import { createCatalogImageProcessor, ImageTooLargeError } from './catalog-image-processor.js';
+import { createCatalogImageProcessor } from './catalog-image-processor.js';
 
 /** A solid-colour PNG of the given size, generated rather than checked in. */
 async function png({ width, height }: { width: number; height: number }): Promise<Buffer> {
@@ -41,14 +42,14 @@ describe('createCatalogImageProcessor', () => {
 
     it('rejects a source whose pixel dimensions are unreasonable', async () => {
         await expect(processor.process(await png({ width: 7000, height: 10 }))).rejects.toBeInstanceOf(
-            ImageTooLargeError,
+            InvalidFormatError,
         );
     });
 
     it('rejects a source whose byte size is unreasonable', async () => {
         const oversized = Buffer.alloc(10 * 1024 * 1024 + 1);
 
-        await expect(processor.process(oversized)).rejects.toBeInstanceOf(ImageTooLargeError);
+        await expect(processor.process(oversized)).rejects.toBeInstanceOf(InvalidFormatError);
     });
 
     it('names its variant from the settings so a changed setting changes the storage key', () => {
