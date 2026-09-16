@@ -1,4 +1,5 @@
-import { useEffect, useState, type ComponentProps } from 'react';
+import { useEffect, useState, type ComponentProps, type ReactNode } from 'react';
+import { RpeHint } from '@/components/sessions/RpeHint';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -85,7 +86,15 @@ export function SetEditDialog({ exercise, set, isSaving, onOpenChange, onSave }:
                     {exercise.trackingType === TrackingType.DistanceTime && (
                         <SetField label="Seconds" value={durationSeconds} onChange={setDurationSeconds} required />
                     )}
-                    <SetField label="RPE" value={rpe} onChange={setRpe} step="0.5" min="0" max="10" />
+                    <SetField
+                        label="RPE"
+                        value={rpe}
+                        onChange={setRpe}
+                        step="0.5"
+                        min="0"
+                        max="10"
+                        hint={<RpeHint />}
+                    />
                 </div>
                 <label className="flex min-h-9 items-center gap-2 text-sm text-muted-foreground">
                     <Checkbox checked={isWarmup} onCheckedChange={(checked) => setWarmup(checked === true)} />
@@ -110,19 +119,25 @@ function SetField({
     value,
     onChange,
     required = false,
+    hint,
     ...inputProps
 }: {
     label: string;
     value: string;
     onChange: (value: string) => void;
     required?: boolean;
+    hint?: ReactNode;
 } & Omit<ComponentProps<typeof Input>, 'value' | 'onChange'>): JSX.Element {
     return (
         <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">
-                {label}
-                {required && <span className="text-destructive"> *</span>}
-            </Label>
+            {/* Every label row reserves the hint's height, so a hinted field still lines up with its neighbours. */}
+            <div className="flex min-h-8 items-center gap-1">
+                <Label className="text-xs text-muted-foreground">
+                    {label}
+                    {required && <span className="text-destructive"> *</span>}
+                </Label>
+                {hint}
+            </div>
             <Input
                 type="number"
                 inputMode="decimal"

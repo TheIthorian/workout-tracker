@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Check, Plus } from 'lucide-react';
 import { StepperField } from '@/components/common/StepperField';
+import { RpeHint } from '@/components/sessions/RpeHint';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TrackingType } from '@/models/exercise';
@@ -102,7 +103,7 @@ export function SetLogForm({ exercise, previousSet, isPending, onLog }: SetLogFo
                         required
                     />
                 )}
-                <StepperField label="RPE" value={rpe} onChange={setRpe} step={RPE_STEP} max={10} />
+                <StepperField label="RPE" value={rpe} onChange={setRpe} step={RPE_STEP} max={10} hint={<RpeHint />} />
             </div>
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <label className="flex min-h-11 items-center gap-2 text-sm text-muted-foreground">
