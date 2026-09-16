@@ -1,0 +1,14 @@
+{
+    "name": "Chest-supported incline row",
+    "trackingType": "weight_reps",
+    "equipment": ["dumbbell", "bench"],
+    "notes": "Prone row with the chest supported on an incline bench. Record the load of one dumbbell.",
+    "guide": {
+        "setup": "Lie chest-down on a bench inclined around 45 degrees with a dumbbell in each hand hanging under the shoulders.",
+        "execution": "Row the dumbbells toward the hips by driving the elbows back, pause, then lower to a full stretch.",
+        "cues": "Keep the chest on the bench. Pull elbows toward the back pockets. Let the shoulders reach at the bottom.",
+        "mistakes": "Peeling the chest off the bench; shrugging; yanking with momentum; cutting the bottom stretch short."
+    },
+    "links": [],
+    "images": []
+}

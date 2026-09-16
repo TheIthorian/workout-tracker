@@ -24,7 +24,7 @@ const PNG_BYTES = Buffer.from(
 
 let database: Awaited<ReturnType<typeof startTestDatabase>>;
 let db: Db;
-let minio: StartedTestContainer;
+let storageContainer: StartedTestContainer;
 let storage: StorageService;
 let seed: CatalogSeedService;
 const tempDirs: string[] = [];
@@ -33,23 +33,18 @@ beforeAll(async () => {
     database = await startTestDatabase();
     db = database.db;
 
-    minio = await new GenericContainer('minio/minio:RELEASE.2025-09-07T16-13-09Z')
-        .withEntrypoint(['bash'])
-        .withCommand([
-            '-c',
-            'mkdir -p /data/drive/test && /usr/bin/minio server /data/drive/test --console-address ":9001"',
-        ])
-        .withEnvironment({ MINIO_ROOT_USER: 'minioadmin', MINIO_ROOT_PASSWORD: 'minioadmin' })
-        .withExposedPorts(9000)
+    storageContainer = await new GenericContainer('adobe/s3mock:5.2.2')
+        .withExposedPorts(9090)
+        .withStartupTimeout(120_000)
         .start();
 
-    const endpoint = `http://${minio.getHost()}:${minio.getMappedPort(9000)}`;
+    const endpoint = `http://${storageContainer.getHost()}:${storageContainer.getMappedPort(9090)}`;
     const config = {
         endpoint,
         region: 'us-east-1',
         bucket: 'catalog-seed-test',
-        accessKeyId: 'minioadmin',
-        secretAccessKey: 'minioadmin',
+        accessKeyId: 'test',
+        secretAccessKey: 'test',
         forcePathStyle: true,
     };
     const bootstrap = new S3Client({
@@ -70,7 +65,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
     await database?.stop();
-    await minio?.stop();
+    await storageContainer?.stop();
     await Promise.all(tempDirs.map((dir) => rm(dir, { recursive: true, force: true })));
 });
 

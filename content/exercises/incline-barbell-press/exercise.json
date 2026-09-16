@@ -1,0 +1,14 @@
+{
+    "name": "Incline barbell press",
+    "trackingType": "weight_reps",
+    "equipment": ["barbell", "bench"],
+    "notes": "Incline barbell press, bench set around 30 degrees.",
+    "guide": {
+        "setup": "Lie back on a bench inclined around 30 degrees with feet planted, shoulder blades pulled together, and hands just wider than shoulder width.",
+        "execution": "Unrack over the shoulders, lower with control to the upper chest, then press up until the elbows lock.",
+        "cues": "Stay tight through the upper back. Keep wrists over elbows. Drive through the feet.",
+        "mistakes": "Setting the bench too steep; bouncing the bar; flaring elbows straight out; lifting the hips off the bench."
+    },
+    "links": [],
+    "images": []
+}

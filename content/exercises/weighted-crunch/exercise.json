@@ -1,0 +1,14 @@
+{
+    "name": "Weighted crunch",
+    "trackingType": "weight_reps",
+    "equipment": ["dumbbell"],
+    "notes": "Crunch holding a dumbbell or plate. Record the load being held.",
+    "guide": {
+        "setup": "Lie on your back with knees bent and feet flat, holding a dumbbell against the chest or over the head.",
+        "execution": "Curl the shoulder blades off the floor by shortening through the abs, then lower under control.",
+        "cues": "Move the ribs toward the hips. Keep the neck relaxed. Pause briefly at the top.",
+        "mistakes": "Pulling on the neck; hinging at the hips instead of flexing the spine; using momentum; lowering too quickly."
+    },
+    "links": [],
+    "images": []
+}
