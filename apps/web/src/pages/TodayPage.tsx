@@ -2,9 +2,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, BookOpen, Dumbbell, Play, Plus } from 'lucide-react';
 import { LoadingState } from '@/components/common/LoadingState';
 import { EmptyState } from '@/components/common/EmptyState';
+import { StartWorkoutButton } from '@/components/sessions/StartWorkoutButton';
 import { Button } from '@/components/ui/button';
 import { useRoutines } from '@/hooks/use-routines';
 import { useActiveSession, useStartSession } from '@/hooks/use-sessions';
+import { getStartWorkoutBlockedReason } from '@/lib/start-workout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 
@@ -19,9 +21,14 @@ export default function TodayPage(): JSX.Element {
     const routines =
         routinesQuery.data?.pages.flatMap((page) => page.data).filter((routine) => !routine.archivedAt) ?? [];
     const session = active.data?.session;
+    const startBlockedReason = getStartWorkoutBlockedReason({ hasActiveSession: Boolean(session) });
     const start = (routineId?: string): void => {
         startSession.mutate(routineId ? { routineId } : {}, {
             onSuccess: (created) => navigate(`/sessions/${created.id}`),
+            // Another tab or an MCP client can open a workout between this page's last read and the
+            // tap. The shared HTTP client has already surfaced the problem detail, so all that is
+            // left is to catch this page up so the controls explain themselves from now on.
+            onError: () => void active.refetch(),
         });
     };
     return (
@@ -102,16 +109,17 @@ export default function TodayPage(): JSX.Element {
                                                     {routine.exerciseCount === 1 ? 'movement' : 'movements'}
                                                 </span>
                                             </Link>
-                                            <Button
+                                            <StartWorkoutButton
                                                 size="sm"
                                                 variant="outline"
-                                                disabled={startSession.isPending || Boolean(session)}
-                                                onClick={() => start(routine.id)}
+                                                blockedReason={startBlockedReason}
+                                                disabled={startSession.isPending}
+                                                onStart={() => start(routine.id)}
                                                 aria-label={`Start ${routine.name}`}
                                             >
                                                 <Play />
                                                 <span className="hidden sm:inline">Start</span>
-                                            </Button>
+                                            </StartWorkoutButton>
                                         </li>
                                     ))}
                                 </ul>

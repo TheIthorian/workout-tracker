@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Archive, ArchiveRestore, ArrowLeft, Pencil, Play, Plus } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowLeft, ArrowRight, Pencil, Play, Plus } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { LoadingState } from '@/components/common/LoadingState';
 import { ExercisePickerSheet } from '@/components/routines/ExercisePickerSheet';
 import { RoutineExerciseList } from '@/components/routines/RoutineExerciseList';
 import { RoutineExerciseTargetsForm } from '@/components/routines/RoutineExerciseTargetsForm';
+import { StartWorkoutButton } from '@/components/sessions/StartWorkoutButton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,8 +30,9 @@ import {
     useUpdateRoutine,
     useUpdateRoutineExercise,
 } from '@/hooks/use-routines';
-import { useStartSession } from '@/hooks/use-sessions';
+import { useActiveSession, useStartSession } from '@/hooks/use-sessions';
 import { toast } from '@/hooks/use-toast';
+import { getStartWorkoutBlockedReason } from '@/lib/start-workout';
 import type { Exercise } from '@/models/exercise';
 import type { PatchRoutineExerciseRequest, RoutineExercise, SaveRoutineExerciseRequest } from '@/models/routine';
 import NotFoundError from '@/pages/NotFoundError';
@@ -60,6 +62,7 @@ export default function RoutineDetailPage(): JSX.Element {
     const removeExercise = useRemoveRoutineExercise({ workspaceId, routineId });
     const replaceExercises = useReplaceRoutineExercises({ workspaceId, routineId });
     const startSession = useStartSession({ workspaceId });
+    const activeSession = useActiveSession({ workspaceId });
 
     if (isLoading) {
         return (
@@ -73,6 +76,11 @@ export default function RoutineDetailPage(): JSX.Element {
 
     const selected = routine.exercises.find((slot) => slot.id === selectedId) ?? null;
     const isArchived = routine.archivedAt !== null;
+    const sessionInProgress = activeSession.data?.session ?? null;
+    const startBlockedReason = getStartWorkoutBlockedReason({
+        hasActiveSession: sessionInProgress !== null,
+        isRoutineArchived: isArchived,
+    });
 
     const openDetails = (): void => {
         setNameDraft(routine.name);
@@ -111,8 +119,10 @@ export default function RoutineDetailPage(): JSX.Element {
             { routineId },
             {
                 onSuccess: (session) => navigate(`/sessions/${session.id}`),
-                onError: (error) =>
-                    toast({ title: 'Could not start workout', description: error.message, variant: 'destructive' }),
+                // Another tab or an MCP client can open a workout between this page's last read and
+                // the tap. The shared HTTP client has already surfaced the problem detail, so all
+                // that is left is to catch this page up so the control explains itself from now on.
+                onError: () => void activeSession.refetch(),
             },
         );
     };
@@ -216,10 +226,15 @@ export default function RoutineDetailPage(): JSX.Element {
                     )}
                 </div>
                 <div className="flex gap-2">
-                    <Button onClick={startWorkout} disabled={isArchived || startSession.isPending} className="gap-2">
+                    <StartWorkoutButton
+                        blockedReason={startBlockedReason}
+                        onStart={startWorkout}
+                        disabled={startSession.isPending || activeSession.isLoading}
+                        className="gap-2"
+                    >
                         <Play className="h-4 w-4" aria-hidden />
                         {startSession.isPending ? 'Starting…' : 'Start workout'}
-                    </Button>
+                    </StartWorkoutButton>
                     <Button variant="outline" className="gap-2" onClick={openDetails}>
                         <Pencil className="h-4 w-4" aria-hidden />
                         Edit
@@ -239,6 +254,24 @@ export default function RoutineDetailPage(): JSX.Element {
                     </Button>
                 </div>
             </div>
+
+            {sessionInProgress && (
+                <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-secondary/50 p-4">
+                    <p className="text-sm text-muted-foreground">
+                        <span className="font-medium text-foreground">{sessionInProgress.name}</span> is still in
+                        progress. Finish or abandon it to start another workout.
+                    </p>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => navigate(`/sessions/${sessionInProgress.id}`)}
+                    >
+                        <ArrowRight className="h-4 w-4" aria-hidden />
+                        Resume workout
+                    </Button>
+                </div>
+            )}
 
             <div className="mt-8 grid gap-8 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
                 <section>
