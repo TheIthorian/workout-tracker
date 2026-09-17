@@ -82,7 +82,11 @@ export function SessionExerciseCard({
             } ${isSkipped ? 'opacity-60' : ''}`}
         >
             <div className="flex items-center gap-3">
-                <TrackingTypeIcon type={exercise.trackingType} className="h-10 w-10 shrink-0" iconClassName="h-5 w-5" />
+                <TrackingTypeIcon
+                    type={exercise.trackingType}
+                    className="mt-0.5 h-10 w-10 shrink-0 self-start"
+                    iconClassName="h-5 w-5"
+                />
                 <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                         <h2 className="font-heading text-xl leading-tight">{exercise.exercise.name}</h2>
