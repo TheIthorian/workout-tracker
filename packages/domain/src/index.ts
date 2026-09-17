@@ -3,6 +3,7 @@ export { Equipment, OnboardingStage } from './equipment.js';
 export {
     DEFAULT_SET_WORK_SECONDS,
     SECONDS_PER_REP,
+    SETUP_SECONDS_PER_EXERCISE,
     estimateRemainingSessionSeconds,
     estimateRoutineSeconds,
     type RoutineSlotLike,

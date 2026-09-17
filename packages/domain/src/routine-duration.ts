@@ -20,6 +20,12 @@ export const SECONDS_PER_REP = 4;
 export const DEFAULT_SET_WORK_SECONDS = 40;
 
 /**
+ * Seconds allowed per exercise for finding the station, loading or adjusting the equipment, and
+ * getting set. Charged once per exercise, and only for one not already under way.
+ */
+export const SETUP_SECONDS_PER_EXERCISE = 60;
+
+/**
  * Estimated seconds to work through a routine: every set's working time, plus a rest after each set
  * bar the routine's last, falling back to `DEFAULT_REST_SECONDS` where a slot sets none. Rest is the
  * larger half of most routines, and it is taken moving between exercises as much as between sets, so
@@ -28,14 +34,11 @@ export const DEFAULT_SET_WORK_SECONDS = 40;
  * A slot that names only its set count still costs `DEFAULT_SET_WORK_SECONDS` a set: those sets get
  * done, and estimating them at zero hides the estimate entirely on a routine written that way. Only
  * a slot with no sets at all is free.
+ *
+ * Each exercise also costs `SETUP_SECONDS_PER_EXERCISE` to walk to and set up.
  */
 export function estimateRoutineSeconds(slots: RoutineSlotLike[]): number {
-    const working = slots.filter((slot) => slotWorkSeconds(slot) > 0);
-    if (working.length === 0) return 0;
-
-    const total = working.reduce((sum, slot) => sum + slotSeconds(slot), 0);
-
-    return total - restSecondsFor(working[working.length - 1]);
+    return totalSeconds(slots.map((slot) => ({ ...slot, needsSetup: true })));
 }
 
 function slotSeconds(slot: RoutineSlotLike): number {
@@ -76,8 +79,24 @@ export type SessionSlotLike = RoutineSlotLike & {
 export function estimateRemainingSessionSeconds(slots: SessionSlotLike[]): number {
     const outstanding = slots
         .filter((slot) => slot.skippedAt === null)
-        .map((slot) => ({ ...slot, targetSets: Math.max(0, slot.targetSets - slot.loggedWorkingSets) }))
+        .map((slot) => ({
+            ...slot,
+            targetSets: Math.max(0, slot.targetSets - slot.loggedWorkingSets),
+            needsSetup: slot.loggedWorkingSets === 0,
+        }))
         .filter((slot) => slot.targetSets > 0);
 
-    return estimateRoutineSeconds(outstanding);
+    return totalSeconds(outstanding);
+}
+
+function totalSeconds(slots: (RoutineSlotLike & { needsSetup: boolean })[]): number {
+    const working = slots.filter((slot) => slotWorkSeconds(slot) > 0);
+    if (working.length === 0) return 0;
+
+    const total = working.reduce(
+        (sum, slot) => sum + slotSeconds(slot) + (slot.needsSetup ? SETUP_SECONDS_PER_EXERCISE : 0),
+        0,
+    );
+
+    return total - restSecondsFor(working[working.length - 1]);
 }
