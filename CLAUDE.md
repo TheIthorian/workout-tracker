@@ -96,6 +96,9 @@ version), revert it and re-apply only the intended lines.
 docker compose up -d       # Postgres, MinIO
 ```
 
+This Postgres also backs the test suite: `pnpm test` creates a throwaway database per spec file on
+it and drops it afterwards, never touching the `app` database dev data lives in. See "Testing".
+
 Data lives in **bind mounts outside the repo**, never named volumes and never inside the tree, so
 neither `docker compose down -v` nor a git purge can wipe it. The location is `DATA_DIR` in the
 root `.env` (copy `.env.example`); no path is hard-coded in `docker-compose.yml`. Delete that
@@ -155,7 +158,7 @@ scoped by user and an unpinned token would otherwise reach every workspace its o
 **Drizzle authors the schema.** `packages/db/src/schema/` is the source of truth; run
 `pnpm --filter @app/db db:generate` after any change and commit the generated SQL in
 `packages/db/drizzle/`. Those migration files are what `db:migrate` applies to a deployment and what
-the test fixture applies to its throwaway container, so a test database cannot drift from
+the test fixture applies to each throwaway test database, so a test database cannot drift from
 production.
 
 Read the generated SQL before applying it — especially any `DROP`. `drizzle-kit` will happily
@@ -337,15 +340,16 @@ output in review.
 - **Co-locate test files** — place `*.spec.ts` files next to the source file they test. The vitest
   config picks up `src/**/*.spec.ts`; the build tsconfig excludes them from the production output.
   `apps/api`'s end-to-end specs live in `apps/api/test/` instead, because they boot the whole app.
-- **Integration tests use the real database** — they run against a real Postgres via testcontainers
-  (`startTestDatabase` in `@app/db/testing`, which applies the committed migrations); never mock the
-  database layer. A mocked DB layer cannot tell you whether a query actually matches the schema.
-- **One container per vitest run, one database per spec file.** `@app/db/testing`'s `global-setup.ts`
-  starts the container and migrates a template database once; `startTestDatabase` then clones that
-  template, so a spec file costs a `CREATE DATABASE` rather than a container start and a full
-  migration. A package whose tests need a database wires both `globalSetup` and `setupFiles` into its
-  `vitest.config.ts` (copy an existing pair of `vitest.global-setup.ts` / `vitest.setup.ts`); without
-  them the fixture still works, it just starts a container of its own per file.
+- **Integration tests use the real database** — `startTestDatabase` in `@app/db/testing` creates a
+  fresh, randomly-named database per spec file and applies the committed migrations to it; never
+  mock the database layer. A mocked DB layer cannot tell you whether a query actually matches the
+  schema.
+- **The test Postgres is already running; the suite does not start one.** `TEST_DATABASE_URL` names
+  a server and its `postgres` maintenance database — `docker compose`'s dev Postgres locally (the
+  default, so `docker compose up -d` is all a developer needs), a service container in CI. Never
+  point it at `DATABASE_URL`: that names the `app` database real dev data lives in, and this fixture
+  creates and drops databases on whatever server it is given. A package whose tests need a database
+  needs no vitest wiring at all — `startTestDatabase()` is the whole interface.
 - **Test the tenancy boundary explicitly.** Every workspace-scoped service and route needs a test
   proving a caller in workspace A cannot read or write workspace B's rows, and that the refusal is a 404.
 - **No I/O in `packages/domain`** — its unit tests run with no database and no network by
@@ -357,8 +361,9 @@ output in review.
   tested against a value it wasn't started with, and gives the owning app a second, hidden source
   of truth for its own configuration. `packages/logger` enforces this on itself with a source-scan
   test (`no-env-access.spec.ts`) — follow that pattern in any new package that could be tempted to
-  reach for `process.env` as a shortcut. `packages/db/drizzle.config.ts` is the one exception: it
-  configures a CLI, which has no app to be configured by.
+  reach for `process.env` as a shortcut. `packages/db/drizzle.config.ts` and
+  `packages/db/src/testing/postgres-fixture.ts` are the exceptions: one configures a CLI and the
+  other the test runner, and neither has an app to be configured by.
 
 ### Error Handling
 

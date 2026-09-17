@@ -12,10 +12,6 @@
         "./testing": {
             "types": "./dist/testing/index.d.ts",
             "default": "./dist/testing/index.js"
-        },
-        "./testing/global-setup": {
-            "types": "./dist/testing/global-setup.d.ts",
-            "default": "./dist/testing/global-setup.js"
         }
     },
     "scripts": {
@@ -37,11 +33,9 @@
     "devDependencies": {
         "@app/logger": "workspace:*",
         "@app/tsconfig": "workspace:*",
-        "@testcontainers/postgresql": "12.1.0",
         "@types/node": "26.2.0",
         "@types/pg": "8.23.1",
         "drizzle-kit": "0.31.10",
-        "testcontainers": "12.1.0",
         "typescript": "6.0.3",
         "vitest": "4.1.10"
     }

@@ -19,9 +19,29 @@ jobs:
       # Turbo replays the cached result of any task whose inputs are unchanged, so a web-only
       # change does not re-run the backend suites.
       TURBO_CACHE_DIR: .turbo
-      # The runner is thrown away after the job, so there is nothing for Ryuk to reap and no
-      # reason to start it alongside every test container.
+      # `packages/storage` still starts an S3Mock container of its own. The runner is thrown away
+      # after the job, so there is nothing for Ryuk to reap.
       TESTCONTAINERS_RYUK_DISABLED: true
+      # The service below, reached through its `postgres` maintenance database. Every suite creates
+      # and drops a database of its own on it; none of them touch an `app` database.
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+
+    # The one Postgres the whole job's suites share, in place of a container started per spec file.
+    # It is up and healthy before the first step runs.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       - uses: actions/checkout@v4
 
