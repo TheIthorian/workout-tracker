@@ -340,6 +340,12 @@ output in review.
 - **Integration tests use the real database** — they run against a real Postgres via testcontainers
   (`startTestDatabase` in `@app/db/testing`, which applies the committed migrations); never mock the
   database layer. A mocked DB layer cannot tell you whether a query actually matches the schema.
+- **One container per vitest run, one database per spec file.** `@app/db/testing`'s `global-setup.ts`
+  starts the container and migrates a template database once; `startTestDatabase` then clones that
+  template, so a spec file costs a `CREATE DATABASE` rather than a container start and a full
+  migration. A package whose tests need a database wires both `globalSetup` and `setupFiles` into its
+  `vitest.config.ts` (copy an existing pair of `vitest.global-setup.ts` / `vitest.setup.ts`); without
+  them the fixture still works, it just starts a container of its own per file.
 - **Test the tenancy boundary explicitly.** Every workspace-scoped service and route needs a test
   proving a caller in workspace A cannot read or write workspace B's rows, and that the refusal is a 404.
 - **No I/O in `packages/domain`** — its unit tests run with no database and no network by
