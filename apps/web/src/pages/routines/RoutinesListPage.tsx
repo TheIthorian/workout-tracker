@@ -1,6 +1,6 @@
 import { useState, type ChangeEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronRight, Plus, Search } from 'lucide-react';
+import { ChevronRight, Clock, Plus, Search } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { LoadingState } from '@/components/common/LoadingState';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useCreateRoutine, useRoutines } from '@/hooks/use-routines';
 import { toast } from '@/hooks/use-toast';
-import type { Routine } from '@/models/routine';
+import { formatEstimatedDuration, type Routine } from '@/models/routine';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 
 /** The user's routines: a searchable single-column list, with creation leading straight into the editor. */
@@ -178,6 +178,7 @@ export default function RoutinesListPage(): JSX.Element {
 
 function RoutineRow({ routine }: { routine: Routine }): JSX.Element {
     const count = routine.exerciseCount;
+    const estimatedDuration = formatEstimatedDuration(routine.estimatedDurationSeconds);
 
     return (
         <li>
@@ -187,8 +188,15 @@ function RoutineRow({ routine }: { routine: Routine }): JSX.Element {
             >
                 <span className="min-w-0 flex-1">
                     <span className="block truncate font-medium text-foreground">{routine.name}</span>
-                    <span className="block text-xs text-muted-foreground">
-                        {count === 1 ? '1 exercise' : `${count} exercises`}
+                    <span className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                        <span>{count === 1 ? '1 exercise' : `${count} exercises`}</span>
+                        {estimatedDuration !== null && (
+                            <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3 shrink-0" aria-hidden />
+                                <span className="sr-only">Estimated total time:</span>
+                                {estimatedDuration}
+                            </span>
+                        )}
                     </span>
                 </span>
                 <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />

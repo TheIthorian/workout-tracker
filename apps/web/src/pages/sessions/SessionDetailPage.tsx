@@ -1,6 +1,7 @@
+import { estimateRemainingSessionSeconds, workingSetCount } from '@app/domain';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { BookOpen, CheckCircle2, Plus } from 'lucide-react';
+import { BookOpen, CheckCircle2, Clock, Plus } from 'lucide-react';
 import { ExerciseGuide } from '@/components/exercises/ExerciseGuide';
 import { LoadingState } from '@/components/common/LoadingState';
 import { ExercisePickerSheet } from '@/components/routines/ExercisePickerSheet';
@@ -32,6 +33,7 @@ import {
     useUpdateSessionSet,
 } from '@/hooks/use-sessions';
 import { toast } from '@/hooks/use-toast';
+import { formatEstimatedDuration } from '@/models/routine';
 import type { PatchSetRequest, SessionExercise, SessionSet } from '@/models/session';
 import NotFoundError from '@/pages/NotFoundError';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
@@ -71,6 +73,21 @@ export default function SessionDetailPage(): JSX.Element {
     if (isError || !session) return <NotFoundError />;
 
     const isComplete = session.completedAt !== null;
+    const remainingDuration = isComplete
+        ? null
+        : formatEstimatedDuration(
+              estimateRemainingSessionSeconds(
+                  session.exercises.map((exercise) => ({
+                      trackingType: exercise.trackingType,
+                      targetSets: exercise.targetSets,
+                      targetReps: exercise.targetReps,
+                      targetDurationSeconds: exercise.targetDurationSeconds,
+                      restSeconds: exercise.restSeconds,
+                      skippedAt: exercise.skippedAt,
+                      loggedWorkingSets: workingSetCount(exercise),
+                  })),
+              ),
+          );
     const handleAdd = (exercise: { id: string; name: string }): void => {
         if (addExercise.isPending || isComplete) return;
         addExercise.mutate(
@@ -158,8 +175,18 @@ export default function SessionDetailPage(): JSX.Element {
                         {isComplete ? 'Completed workout' : 'Workout in progress'}
                     </p>
                     <h1 className="font-heading text-3xl">{session.name}</h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        {session.state.progress.loggedSets} of {session.state.progress.targetSets} working sets logged
+                    <p className="mt-1 flex flex-wrap items-center gap-x-3 text-sm text-muted-foreground">
+                        <span>
+                            {session.state.progress.loggedSets} of {session.state.progress.targetSets} working sets
+                            logged
+                        </span>
+                        {remainingDuration !== null && (
+                            <span className="flex items-center gap-1">
+                                <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                                <span className="sr-only">Estimated time remaining:</span>
+                                {remainingDuration} left
+                            </span>
+                        )}
                     </p>
                 </div>
                 {!isComplete && (

@@ -1,5 +1,12 @@
 export { Decimal } from './decimal.js';
 export { Equipment, OnboardingStage } from './equipment.js';
+export {
+    SECONDS_PER_REP,
+    estimateRemainingSessionSeconds,
+    estimateRoutineSeconds,
+    type RoutineSlotLike,
+    type SessionSlotLike,
+} from './routine-duration.js';
 export { DEFAULT_REST_SECONDS, resolveRestSeconds, restTimer, sessionRestTimer, type RestTimer } from './rest-timer.js';
 export {
     SessionExerciseSource,

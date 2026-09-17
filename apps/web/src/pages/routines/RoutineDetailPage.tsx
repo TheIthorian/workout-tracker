@@ -35,7 +35,6 @@ import { toast } from '@/hooks/use-toast';
 import { getStartWorkoutBlockedReason } from '@/lib/start-workout';
 import type { Exercise } from '@/models/exercise';
 import {
-    estimateRoutineSeconds,
     formatEstimatedDuration,
     type PatchRoutineExerciseRequest,
     type RoutineExercise,
@@ -82,7 +81,7 @@ export default function RoutineDetailPage(): JSX.Element {
 
     const selected = routine.exercises.find((slot) => slot.id === selectedId) ?? null;
     const isArchived = routine.archivedAt !== null;
-    const estimatedDuration = formatEstimatedDuration(estimateRoutineSeconds(routine.exercises));
+    const estimatedDuration = formatEstimatedDuration(routine.estimatedDurationSeconds);
     const sessionInProgress = activeSession.data?.session ?? null;
     const startBlockedReason = getStartWorkoutBlockedReason({
         hasActiveSession: sessionInProgress !== null,
