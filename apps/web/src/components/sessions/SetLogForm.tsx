@@ -29,7 +29,7 @@ export function SetLogForm({ exercise, previousSet, isPending, onLog }: SetLogFo
     );
     const [distanceM, setDistanceM] = useState(previousSet?.distanceM ?? exercise.targetDistanceM);
     const [isWarmup, setWarmup] = useState(false);
-    const [rpe, setRpe] = useState<number | null>(null);
+    const [rpe, setRpe] = useState(previousSet?.rpe ?? null);
 
     useEffect(() => {
         setWeightKg(previousSet?.weightKg ?? exercise.targetWeightKg);
@@ -37,7 +37,7 @@ export function SetLogForm({ exercise, previousSet, isPending, onLog }: SetLogFo
         setDurationSeconds(previousSet?.durationSeconds ?? exercise.targetDurationSeconds);
         setDistanceM(previousSet?.distanceM ?? exercise.targetDistanceM);
         setWarmup(false);
-        setRpe(null);
+        setRpe(previousSet?.rpe ?? null);
     }, [
         exercise.id,
         exercise.targetDistanceM,
@@ -47,6 +47,7 @@ export function SetLogForm({ exercise, previousSet, isPending, onLog }: SetLogFo
         previousSet?.distanceM,
         previousSet?.durationSeconds,
         previousSet?.reps,
+        previousSet?.rpe,
         previousSet?.weightKg,
     ]);
 
