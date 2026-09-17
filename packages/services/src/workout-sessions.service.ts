@@ -4,6 +4,7 @@ import {
     resolveRestSeconds,
     SessionExerciseSource,
     validateSetMeasurements,
+    type Equipment,
     type SetMeasurements,
     type TrackingType,
 } from '@app/domain';
@@ -58,7 +59,7 @@ export type SessionExercise = SessionExerciseTargets & {
     source: SessionExerciseSource;
     trackingType: TrackingType;
     skippedAt: string | null;
-    exercise: { id: string; name: string; isCatalog: boolean; archivedAt: string | null };
+    exercise: { id: string; name: string; isCatalog: boolean; equipment: Equipment[]; archivedAt: string | null };
     sets: SessionSet[];
 };
 export type SessionDetail = SessionSummary & {
@@ -696,6 +697,7 @@ export class WorkoutSessionsService {
                     id: exercises.id,
                     name: exercises.name,
                     isCatalog: sql<boolean>`${exercises.workspaceId} is null`,
+                    equipment: exercises.equipment,
                     archivedAt: exercises.archivedAt,
                 },
             })

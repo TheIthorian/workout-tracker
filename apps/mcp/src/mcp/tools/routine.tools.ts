@@ -90,7 +90,8 @@ export function buildRoutineTools({
             methodName: 'GetRoutine',
             description:
                 'Gets a routine by id: its name, description, and ordered exercises, each with the exercise ' +
-                '(id, name, trackingType, isCatalog, archivedAt) and its targets. Includes webUrl.',
+                '(id, name, trackingType, isCatalog, equipment, archivedAt) and its targets. An empty equipment ' +
+                'list means the movement is bodyweight. Includes webUrl.',
             inputSchema: getRoutineToolArgsSchema,
             handler: async (args) => {
                 const routine = await client.get<RoutineDetailResponse>({ path: `${basePath}/${args.routineId}` });

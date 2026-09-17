@@ -1,3 +1,4 @@
+import type { Equipment } from './equipment';
 import { TrackingType } from './exercise';
 
 /** One recorded set in a workout session. Measurements use kg, metres, and seconds. */
@@ -27,7 +28,7 @@ export type SessionExercise = {
     targetWeightKg: number | null;
     targetDurationSeconds: number | null;
     targetDistanceM: number | null;
-    exercise: { id: string; name: string; isCatalog: boolean; archivedAt: string | null };
+    exercise: { id: string; name: string; isCatalog: boolean; equipment: Equipment[]; archivedAt: string | null };
     sets: SessionSet[];
 };
 

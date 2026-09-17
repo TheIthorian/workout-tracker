@@ -1,3 +1,4 @@
+import { TrackingTypeIcon } from '@/components/exercises/TrackingTypeIcon';
 import { cn } from '@/lib/utils';
 import { TRACKING_TYPE_META, TrackingType } from '@/models/exercise';
 
@@ -17,12 +18,10 @@ export function TrackingTypeLegendStrip({ className }: TrackingTypeLegendProps):
             <h2 className="sr-only">{LEGEND_TITLE}</h2>
             <ul className="grid grid-cols-3 gap-2">
                 {Object.values(TrackingType).map((type) => {
-                    const { icon: Icon, label } = TRACKING_TYPE_META[type];
+                    const { label } = TRACKING_TYPE_META[type];
                     return (
                         <li key={type} className="flex flex-col items-center gap-1.5 text-center">
-                            <span data-type={type} className="exercise-icon h-9 w-9 rounded-lg">
-                                <Icon className="h-4 w-4" aria-hidden />
-                            </span>
+                            <TrackingTypeIcon type={type} decorative />
                             <span className="text-[11px] leading-tight text-muted-foreground">{label}</span>
                         </li>
                     );
@@ -39,12 +38,10 @@ export function TrackingTypeLegendCard({ className }: TrackingTypeLegendProps): 
             <h2 className="mb-4 text-sm font-semibold tracking-normal">{LEGEND_TITLE}</h2>
             <ul className="space-y-4">
                 {Object.values(TrackingType).map((type) => {
-                    const { icon: Icon, label } = TRACKING_TYPE_META[type];
+                    const { label } = TRACKING_TYPE_META[type];
                     return (
                         <li key={type} className="flex items-center gap-3">
-                            <span data-type={type} className="exercise-icon h-9 w-9 rounded-lg">
-                                <Icon className="h-4 w-4" aria-hidden />
-                            </span>
+                            <TrackingTypeIcon type={type} decorative />
                             <span className="text-xs text-muted-foreground">{label}</span>
                         </li>
                     );
