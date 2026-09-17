@@ -81,12 +81,8 @@ export function SessionExerciseCard({
                 isCurrent ? 'border-primary ring-1 ring-primary/25' : 'border-border'
             } ${isSkipped ? 'opacity-60' : ''}`}
         >
-            <div className="flex items-start gap-3">
-                <TrackingTypeIcon
-                    type={exercise.trackingType}
-                    className="mt-0.5 h-10 w-10 shrink-0"
-                    iconClassName="h-5 w-5"
-                />
+            <div className="flex items-center gap-3">
+                <TrackingTypeIcon type={exercise.trackingType} className="h-10 w-10 shrink-0" iconClassName="h-5 w-5" />
                 <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                         <h2 className="font-heading text-xl leading-tight">{exercise.exercise.name}</h2>
@@ -116,12 +112,6 @@ export function SessionExerciseCard({
                             </button>
                         )}
                     </p>
-                    <EquipmentChips equipment={exercise.exercise.equipment} className="mt-2" />
-                    {lastWorkoutSet && !isReadOnly && (
-                        <p className="mt-1 text-xs text-muted-foreground">
-                            Last workout: {describeSet({ exercise, set: lastWorkoutSet })}
-                        </p>
-                    )}
                 </div>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -155,6 +145,14 @@ export function SessionExerciseCard({
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
+
+            <EquipmentChips equipment={exercise.exercise.equipment} className="mt-3" />
+
+            {lastWorkoutSet && !isReadOnly && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                    Last workout: {describeSet({ exercise, set: lastWorkoutSet })}
+                </p>
+            )}
 
             {exercise.notes && (
                 <p className="mt-3 whitespace-pre-line text-sm text-muted-foreground">{exercise.notes}</p>
