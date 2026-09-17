@@ -65,8 +65,17 @@ describe('estimateRoutineSeconds', () => {
         expect(estimateRoutineSeconds([{ ...repped, targetSets: 0, targetReps: null }])).toBe(0);
     });
 
-    it('sums every slot in the routine', () => {
-        expect(estimateRoutineSeconds([repped, timed])).toBe(3 * 8 * SECONDS_PER_REP + 2 * 120 + (3 * 60 + 2 * 30));
+    it('sums every slot, resting between them as well as between sets', () => {
+        // Three rests inside `repped` — two between its sets and one moving on to `timed` — then two
+        // inside `timed`, and none after the routine's final set.
+        expect(estimateRoutineSeconds([repped, timed])).toBe(3 * 8 * SECONDS_PER_REP + 3 * 120 + (3 * 60 + 2 * 30));
+    });
+
+    it('rests on the way out of an exercise, not after the last set of the routine', () => {
+        const pair = estimateRoutineSeconds([repped, repped]);
+        const single = estimateRoutineSeconds([repped]);
+
+        expect(pair - 2 * single).toBe(120);
     });
 });
 

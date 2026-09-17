@@ -20,29 +20,36 @@ export const SECONDS_PER_REP = 4;
 export const DEFAULT_SET_WORK_SECONDS = 40;
 
 /**
- * Estimated seconds to work through a routine: each slot's working time plus the rest between its
- * sets, falling back to `DEFAULT_REST_SECONDS` where a slot sets none. Warm-ups, setup, and moving
- * between stations are deliberately not modelled, so a real session runs longer than this.
+ * Estimated seconds to work through a routine: every set's working time, plus a rest after each set
+ * bar the routine's last, falling back to `DEFAULT_REST_SECONDS` where a slot sets none. Rest is the
+ * larger half of most routines, and it is taken moving between exercises as much as between sets, so
+ * the rest after a slot's final set counts too. Warm-ups and setup are still not modelled.
  *
  * A slot that names only its set count still costs `DEFAULT_SET_WORK_SECONDS` a set: those sets get
  * done, and estimating them at zero hides the estimate entirely on a routine written that way. Only
  * a slot with no sets at all is free.
  */
 export function estimateRoutineSeconds(slots: RoutineSlotLike[]): number {
-    return slots.reduce((total, slot) => total + slotSeconds(slot), 0);
+    const working = slots.filter((slot) => slotWorkSeconds(slot) > 0);
+    if (working.length === 0) return 0;
+
+    const total = working.reduce((sum, slot) => sum + slotSeconds(slot), 0);
+
+    return total - restSecondsFor(working[working.length - 1]);
 }
 
 function slotSeconds(slot: RoutineSlotLike): number {
-    const workSeconds = slotWorkSeconds(slot);
-    if (!Number.isFinite(workSeconds) || workSeconds <= 0) return 0;
+    return slotWorkSeconds(slot) + slot.targetSets * restSecondsFor(slot);
+}
 
-    const restSeconds = slot.restSeconds ?? DEFAULT_REST_SECONDS;
-
-    return workSeconds + Math.max(0, slot.targetSets - 1) * restSeconds;
+function restSecondsFor(slot: RoutineSlotLike): number {
+    return slot.restSeconds ?? DEFAULT_REST_SECONDS;
 }
 
 function slotWorkSeconds(slot: RoutineSlotLike): number {
-    return slot.targetSets * perSetSeconds(slot);
+    const seconds = slot.targetSets * perSetSeconds(slot);
+
+    return Number.isFinite(seconds) && seconds > 0 ? seconds : 0;
 }
 
 function perSetSeconds(slot: RoutineSlotLike): number {
