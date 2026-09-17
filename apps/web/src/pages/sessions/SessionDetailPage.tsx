@@ -1,7 +1,7 @@
 import { estimateRemainingSessionSeconds, workingSetCount } from '@app/domain';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { BookOpen, CheckCircle2, Clock, Plus } from 'lucide-react';
+import { BookOpen, CheckCircle2, ClipboardCopy, Clock, Plus } from 'lucide-react';
 import { ExerciseGuide } from '@/components/exercises/ExerciseGuide';
 import { LoadingState } from '@/components/common/LoadingState';
 import { ExercisePickerSheet } from '@/components/routines/ExercisePickerSheet';
@@ -33,6 +33,7 @@ import {
     useUpdateSessionSet,
 } from '@/hooks/use-sessions';
 import { toast } from '@/hooks/use-toast';
+import { buildSessionSummary } from '@/lib/session-summary';
 import { formatEstimatedDuration } from '@/models/routine';
 import type { PatchSetRequest, SessionExercise, SessionSet } from '@/models/session';
 import NotFoundError from '@/pages/NotFoundError';
@@ -138,6 +139,19 @@ export default function SessionDetailPage(): JSX.Element {
                 toast({ title: 'Could not abandon workout', description: error.message, variant: 'destructive' }),
         });
     };
+    const handleCopySummary = async (): Promise<void> => {
+        try {
+            await navigator.clipboard.writeText(buildSessionSummary(session));
+
+            toast({ title: 'Summary copied', description: 'Paste it into your chat with an agent.' });
+        } catch {
+            toast({
+                title: 'Could not copy summary',
+                description: 'Your browser blocked clipboard access.',
+                variant: 'destructive',
+            });
+        }
+    };
     const handleUpdateSet = (data: PatchSetRequest): void => {
         if (!setToEdit) return;
         updateSet.mutate(
@@ -189,21 +203,27 @@ export default function SessionDetailPage(): JSX.Element {
                         )}
                     </p>
                 </div>
-                {!isComplete && (
-                    <div className="flex gap-2">
-                        <Button variant="ghost" onClick={() => setAbandonOpen(true)} disabled={abandon.isPending}>
-                            Abandon
-                        </Button>
-                        <Button
-                            onClick={() => setCompleteOpen(true)}
-                            disabled={!session.state.canComplete}
-                            className="gap-2"
-                        >
-                            <CheckCircle2 className="h-4 w-4" aria-hidden />
-                            Finish workout
-                        </Button>
-                    </div>
-                )}
+                <div className="flex gap-2">
+                    <Button variant="outline" className="gap-2" onClick={handleCopySummary}>
+                        <ClipboardCopy className="h-4 w-4" aria-hidden />
+                        Get summary
+                    </Button>
+                    {!isComplete && (
+                        <>
+                            <Button variant="ghost" onClick={() => setAbandonOpen(true)} disabled={abandon.isPending}>
+                                Abandon
+                            </Button>
+                            <Button
+                                onClick={() => setCompleteOpen(true)}
+                                disabled={!session.state.canComplete}
+                                className="gap-2"
+                            >
+                                <CheckCircle2 className="h-4 w-4" aria-hidden />
+                                Finish workout
+                            </Button>
+                        </>
+                    )}
+                </div>
             </div>
 
             {session.exercises.length === 0 ? (
