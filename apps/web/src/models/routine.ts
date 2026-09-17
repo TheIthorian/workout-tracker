@@ -1,4 +1,8 @@
+import { DEFAULT_REST_SECONDS } from '@app/domain';
 import { TrackingType } from './exercise';
+
+/** Seconds one rep is assumed to take, covering the rep itself and the breath either side of it. */
+export const SECONDS_PER_REP = 4;
 
 /** A workout template, as listed. */
 export type Routine = {
@@ -72,6 +76,35 @@ export function describeTargets(slot: RoutineExercise): string {
     return parts.join(' · ');
 }
 
+/**
+ * Rough total time a routine takes, in seconds.
+ *
+ * Work per slot is `sets × duration` for a duration or distance-and-time slot, and
+ * `sets × reps × SECONDS_PER_REP` for a weight-and-reps one. A slot that does any work then adds
+ * `(sets - 1) × rest` between its sets, falling back to `DEFAULT_REST_SECONDS` when it prescribes
+ * none. A slot whose relevant target is unset contributes nothing: the target is a suggestion the
+ * user has not made yet, not an instruction to do no work. Warm-up and the walk between machines
+ * are not modelled, so the estimate reads low for a long session.
+ */
+export function estimateRoutineSeconds(slots: RoutineExercise[]): number {
+    return slots.reduce((total, slot) => total + slotSeconds(slot), 0);
+}
+
+/**
+ * An estimated duration as `~45 min`, or `~1h 05m` once it passes an hour. Null when there is
+ * nothing worth showing, so an empty routine renders no estimate rather than `~0 min`.
+ */
+export function formatEstimatedDuration(totalSeconds: number): string | null {
+    if (!Number.isFinite(totalSeconds) || totalSeconds <= 0) return null;
+
+    const totalMinutes = Math.max(1, Math.round(totalSeconds / 60));
+    if (totalMinutes < 60) return `~${totalMinutes} min`;
+
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return `~${hours}h ${minutes.toString().padStart(2, '0')}m`;
+}
+
 /** Seconds as `m:ss`. */
 export function formatClock(totalSeconds: number): string {
     const minutes = Math.floor(totalSeconds / 60);
@@ -82,6 +115,24 @@ export function formatClock(totalSeconds: number): string {
 /** Metres as `400 m` or `5 km`, trimming trailing zeros. */
 export function formatDistance(metres: number): string {
     return metres >= 1000 ? `${formatNumber(metres / 1000)} km` : `${formatNumber(metres)} m`;
+}
+
+function slotSeconds(slot: RoutineExercise): number {
+    const workSeconds = slotWorkSeconds(slot);
+    if (!Number.isFinite(workSeconds) || workSeconds <= 0) return 0;
+
+    const restSeconds = slot.restSeconds ?? DEFAULT_REST_SECONDS;
+    return workSeconds + Math.max(0, slot.targetSets - 1) * restSeconds;
+}
+
+function slotWorkSeconds(slot: RoutineExercise): number {
+    switch (slot.exercise.trackingType) {
+        case TrackingType.WeightReps:
+            return slot.targetReps === null ? 0 : slot.targetSets * slot.targetReps * SECONDS_PER_REP;
+        case TrackingType.Duration:
+        case TrackingType.DistanceTime:
+            return slot.targetDurationSeconds === null ? 0 : slot.targetSets * slot.targetDurationSeconds;
+    }
 }
 
 function primaryTarget(slot: RoutineExercise): string | null {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Archive, ArchiveRestore, ArrowLeft, ArrowRight, Pencil, Play, Plus } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowLeft, ArrowRight, Clock, Pencil, Play, Plus } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { LoadingState } from '@/components/common/LoadingState';
 import { ExercisePickerSheet } from '@/components/routines/ExercisePickerSheet';
@@ -34,7 +34,13 @@ import { useActiveSession, useStartSession } from '@/hooks/use-sessions';
 import { toast } from '@/hooks/use-toast';
 import { getStartWorkoutBlockedReason } from '@/lib/start-workout';
 import type { Exercise } from '@/models/exercise';
-import type { PatchRoutineExerciseRequest, RoutineExercise, SaveRoutineExerciseRequest } from '@/models/routine';
+import {
+    estimateRoutineSeconds,
+    formatEstimatedDuration,
+    type PatchRoutineExerciseRequest,
+    type RoutineExercise,
+    type SaveRoutineExerciseRequest,
+} from '@/models/routine';
 import NotFoundError from '@/pages/NotFoundError';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 
@@ -76,6 +82,7 @@ export default function RoutineDetailPage(): JSX.Element {
 
     const selected = routine.exercises.find((slot) => slot.id === selectedId) ?? null;
     const isArchived = routine.archivedAt !== null;
+    const estimatedDuration = formatEstimatedDuration(estimateRoutineSeconds(routine.exercises));
     const sessionInProgress = activeSession.data?.session ?? null;
     const startBlockedReason = getStartWorkoutBlockedReason({
         hasActiveSession: sessionInProgress !== null,
@@ -219,6 +226,13 @@ export default function RoutineDetailPage(): JSX.Element {
                 <div className="min-w-0">
                     <h1 className="font-heading text-3xl text-foreground">{routine.name}</h1>
                     {routine.description && <p className="mt-1.5 text-muted-foreground">{routine.description}</p>}
+                    {estimatedDuration !== null && (
+                        <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
+                            <Clock className="h-4 w-4 shrink-0" aria-hidden />
+                            <span className="sr-only">Estimated total time:</span>
+                            {estimatedDuration}
+                        </p>
+                    )}
                     {isArchived && (
                         <Badge variant="outline" className="mt-2">
                             Archived
