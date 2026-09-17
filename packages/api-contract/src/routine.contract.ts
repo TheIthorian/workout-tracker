@@ -33,6 +33,8 @@ export const routineResponseSchema = z.object({
     description: z.string().nullable(),
     archivedAt: z.string().nullable(),
     exerciseCount: z.number().int(),
+    /** Estimated seconds to work through the routine; 0 when nothing in it has a usable target. */
+    estimatedDurationSeconds: z.number().int().nonnegative(),
     createdAt: z.string(),
     updatedAt: z.string(),
 });

@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, BookOpen, Dumbbell, Play, Plus } from 'lucide-react';
+import { ArrowRight, BookOpen, Clock, Dumbbell, Play, Plus } from 'lucide-react';
 import { LoadingState } from '@/components/common/LoadingState';
 import { EmptyState } from '@/components/common/EmptyState';
 import { StartWorkoutButton } from '@/components/sessions/StartWorkoutButton';
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useRoutines } from '@/hooks/use-routines';
 import { useActiveSession, useStartSession } from '@/hooks/use-sessions';
 import { getStartWorkoutBlockedReason } from '@/lib/start-workout';
+import { formatEstimatedDuration } from '@/models/routine';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 
@@ -104,9 +105,19 @@ export default function TodayPage(): JSX.Element {
                                                 <span className="block break-words text-sm font-semibold">
                                                     {routine.name}
                                                 </span>
-                                                <span className="mt-1 block text-xs text-muted-foreground">
-                                                    {routine.exerciseCount}{' '}
-                                                    {routine.exerciseCount === 1 ? 'movement' : 'movements'}
+                                                <span className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                                                    <span>
+                                                        {routine.exerciseCount}{' '}
+                                                        {routine.exerciseCount === 1 ? 'movement' : 'movements'}
+                                                    </span>
+                                                    {formatEstimatedDuration(routine.estimatedDurationSeconds) !==
+                                                        null && (
+                                                        <span className="flex items-center gap-1">
+                                                            <Clock className="h-3 w-3 shrink-0" aria-hidden />
+                                                            <span className="sr-only">Estimated total time:</span>
+                                                            {formatEstimatedDuration(routine.estimatedDurationSeconds)}
+                                                        </span>
+                                                    )}
                                                 </span>
                                             </Link>
                                             <StartWorkoutButton

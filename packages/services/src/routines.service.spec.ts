@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { schema, type Db } from '@app/db';
 import { startTestDatabase } from '@app/db/testing';
-import { Equipment, TrackingType } from '@app/domain';
+import { Equipment, estimateRoutineSeconds, TrackingType } from '@app/domain';
 import { EntityNotFoundError, SetShapeMismatchError } from '@app/errors';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -566,6 +566,58 @@ describe('replaceExercises', () => {
                     { exerciseId: other.id, targetSets: 1 },
                 ],
             }),
+        ).rejects.toBeInstanceOf(EntityNotFoundError);
+    });
+});
+
+describe('estimated duration', () => {
+    it('matches the shared estimator on both the detail and the list', async () => {
+        const routineId = await createRoutine(`Estimated ${randomUUID()}`);
+        const detail = await routines.addExercise({
+            userId,
+            workspaceId,
+            routineId,
+            exerciseId: benchId,
+            targetSets: 3,
+            targetReps: 8,
+            restSeconds: 120,
+        });
+        const expected = estimateRoutineSeconds([
+            {
+                trackingType: TrackingType.WeightReps,
+                targetSets: 3,
+                targetReps: 8,
+                targetDurationSeconds: null,
+                restSeconds: 120,
+            },
+        ]);
+
+        expect(expected).toBeGreaterThan(0);
+        expect(detail.estimatedDurationSeconds).toBe(expected);
+
+        const listed = await routines.list({ userId, workspaceId, ...page });
+        expect(listed.data.find((row) => row.id === routineId)?.estimatedDurationSeconds).toBe(expected);
+    });
+
+    it('is zero for a routine with no exercises', async () => {
+        const routineId = await createRoutine(`Empty ${randomUUID()}`);
+
+        expect((await routines.get({ userId, workspaceId, routineId })).estimatedDurationSeconds).toBe(0);
+    });
+
+    it("never counts another workspace's routine", async () => {
+        const mine = await createRoutine(`Mine ${randomUUID()}`);
+        await routines.addExercise({
+            userId,
+            workspaceId,
+            routineId: mine,
+            exerciseId: benchId,
+            targetSets: 3,
+            targetReps: 8,
+        });
+
+        await expect(
+            routines.get({ userId: outsiderId, workspaceId: otherWorkspaceId, routineId: mine }),
         ).rejects.toBeInstanceOf(EntityNotFoundError);
     });
 });

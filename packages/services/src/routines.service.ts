@@ -1,5 +1,11 @@
 import { schema, scopedToWorkspace, scopedToWorkspaceOrGlobal, withTransaction, type Db, type Tx } from '@app/db';
-import { validateSetMeasurements, type Equipment, type TrackingType } from '@app/domain';
+import {
+    estimateRoutineSeconds,
+    validateSetMeasurements,
+    type Equipment,
+    type RoutineSlotLike,
+    type TrackingType,
+} from '@app/domain';
 import { EntityNotFoundError, SetShapeMismatchError } from '@app/errors';
 import { asc, count, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm';
 import type { WorkspaceMembershipService } from './workspace-membership.service.js';
@@ -12,6 +18,8 @@ export type RoutineSummary = {
     description: string | null;
     archivedAt: string | null;
     exerciseCount: number;
+    /** Estimated seconds to work through the routine; 0 when nothing in it has a usable target. */
+    estimatedDurationSeconds: number;
     createdAt: string;
     updatedAt: string;
 };
@@ -112,8 +120,22 @@ export class RoutinesService {
         ]);
 
         const totalCount = totals?.totalCount ?? 0;
+        const estimates = await this.estimateByRoutine({
+            db: this.db,
+            workspaceId,
+            routineIds: data.map((routine) => routine.id),
+        });
 
-        return { data, page, pageSize, totalCount, totalPages: Math.ceil(totalCount / pageSize) };
+        return {
+            data: data.map((routine) => ({
+                ...routine,
+                estimatedDurationSeconds: estimates.get(routine.id) ?? 0,
+            })),
+            page,
+            pageSize,
+            totalCount,
+            totalPages: Math.ceil(totalCount / pageSize),
+        };
     }
 
     /**
@@ -530,8 +552,64 @@ export class RoutinesService {
             .where(scopedToWorkspace(routineExercises, workspaceId, eq(routineExercises.routineId, routineId)))
             .orderBy(asc(routineExercises.position));
 
-        return { ...routine, exercises: slots };
+        return {
+            ...routine,
+            estimatedDurationSeconds: estimateRoutineSeconds(slots.map(toSlotLike)),
+            exercises: slots,
+        };
     }
+
+    /** Estimated seconds for each of `routineIds`, in one query rather than one per routine. */
+    private async estimateByRoutine({
+        db,
+        workspaceId,
+        routineIds,
+    }: {
+        db: Db | Tx;
+        workspaceId: string;
+        routineIds: string[];
+    }): Promise<Map<string, number>> {
+        if (routineIds.length === 0) return new Map();
+
+        const rows = await db
+            .select({
+                routineId: routineExercises.routineId,
+                targetSets: routineExercises.targetSets,
+                restSeconds: routineExercises.restSeconds,
+                targetReps: routineExercises.targetReps,
+                targetDurationSeconds: routineExercises.targetDurationSeconds,
+                trackingType: exercises.trackingType,
+            })
+            .from(routineExercises)
+            .innerJoin(exercises, eq(exercises.id, routineExercises.exerciseId))
+            .where(scopedToWorkspace(routineExercises, workspaceId, inArray(routineExercises.routineId, routineIds)));
+
+        const slotsByRoutine = new Map<string, RoutineSlotLike[]>();
+        for (const row of rows) {
+            const slots = slotsByRoutine.get(row.routineId) ?? [];
+            slots.push(row);
+            slotsByRoutine.set(row.routineId, slots);
+        }
+
+        return new Map([...slotsByRoutine].map(([id, slots]) => [id, estimateRoutineSeconds(slots)]));
+    }
+}
+
+/** A detail slot reduced to the flat shape the shared estimator reads. */
+function toSlotLike(slot: {
+    targetSets: number;
+    restSeconds: number | null;
+    targetReps: number | null;
+    targetDurationSeconds: number | null;
+    exercise: { trackingType: TrackingType };
+}): RoutineSlotLike {
+    return {
+        trackingType: slot.exercise.trackingType,
+        targetSets: slot.targetSets,
+        targetReps: slot.targetReps,
+        targetDurationSeconds: slot.targetDurationSeconds,
+        restSeconds: slot.restSeconds,
+    };
 }
 
 const ROUTINE_SUMMARY_COLUMNS = {

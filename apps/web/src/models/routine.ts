@@ -8,6 +8,8 @@ export type Routine = {
     description: string | null;
     archivedAt: string | null;
     exerciseCount: number;
+    /** Estimated seconds to work through the routine; 0 when nothing in it has a usable target. */
+    estimatedDurationSeconds: number;
     createdAt: string;
     updatedAt: string;
 };
@@ -73,6 +75,21 @@ export function describeTargets(slot: RoutineExercise): string {
     if (slot.restSeconds !== null && slot.restSeconds > 0) parts.push(`rest ${formatClock(slot.restSeconds)}`);
 
     return parts.join(' · ');
+}
+
+/**
+ * An estimated duration as `~45 min`, or `~1h 05m` once it passes an hour. Null when there is
+ * nothing worth showing, so an empty routine renders no estimate rather than `~0 min`.
+ */
+export function formatEstimatedDuration(totalSeconds: number): string | null {
+    if (!Number.isFinite(totalSeconds) || totalSeconds <= 0) return null;
+
+    const totalMinutes = Math.max(1, Math.round(totalSeconds / 60));
+    if (totalMinutes < 60) return `~${totalMinutes} min`;
+
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return `~${hours}h ${minutes.toString().padStart(2, '0')}m`;
 }
 
 /**

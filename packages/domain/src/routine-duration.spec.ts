@@ -1,0 +1,122 @@
+import { describe, expect, it } from 'vitest';
+import { DEFAULT_REST_SECONDS } from './rest-timer.js';
+import {
+    DEFAULT_SET_WORK_SECONDS,
+    estimateRemainingSessionSeconds,
+    estimateRoutineSeconds,
+    SECONDS_PER_REP,
+    SETUP_SECONDS_PER_EXERCISE,
+    type RoutineSlotLike,
+} from './routine-duration.js';
+import { TrackingType } from './tracking-type.js';
+
+const repped: RoutineSlotLike = {
+    trackingType: TrackingType.WeightReps,
+    targetSets: 3,
+    targetReps: 8,
+    targetDurationSeconds: null,
+    restSeconds: 120,
+};
+
+const timed: RoutineSlotLike = {
+    trackingType: TrackingType.Duration,
+    targetSets: 3,
+    targetReps: null,
+    targetDurationSeconds: 60,
+    restSeconds: 30,
+};
+
+describe('estimateRoutineSeconds', () => {
+    it('is zero for a routine with no slots', () => {
+        expect(estimateRoutineSeconds([])).toBe(0);
+    });
+
+    it('counts reps as working time plus the rest between sets, after setting up', () => {
+        expect(estimateRoutineSeconds([repped])).toBe(SETUP_SECONDS_PER_EXERCISE + 3 * 8 * SECONDS_PER_REP + 2 * 120);
+    });
+
+    it('counts a timed slot by its target duration', () => {
+        expect(estimateRoutineSeconds([timed])).toBe(SETUP_SECONDS_PER_EXERCISE + 3 * 60 + 2 * 30);
+    });
+
+    it('treats a distance slot like a timed one', () => {
+        const distance = { ...timed, trackingType: TrackingType.DistanceTime };
+
+        expect(estimateRoutineSeconds([distance])).toBe(SETUP_SECONDS_PER_EXERCISE + 3 * 60 + 2 * 30);
+    });
+
+    it('falls back to the default rest when a slot sets none', () => {
+        expect(estimateRoutineSeconds([{ ...repped, restSeconds: null }])).toBe(
+            SETUP_SECONDS_PER_EXERCISE + 3 * 8 * SECONDS_PER_REP + 2 * DEFAULT_REST_SECONDS,
+        );
+    });
+
+    it('adds no rest to a single-set slot', () => {
+        expect(estimateRoutineSeconds([{ ...repped, targetSets: 1 }])).toBe(
+            SETUP_SECONDS_PER_EXERCISE + 8 * SECONDS_PER_REP,
+        );
+    });
+
+    it('still counts a slot that names only its set count', () => {
+        expect(estimateRoutineSeconds([{ ...repped, targetReps: null }])).toBe(
+            SETUP_SECONDS_PER_EXERCISE + 3 * DEFAULT_SET_WORK_SECONDS + 2 * 120,
+        );
+        expect(estimateRoutineSeconds([{ ...timed, targetDurationSeconds: null }])).toBe(
+            SETUP_SECONDS_PER_EXERCISE + 3 * DEFAULT_SET_WORK_SECONDS + 2 * 30,
+        );
+    });
+
+    it('is zero only when a slot prescribes no sets at all', () => {
+        expect(estimateRoutineSeconds([{ ...repped, targetSets: 0, targetReps: null }])).toBe(0);
+    });
+
+    it('sums every slot, resting between them as well as between sets', () => {
+        // Three rests inside `repped` — two between its sets and one moving on to `timed` — then two
+        // inside `timed`, and none after the routine's final set.
+        expect(estimateRoutineSeconds([repped, timed])).toBe(
+            2 * SETUP_SECONDS_PER_EXERCISE + 3 * 8 * SECONDS_PER_REP + 3 * 120 + (3 * 60 + 2 * 30),
+        );
+    });
+
+    it('rests on the way out of an exercise, not after the last set of the routine', () => {
+        const pair = estimateRoutineSeconds([repped, repped]);
+        const single = estimateRoutineSeconds([repped]);
+
+        expect(pair - 2 * single).toBe(120);
+    });
+});
+
+describe('estimateRemainingSessionSeconds', () => {
+    const pending = { ...repped, skippedAt: null, loggedWorkingSets: 0 };
+
+    it('counts only the sets still to log', () => {
+        expect(estimateRemainingSessionSeconds([{ ...pending, loggedWorkingSets: 1 }])).toBe(
+            2 * 8 * SECONDS_PER_REP + 120,
+        );
+    });
+
+    it('costs nothing once every set is logged', () => {
+        expect(estimateRemainingSessionSeconds([{ ...pending, loggedWorkingSets: 3 }])).toBe(0);
+    });
+
+    it('does not go negative when more sets were logged than planned', () => {
+        expect(estimateRemainingSessionSeconds([{ ...pending, loggedWorkingSets: 5 }])).toBe(0);
+    });
+
+    it('ignores a skipped exercise', () => {
+        expect(estimateRemainingSessionSeconds([{ ...pending, skippedAt: '2026-01-01T00:00:00.000Z' }])).toBe(0);
+    });
+
+    it('matches the routine estimate before anything is logged', () => {
+        expect(estimateRemainingSessionSeconds([pending])).toBe(estimateRoutineSeconds([repped]));
+    });
+
+    it('charges no setup for an exercise already under way', () => {
+        const started = { ...pending, targetSets: 4, loggedWorkingSets: 1 };
+        const untouched = { ...pending, targetSets: 3, loggedWorkingSets: 0 };
+
+        expect(estimateRemainingSessionSeconds([started])).toBe(
+            estimateRemainingSessionSeconds([untouched]) - SETUP_SECONDS_PER_EXERCISE,
+        );
+    });
+});
