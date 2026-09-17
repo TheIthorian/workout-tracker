@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { schema, type Db } from '@app/db';
 import { startTestDatabase } from '@app/db/testing';
-import { estimateRoutineSeconds, TrackingType } from '@app/domain';
+import { Equipment, estimateRoutineSeconds, TrackingType } from '@app/domain';
 import { EntityNotFoundError, SetShapeMismatchError } from '@app/errors';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -36,8 +36,15 @@ beforeAll(async () => {
     outsiderId = await seedUser(db, 'Outsider');
     otherWorkspaceId = await seedWorkspace(db, outsiderId);
 
-    benchId = (await exercises.create({ userId, workspaceId, name: 'Bench', trackingType: TrackingType.WeightReps }))
-        .id;
+    benchId = (
+        await exercises.create({
+            userId,
+            workspaceId,
+            name: 'Bench',
+            trackingType: TrackingType.WeightReps,
+            equipment: [Equipment.Barbell, Equipment.Bench],
+        })
+    ).id;
     plankId = (await exercises.create({ userId, workspaceId, name: 'Plank', trackingType: TrackingType.Duration })).id;
     runId = (await exercises.create({ userId, workspaceId, name: 'Run', trackingType: TrackingType.DistanceTime })).id;
 });
@@ -189,9 +196,16 @@ describe('addExercise', () => {
             targetSets: 3,
             targetReps: 8,
             targetWeightKg: null,
-            exercise: { id: benchId, trackingType: TrackingType.WeightReps, isCatalog: false, archivedAt: null },
+            exercise: {
+                id: benchId,
+                trackingType: TrackingType.WeightReps,
+                isCatalog: false,
+                equipment: [Equipment.Barbell, Equipment.Bench],
+                archivedAt: null,
+            },
         });
         expect(detail.exercises[1]).toMatchObject({ targetDurationSeconds: 60, restSeconds: 30 });
+        expect(detail.exercises[1]?.exercise.equipment).toEqual([]);
     });
 
     it('stores decimal weights and distances as numbers', async () => {
@@ -226,7 +240,11 @@ describe('addExercise', () => {
 
     it('accepts a catalog exercise', async () => {
         const routineId = await createRoutine();
-        const catalogId = await seedCatalogExercise(db, { slug: `catalog-${randomUUID()}`, name: 'Catalog Squat' });
+        const catalogId = await seedCatalogExercise(db, {
+            slug: `catalog-${randomUUID()}`,
+            name: 'Catalog Squat',
+            equipment: [Equipment.SquatRack, Equipment.Barbell],
+        });
 
         const detail = await routines.addExercise({
             userId,
@@ -236,7 +254,12 @@ describe('addExercise', () => {
             targetSets: 5,
         });
 
-        expect(detail.exercises[0]?.exercise).toMatchObject({ id: catalogId, name: 'Catalog Squat', isCatalog: true });
+        expect(detail.exercises[0]?.exercise).toMatchObject({
+            id: catalogId,
+            name: 'Catalog Squat',
+            isCatalog: true,
+            equipment: [Equipment.SquatRack, Equipment.Barbell],
+        });
     });
 
     it('rejects targets that do not fit the tracking type', async () => {

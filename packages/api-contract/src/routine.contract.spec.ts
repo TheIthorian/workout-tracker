@@ -1,14 +1,40 @@
+import { Equipment, TrackingType } from '@app/domain';
 import { describe, expect, it } from 'vitest';
 import {
     patchRoutineExerciseRequestSchema,
     patchRoutineRequestSchema,
     postRoutineExerciseRequestSchema,
     putRoutineExercisesRequestSchema,
+    routineExerciseSummarySchema,
     routineListQuerySchema,
     routineResponseSchema,
 } from './routine.contract.js';
 
 const exerciseId = '4b6c7e39-0f8b-4c8b-9a8e-2d1f0f0e1a11';
+
+const summary = {
+    id: exerciseId,
+    name: 'Bench press',
+    trackingType: TrackingType.WeightReps,
+    isCatalog: true,
+    equipment: [Equipment.Barbell, Equipment.Bench],
+    archivedAt: null,
+};
+
+describe('routineExerciseSummarySchema', () => {
+    it('carries the exercise equipment', () => {
+        expect(routineExerciseSummarySchema.parse(summary).equipment).toEqual([Equipment.Barbell, Equipment.Bench]);
+    });
+
+    it('reads a bodyweight exercise as an empty list', () => {
+        expect(routineExerciseSummarySchema.parse({ ...summary, equipment: [] }).equipment).toEqual([]);
+    });
+
+    it('requires equipment and rejects a value outside the vocabulary', () => {
+        expect(routineExerciseSummarySchema.safeParse({ ...summary, equipment: undefined }).success).toBe(false);
+        expect(routineExerciseSummarySchema.safeParse({ ...summary, equipment: ['jetpack'] }).success).toBe(false);
+    });
+});
 
 describe('postRoutineExerciseRequestSchema', () => {
     it('defaults targetSets to 3', () => {

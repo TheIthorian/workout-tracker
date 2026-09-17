@@ -1,3 +1,4 @@
+import { EQUIPMENT_ORDER, type Equipment } from './equipment';
 import { TrackingType } from './exercise';
 
 /** A workout template, as listed. */
@@ -19,6 +20,8 @@ export type RoutineExerciseSummary = {
     name: string;
     trackingType: TrackingType;
     isCatalog: boolean;
+    /** What the movement needs; empty means bodyweight. */
+    equipment: Equipment[];
     /** Set when the exercise was archived after being added; the slot stays, flagged. */
     archivedAt: string | null;
 };
@@ -87,6 +90,16 @@ export function formatEstimatedDuration(totalSeconds: number): string | null {
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
     return `~${hours}h ${minutes.toString().padStart(2, '0')}m`;
+}
+
+/**
+ * Everything a routine's slots need between them, deduplicated and in the library's display order
+ * so the same routine always reads the same way. Empty when every exercise is bodyweight.
+ */
+export function aggregateRoutineEquipment(slots: RoutineExercise[]): Equipment[] {
+    const needed = new Set(slots.flatMap((slot) => slot.exercise.equipment));
+
+    return EQUIPMENT_ORDER.filter((item) => needed.has(item));
 }
 
 /** Seconds as `m:ss`. */

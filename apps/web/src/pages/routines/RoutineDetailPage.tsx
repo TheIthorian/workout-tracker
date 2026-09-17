@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Archive, ArchiveRestore, ArrowLeft, ArrowRight, Clock, Pencil, Play, Plus } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { LoadingState } from '@/components/common/LoadingState';
+import { EquipmentChips } from '@/components/equipment/EquipmentChips';
 import { ExercisePickerSheet } from '@/components/routines/ExercisePickerSheet';
 import { RoutineExerciseList } from '@/components/routines/RoutineExerciseList';
 import { RoutineExerciseTargetsForm } from '@/components/routines/RoutineExerciseTargetsForm';
@@ -35,6 +36,7 @@ import { toast } from '@/hooks/use-toast';
 import { getStartWorkoutBlockedReason } from '@/lib/start-workout';
 import type { Exercise } from '@/models/exercise';
 import {
+    aggregateRoutineEquipment,
     formatEstimatedDuration,
     type PatchRoutineExerciseRequest,
     type RoutineExercise,
@@ -80,6 +82,7 @@ export default function RoutineDetailPage(): JSX.Element {
     if (isError || !routine) return <NotFoundError />;
 
     const selected = routine.exercises.find((slot) => slot.id === selectedId) ?? null;
+    const routineEquipment = aggregateRoutineEquipment(routine.exercises);
     const isArchived = routine.archivedAt !== null;
     const estimatedDuration = formatEstimatedDuration(routine.estimatedDurationSeconds);
     const sessionInProgress = activeSession.data?.session ?? null;
@@ -297,6 +300,12 @@ export default function RoutineDetailPage(): JSX.Element {
                         />
                     ) : (
                         <>
+                            <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border bg-card p-3">
+                                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                    What you need
+                                </h2>
+                                <EquipmentChips equipment={routineEquipment} />
+                            </div>
                             <RoutineExerciseList
                                 slots={routine.exercises}
                                 selectedId={selectedId}

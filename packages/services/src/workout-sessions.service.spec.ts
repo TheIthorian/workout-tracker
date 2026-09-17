@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { type Db } from '@app/db';
 import { startTestDatabase } from '@app/db/testing';
-import { DEFAULT_REST_SECONDS } from '@app/domain';
+import { DEFAULT_REST_SECONDS, Equipment } from '@app/domain';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ExercisesService } from './exercises.service.js';
 import { seedCatalogExercise, seedUser, seedWorkspace } from './testing.js';
@@ -33,6 +33,34 @@ beforeAll(async () => {
 
 afterAll(async () => {
     await database?.stop();
+});
+
+describe('session exercise equipment', () => {
+    it("carries each exercise's equipment, empty for a bodyweight movement", async () => {
+        const benchId = await seedCatalogExercise(db, {
+            slug: `catalog-${randomUUID()}`,
+            equipment: [Equipment.Barbell, Equipment.Bench],
+        });
+        const plankId = await seedCatalogExercise(db, { slug: `catalog-${randomUUID()}`, equipment: [] });
+        const session = await sessions.start({ userId, workspaceId });
+        const sessionId = session.id;
+
+        await sessions.addExercise({ userId, workspaceId, sessionId, exerciseId: benchId, targetSets: 3 });
+        const detail = await sessions.addExercise({
+            userId,
+            workspaceId,
+            sessionId,
+            exerciseId: plankId,
+            targetSets: 3,
+        });
+
+        expect(detail.exercises.map((exercise) => exercise.exercise.equipment)).toEqual([
+            [Equipment.Barbell, Equipment.Bench],
+            [],
+        ]);
+
+        await sessions.abandon({ userId, workspaceId, sessionId });
+    });
 });
 
 describe('rest between sets', () => {

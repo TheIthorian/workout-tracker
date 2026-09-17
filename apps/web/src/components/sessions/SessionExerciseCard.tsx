@@ -11,7 +11,9 @@ import {
     Timer,
     Trash2,
 } from 'lucide-react';
+import { EquipmentChips } from '@/components/equipment/EquipmentChips';
 import { RestTimeSheet } from '@/components/exercises/RestTimeSheet';
+import { TrackingTypeIcon } from '@/components/exercises/TrackingTypeIcon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -79,7 +81,12 @@ export function SessionExerciseCard({
                 isCurrent ? 'border-primary ring-1 ring-primary/25' : 'border-border'
             } ${isSkipped ? 'opacity-60' : ''}`}
         >
-            <div className="flex items-start gap-3">
+            <div className="flex items-center gap-3">
+                <TrackingTypeIcon
+                    type={exercise.trackingType}
+                    className="mt-0.5 h-10 w-10 shrink-0 self-start"
+                    iconClassName="h-5 w-5"
+                />
                 <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                         <h2 className="font-heading text-xl leading-tight">{exercise.exercise.name}</h2>
@@ -109,44 +116,54 @@ export function SessionExerciseCard({
                             </button>
                         )}
                     </p>
-                    {lastWorkoutSet && !isReadOnly && (
-                        <p className="mt-1 text-xs text-muted-foreground">
-                            Last workout: {describeSet({ exercise, set: lastWorkoutSet })}
-                        </p>
-                    )}
                 </div>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" aria-label={`Actions for ${exercise.exercise.name}`}>
-                            <MoreHorizontal className="h-5 w-5" aria-hidden />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={onOpenGuide}>
-                            <BookOpen className="mr-2 h-4 w-4" aria-hidden />
-                            Exercise guide
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                            disabled={!canMoveUp || isUpdating || isReadOnly}
-                            onSelect={() => onMove('up')}
-                        >
-                            <ArrowUp className="mr-2 h-4 w-4" aria-hidden />
-                            Move up
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                            disabled={!canMoveDown || isUpdating || isReadOnly}
-                            onSelect={() => onMove('down')}
-                        >
-                            <ArrowDown className="mr-2 h-4 w-4" aria-hidden />
-                            Move down
-                        </DropdownMenuItem>
-                        <DropdownMenuItem disabled={isUpdating || isReadOnly} onSelect={onSkip}>
-                            <SkipForward className="mr-2 h-4 w-4" aria-hidden />
-                            {isSkipped ? 'Restore exercise' : 'Skip exercise'}
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex shrink-0 items-center gap-1">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Exercise guide for ${exercise.exercise.name}`}
+                        title="Exercise guide"
+                        onClick={onOpenGuide}
+                    >
+                        <BookOpen className="h-5 w-5" aria-hidden />
+                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" aria-label={`Actions for ${exercise.exercise.name}`}>
+                                <MoreHorizontal className="h-5 w-5" aria-hidden />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                                disabled={!canMoveUp || isUpdating || isReadOnly}
+                                onSelect={() => onMove('up')}
+                            >
+                                <ArrowUp className="mr-2 h-4 w-4" aria-hidden />
+                                Move up
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                disabled={!canMoveDown || isUpdating || isReadOnly}
+                                onSelect={() => onMove('down')}
+                            >
+                                <ArrowDown className="mr-2 h-4 w-4" aria-hidden />
+                                Move down
+                            </DropdownMenuItem>
+                            <DropdownMenuItem disabled={isUpdating || isReadOnly} onSelect={onSkip}>
+                                <SkipForward className="mr-2 h-4 w-4" aria-hidden />
+                                {isSkipped ? 'Restore exercise' : 'Skip exercise'}
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             </div>
+
+            <EquipmentChips equipment={exercise.exercise.equipment} className="mt-3" />
+
+            {lastWorkoutSet && !isReadOnly && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                    Last workout: {describeSet({ exercise, set: lastWorkoutSet })}
+                </p>
+            )}
 
             {exercise.notes && (
                 <p className="mt-3 whitespace-pre-line text-sm text-muted-foreground">{exercise.notes}</p>

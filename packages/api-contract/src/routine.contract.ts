@@ -1,4 +1,4 @@
-import { TrackingType } from '@app/domain';
+import { Equipment, TrackingType } from '@app/domain';
 import { z } from 'zod';
 import { guidSchema, paginatedResponseSchema, paginationQuerySchema } from './primitives.js';
 
@@ -8,6 +8,8 @@ export const routineExerciseSummarySchema = z.object({
     name: z.string(),
     trackingType: z.enum(TrackingType),
     isCatalog: z.boolean(),
+    /** What the movement needs; empty means bodyweight. */
+    equipment: z.array(z.enum(Equipment)),
     /** Set when the exercise was archived after being added; the slot stays, flagged. */
     archivedAt: z.string().nullable(),
 });

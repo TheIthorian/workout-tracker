@@ -1,5 +1,11 @@
 import { schema, scopedToWorkspace, scopedToWorkspaceOrGlobal, withTransaction, type Db, type Tx } from '@app/db';
-import { estimateRoutineSeconds, validateSetMeasurements, type RoutineSlotLike, type TrackingType } from '@app/domain';
+import {
+    estimateRoutineSeconds,
+    validateSetMeasurements,
+    type Equipment,
+    type RoutineSlotLike,
+    type TrackingType,
+} from '@app/domain';
 import { EntityNotFoundError, SetShapeMismatchError } from '@app/errors';
 import { asc, count, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm';
 import type { WorkspaceMembershipService } from './workspace-membership.service.js';
@@ -36,6 +42,7 @@ export type RoutineExercise = RoutineExerciseTargets & {
         name: string;
         trackingType: TrackingType;
         isCatalog: boolean;
+        equipment: Equipment[];
         archivedAt: string | null;
     };
 };
@@ -536,6 +543,7 @@ export class RoutinesService {
                     name: exercises.name,
                     trackingType: exercises.trackingType,
                     isCatalog: sql<boolean>`${exercises.workspaceId} is null`,
+                    equipment: exercises.equipment,
                     archivedAt: exercises.archivedAt,
                 },
             })

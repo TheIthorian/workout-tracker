@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { Equipment } from './equipment';
 import { TrackingType } from './exercise';
-import { describeTargets, formatEstimatedDuration, type RoutineExercise } from './routine';
+import { aggregateRoutineEquipment, describeTargets, formatEstimatedDuration, type RoutineExercise } from './routine';
 
-function slot(overrides: Partial<RoutineExercise> & { trackingType: TrackingType }): RoutineExercise {
-    const { trackingType, ...rest } = overrides;
+function slot(
+    overrides: Partial<RoutineExercise> & { trackingType: TrackingType; equipment?: Equipment[] },
+): RoutineExercise {
+    const { trackingType, equipment = [], ...rest } = overrides;
     return {
         id: 'slot',
         position: 0,
@@ -14,7 +17,7 @@ function slot(overrides: Partial<RoutineExercise> & { trackingType: TrackingType
         targetWeightKg: null,
         targetDurationSeconds: null,
         targetDistanceM: null,
-        exercise: { id: 'ex', name: 'Bench', trackingType, isCatalog: false, archivedAt: null },
+        exercise: { id: 'ex', name: 'Bench', trackingType, isCatalog: false, equipment, archivedAt: null },
         ...rest,
     };
 }
@@ -80,5 +83,37 @@ describe('formatEstimatedDuration', () => {
         expect(formatEstimatedDuration(3900)).toBe('~1h 05m');
         expect(formatEstimatedDuration(7200)).toBe('~2h 00m');
         expect(formatEstimatedDuration(3600 + 35 * 60)).toBe('~1h 35m');
+    });
+});
+
+describe('aggregateRoutineEquipment', () => {
+    const weightReps = TrackingType.WeightReps;
+
+    it('is empty for a routine with no slots', () => {
+        expect(aggregateRoutineEquipment([])).toEqual([]);
+    });
+
+    it('is empty when every exercise is bodyweight', () => {
+        expect(
+            aggregateRoutineEquipment([slot({ trackingType: weightReps }), slot({ trackingType: weightReps })]),
+        ).toEqual([]);
+    });
+
+    it('deduplicates equipment shared by several slots', () => {
+        const slots = [
+            slot({ trackingType: weightReps, equipment: [Equipment.Barbell, Equipment.Bench] }),
+            slot({ trackingType: weightReps, equipment: [Equipment.Barbell] }),
+        ];
+
+        expect(aggregateRoutineEquipment(slots)).toEqual([Equipment.Barbell, Equipment.Bench]);
+    });
+
+    it('orders the result by the library display order, not by slot order', () => {
+        const slots = [
+            slot({ trackingType: weightReps, equipment: [Equipment.Treadmill] }),
+            slot({ trackingType: weightReps, equipment: [Equipment.Dumbbell, Equipment.Barbell] }),
+        ];
+
+        expect(aggregateRoutineEquipment(slots)).toEqual([Equipment.Barbell, Equipment.Dumbbell, Equipment.Treadmill]);
     });
 });
