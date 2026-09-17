@@ -27,6 +27,20 @@ export type AuthConfig = {
 };
 
 /**
+ * How long a session stays valid, in seconds. Better Auth applies this both to the `session` row's
+ * `expires_at` and to the session cookie's `Max-Age`, so it is the longest a signed-in visitor can
+ * go untouched before being signed out.
+ */
+export const SESSION_EXPIRES_IN_SECONDS = 60 * 60 * 24 * 30;
+
+/**
+ * How old a session must be before a request slides it forward, in seconds. Better Auth only
+ * rewrites `expires_at` and reissues the cookie once a session has aged past this, so it trades
+ * how precisely the window tracks activity against a write on every request.
+ */
+export const SESSION_UPDATE_AGE_SECONDS = 60 * 60 * 24;
+
+/**
  * The options object handed to both `betterAuth()` itself (`AuthService`) and to every standalone
  * `drizzleAdapter(...)` instance this package builds (`UserProvisioningService`). Kept as one
  * function so the two never drift - a standalone adapter built with different options would
@@ -40,6 +54,10 @@ export function buildAuthOptions(
         baseURL: config.baseUrl,
         trustedOrigins: config.trustedOrigins,
         emailAndPassword: { enabled: true },
+        session: {
+            expiresIn: SESSION_EXPIRES_IN_SECONDS,
+            updateAge: SESSION_UPDATE_AGE_SECONDS,
+        },
         // Better Auth's router applies `rateLimit` to every request that passes through it. That
         // covers a mounted `auth.handler`, but NOT a direct `auth.api.*` call - `onRequestRateLimit`
         // is only invoked from the router's `onRequest`, never from `dispatchAuthEndpoint`, which
