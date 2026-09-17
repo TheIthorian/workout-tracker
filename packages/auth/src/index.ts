@@ -1,4 +1,10 @@
-export { AUTH_SCHEMA, buildAuthOptions, type AuthConfig } from './auth-options.js';
+export {
+    AUTH_SCHEMA,
+    buildAuthOptions,
+    SESSION_EXPIRES_IN_SECONDS,
+    SESSION_UPDATE_AGE_SECONDS,
+    type AuthConfig,
+} from './auth-options.js';
 export {
     AuthService,
     type AuthHandlerResponse,
