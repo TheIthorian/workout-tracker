@@ -115,37 +115,44 @@ export function SessionExerciseCard({
                         </p>
                     )}
                 </div>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" aria-label={`Actions for ${exercise.exercise.name}`}>
-                            <MoreHorizontal className="h-5 w-5" aria-hidden />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={onOpenGuide}>
-                            <BookOpen className="mr-2 h-4 w-4" aria-hidden />
-                            Exercise guide
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                            disabled={!canMoveUp || isUpdating || isReadOnly}
-                            onSelect={() => onMove('up')}
-                        >
-                            <ArrowUp className="mr-2 h-4 w-4" aria-hidden />
-                            Move up
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                            disabled={!canMoveDown || isUpdating || isReadOnly}
-                            onSelect={() => onMove('down')}
-                        >
-                            <ArrowDown className="mr-2 h-4 w-4" aria-hidden />
-                            Move down
-                        </DropdownMenuItem>
-                        <DropdownMenuItem disabled={isUpdating || isReadOnly} onSelect={onSkip}>
-                            <SkipForward className="mr-2 h-4 w-4" aria-hidden />
-                            {isSkipped ? 'Restore exercise' : 'Skip exercise'}
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex shrink-0 items-center gap-1">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Exercise guide for ${exercise.exercise.name}`}
+                        title="Exercise guide"
+                        onClick={onOpenGuide}
+                    >
+                        <BookOpen className="h-5 w-5" aria-hidden />
+                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" aria-label={`Actions for ${exercise.exercise.name}`}>
+                                <MoreHorizontal className="h-5 w-5" aria-hidden />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                                disabled={!canMoveUp || isUpdating || isReadOnly}
+                                onSelect={() => onMove('up')}
+                            >
+                                <ArrowUp className="mr-2 h-4 w-4" aria-hidden />
+                                Move up
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                disabled={!canMoveDown || isUpdating || isReadOnly}
+                                onSelect={() => onMove('down')}
+                            >
+                                <ArrowDown className="mr-2 h-4 w-4" aria-hidden />
+                                Move down
+                            </DropdownMenuItem>
+                            <DropdownMenuItem disabled={isUpdating || isReadOnly} onSelect={onSkip}>
+                                <SkipForward className="mr-2 h-4 w-4" aria-hidden />
+                                {isSkipped ? 'Restore exercise' : 'Skip exercise'}
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             </div>
 
             {exercise.notes && (
