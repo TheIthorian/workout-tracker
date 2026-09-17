@@ -78,9 +78,6 @@ importers:
       '@aws-sdk/client-s3':
         specifier: 3.1115.0
         version: 3.1115.0
-      '@testcontainers/postgresql':
-        specifier: 12.1.0
-        version: 12.1.0
       '@types/node':
         specifier: 26.2.0
         version: 26.2.0
@@ -187,9 +184,6 @@ importers:
       '@nestjs/testing':
         specifier: 11.1.28
         version: 11.1.28(@nestjs/common@11.1.28(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.28(@nestjs/common@11.1.28(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))
-      '@testcontainers/postgresql':
-        specifier: 12.1.0
-        version: 12.1.0
       '@types/node':
         specifier: 26.2.0
         version: 26.2.0
@@ -199,9 +193,6 @@ importers:
       pino:
         specifier: 10.3.1
         version: 10.3.1
-      testcontainers:
-        specifier: 12.1.0
-        version: 12.1.0
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -281,9 +272,6 @@ importers:
       '@nestjs/testing':
         specifier: 11.1.28
         version: 11.1.28(@nestjs/common@11.1.28(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.28(@nestjs/common@11.1.28(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))
-      '@testcontainers/postgresql':
-        specifier: 12.1.0
-        version: 12.1.0
       '@types/node':
         specifier: 26.2.0
         version: 26.2.0
@@ -293,9 +281,6 @@ importers:
       pino:
         specifier: 10.3.1
         version: 10.3.1
-      testcontainers:
-        specifier: 12.1.0
-        version: 12.1.0
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -603,15 +588,9 @@ importers:
       '@app/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
-      '@testcontainers/postgresql':
-        specifier: 12.1.0
-        version: 12.1.0
       '@types/node':
         specifier: 26.2.0
         version: 26.2.0
-      testcontainers:
-        specifier: 12.1.0
-        version: 12.1.0
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -674,9 +653,6 @@ importers:
       '@app/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
-      '@testcontainers/postgresql':
-        specifier: 12.1.0
-        version: 12.1.0
       '@types/node':
         specifier: 26.2.0
         version: 26.2.0
@@ -686,9 +662,6 @@ importers:
       drizzle-kit:
         specifier: 0.31.10
         version: 0.31.10
-      testcontainers:
-        specifier: 12.1.0
-        version: 12.1.0
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -894,9 +867,6 @@ importers:
       '@aws-sdk/client-s3':
         specifier: 3.1115.0
         version: 3.1115.0
-      '@testcontainers/postgresql':
-        specifier: 12.1.0
-        version: 12.1.0
       '@types/node':
         specifier: 26.2.0
         version: 26.2.0
@@ -4025,9 +3995,6 @@ packages:
     resolution: {integrity: sha512-/XGYhZ3foc5H0VM2jLSD/NyBRIOK4q9kfeml4+0x2DlL6xVuAcVEW+hTlTapAmejObg0i3eNqhkr2dT+eciwoQ==}
     peerDependencies:
       react: ^18 || ^19
-
-  '@testcontainers/postgresql@12.1.0':
-    resolution: {integrity: sha512-Pjf2VSVNirEPfz36nidyrVAnZvc2YhajOznY4VgyEsvfTd5qiMNOuPq96drREvxAUtXl5SFLX7vXj7sSq4aTcA==}
 
   '@testing-library/dom@10.4.1':
     resolution: {integrity: sha512-o4PXJQidqJl82ckFaXUeoAW+XysPLauYI43Abki5hABd853iMhitooc6znOnczgbTYmEP6U6/y1ZyKAIsvMKGg==}
@@ -9678,15 +9645,6 @@ snapshots:
     dependencies:
       '@tanstack/query-core': 5.83.0
       react: 18.3.1
-
-  '@testcontainers/postgresql@12.1.0':
-    dependencies:
-      testcontainers: 12.1.0
-    transitivePeerDependencies:
-      - bare-abort-controller
-      - bare-buffer
-      - react-native-b4a
-      - supports-color
 
   '@testing-library/dom@10.4.1':
     dependencies:

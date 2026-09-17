@@ -36,11 +36,9 @@
         "@app/services": "workspace:*",
         "@app/tsconfig": "workspace:*",
         "@nestjs/testing": "11.1.28",
-        "@testcontainers/postgresql": "12.1.0",
         "@types/node": "26.2.0",
         "concurrently": "10.0.5",
         "pino": "10.3.1",
-        "testcontainers": "12.1.0",
         "typescript": "6.0.3",
         "unplugin-swc": "1.5.11",
         "vitest": "4.1.10"

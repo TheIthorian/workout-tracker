@@ -5,9 +5,43 @@ on:
     branches: [main]
   pull_request:
 
+# A superseded PR run tells nobody anything, so let a new push cancel it. Pushes to main are left
+# alone: their runs gate the deploys below.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Turbo replays the cached result of any task whose inputs are unchanged, so a web-only
+      # change does not re-run the backend suites.
+      TURBO_CACHE_DIR: .turbo
+      # `packages/storage` still starts an S3Mock container of its own. The runner is thrown away
+      # after the job, so there is nothing for Ryuk to reap.
+      TESTCONTAINERS_RYUK_DISABLED: true
+      # The service below, reached through its `postgres` maintenance database. Every suite creates
+      # and drops a database of its own on it; none of them touch an `app` database.
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+
+    # The one Postgres the whole job's suites share, in place of a container started per spec file.
+    # It is up and healthy before the first step runs.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       - uses: actions/checkout@v4
 
@@ -20,13 +54,23 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
 
+      - uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: turbo-${{ runner.os }}-
+
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
+
+      # Formatting is the cheapest thing that can fail, so it fails before the long steps rather
+      # than after them.
+      - run: pnpm format
+      - run: git diff --exit-code
+
       - run: pnpm typecheck
       - run: pnpm build
       - run: pnpm test
-      - run: pnpm format
-      - run: git diff --exit-code
 
   # Build only, on PRs, so a broken Dockerfile fails here rather than after merge when Railway
   # tries to deploy it. Nothing is pushed, tagged or run: Railway builds and probes readiness

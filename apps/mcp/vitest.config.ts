@@ -5,8 +5,7 @@ export default defineConfig({
     plugins: [swc.vite({ module: { type: 'es6' } })],
     test: {
         include: ['src/**/*.spec.ts', 'test/**/*.spec.ts'],
-        // Testcontainers pulls an image and applies a 1249-line schema on first use.
-        testTimeout: 120_000,
-        hookTimeout: 180_000,
+        testTimeout: 60_000,
+        hookTimeout: 60_000,
     },
 });
