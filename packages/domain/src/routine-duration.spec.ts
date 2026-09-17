@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_REST_SECONDS } from './rest-timer.js';
 import {
+    DEFAULT_SET_WORK_SECONDS,
     estimateRemainingSessionSeconds,
     estimateRoutineSeconds,
     SECONDS_PER_REP,
@@ -37,11 +38,10 @@ describe('estimateRoutineSeconds', () => {
         expect(estimateRoutineSeconds([timed])).toBe(3 * 60 + 2 * 30);
     });
 
-    it('treats a distance slot like a timed one, and skips it without a target time', () => {
+    it('treats a distance slot like a timed one', () => {
         const distance = { ...timed, trackingType: TrackingType.DistanceTime };
 
         expect(estimateRoutineSeconds([distance])).toBe(3 * 60 + 2 * 30);
-        expect(estimateRoutineSeconds([{ ...distance, targetDurationSeconds: null }])).toBe(0);
     });
 
     it('falls back to the default rest when a slot sets none', () => {
@@ -54,8 +54,15 @@ describe('estimateRoutineSeconds', () => {
         expect(estimateRoutineSeconds([{ ...repped, targetSets: 1 }])).toBe(8 * SECONDS_PER_REP);
     });
 
-    it('contributes nothing for a slot with no usable target', () => {
-        expect(estimateRoutineSeconds([{ ...repped, targetReps: null }])).toBe(0);
+    it('still counts a slot that names only its set count', () => {
+        expect(estimateRoutineSeconds([{ ...repped, targetReps: null }])).toBe(3 * DEFAULT_SET_WORK_SECONDS + 2 * 120);
+        expect(estimateRoutineSeconds([{ ...timed, targetDurationSeconds: null }])).toBe(
+            3 * DEFAULT_SET_WORK_SECONDS + 2 * 30,
+        );
+    });
+
+    it('is zero only when a slot prescribes no sets at all', () => {
+        expect(estimateRoutineSeconds([{ ...repped, targetSets: 0, targetReps: null }])).toBe(0);
     });
 
     it('sums every slot in the routine', () => {

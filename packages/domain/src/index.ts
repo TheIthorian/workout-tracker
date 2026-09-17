@@ -1,6 +1,7 @@
 export { Decimal } from './decimal.js';
 export { Equipment, OnboardingStage } from './equipment.js';
 export {
+    DEFAULT_SET_WORK_SECONDS,
     SECONDS_PER_REP,
     estimateRemainingSessionSeconds,
     estimateRoutineSeconds,
