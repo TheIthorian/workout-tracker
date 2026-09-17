@@ -81,10 +81,10 @@ export function SessionExerciseCard({
                 isCurrent ? 'border-primary ring-1 ring-primary/25' : 'border-border'
             } ${isSkipped ? 'opacity-60' : ''}`}
         >
-            <div className="flex items-center gap-3">
+            <div className="flex items-start gap-2 sm:gap-3">
                 <TrackingTypeIcon
                     type={exercise.trackingType}
-                    className="mt-0.5 h-10 w-10 shrink-0 self-start"
+                    className="mt-0.5 h-10 w-10 shrink-0"
                     iconClassName="h-5 w-5"
                 />
                 <div className="min-w-0 flex-1">
@@ -99,7 +99,7 @@ export function SessionExerciseCard({
                         )}
                         {isSkipped && <Badge variant="secondary">Skipped</Badge>}
                     </div>
-                    <p className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
+                    <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-muted-foreground">
                         <span>
                             {workingSets} of {exercise.targetSets} working sets
                         </span>
@@ -108,7 +108,7 @@ export function SessionExerciseCard({
                         ) : (
                             <button
                                 type="button"
-                                className="inline-flex min-h-9 items-center gap-1 rounded-md px-1 text-primary underline-offset-4 hover:underline"
+                                className="-my-1 inline-flex min-h-8 items-center gap-1 rounded-md text-primary underline-offset-4 hover:underline"
                                 onClick={() => setRestOpen(true)}
                             >
                                 <Timer className="h-3.5 w-3.5" aria-hidden />
@@ -117,10 +117,11 @@ export function SessionExerciseCard({
                         )}
                     </p>
                 </div>
-                <div className="flex shrink-0 items-center gap-1">
+                <div className="-mr-1 -mt-1 flex shrink-0 items-center sm:mr-0 sm:mt-0 sm:gap-1">
                     <Button
                         variant="ghost"
                         size="icon"
+                        className="h-11 w-11 sm:h-12 sm:w-12"
                         aria-label={`Exercise guide for ${exercise.exercise.name}`}
                         title="Exercise guide"
                         onClick={onOpenGuide}
@@ -129,7 +130,12 @@ export function SessionExerciseCard({
                     </Button>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" aria-label={`Actions for ${exercise.exercise.name}`}>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-11 w-11 sm:h-12 sm:w-12"
+                                aria-label={`Actions for ${exercise.exercise.name}`}
+                            >
                                 <MoreHorizontal className="h-5 w-5" aria-hidden />
                             </Button>
                         </DropdownMenuTrigger>
@@ -172,32 +178,36 @@ export function SessionExerciseCard({
             {exercise.sets.length > 0 && (
                 <ol className="mt-4 divide-y divide-border overflow-hidden rounded-xl border border-border text-sm">
                     {exercise.sets.map((set) => (
-                        <li key={set.id} className="flex items-center gap-3 px-3 py-2">
+                        <li key={set.id} className="flex items-center gap-2 py-1.5 pl-3 pr-1 sm:gap-3 sm:py-2">
                             <span className="w-12 shrink-0 text-xs font-medium text-muted-foreground">
                                 {set.isWarmup ? 'Warm-up' : `Set ${set.setIndex}`}
                             </span>
-                            <span className="min-w-0 flex-1 font-medium">{describeSet({ exercise, set })}</span>
-                            {set.rpe !== null && <span className="text-xs text-muted-foreground">RPE {set.rpe}</span>}
-                            <span className="flex shrink-0 gap-1">
+                            <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2">
+                                <span className="font-medium">{describeSet({ exercise, set })}</span>
+                                {set.rpe !== null && (
+                                    <span className="text-xs text-muted-foreground">RPE {set.rpe}</span>
+                                )}
+                            </span>
+                            <span className="flex shrink-0">
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8"
+                                    className="h-10 w-10"
                                     aria-label={`Edit set ${set.setIndex}`}
                                     disabled={isSetMutating}
                                     onClick={() => onEditSet(set)}
                                 >
-                                    <Pencil className="h-3.5 w-3.5" aria-hidden />
+                                    <Pencil className="h-4 w-4" aria-hidden />
                                 </Button>
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 text-destructive hover:text-destructive"
+                                    className="h-10 w-10 text-destructive hover:text-destructive"
                                     aria-label={`Delete set ${set.setIndex}`}
                                     disabled={isSetMutating}
                                     onClick={() => onRemoveSet(set)}
                                 >
-                                    <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                                    <Trash2 className="h-4 w-4" aria-hidden />
                                 </Button>
                             </span>
                         </li>

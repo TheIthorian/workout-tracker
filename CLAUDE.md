@@ -381,7 +381,10 @@ types: feat | fix | chore | test | docs | refactor | style | perf | build | ci
 scope: optional, e.g. api | mcp | web | db | auth
 ```
 
-## Pull Requests — What / Why / How
+## Pull Requests — Title and What / Why / How
+
+**PR titles follow Conventional Commits**, same format as commit messages above:
+`<type>(<scope>): <description>`.
 
 PR descriptions use exactly three headings, in this order, and stay concise:
 
