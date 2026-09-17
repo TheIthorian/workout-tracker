@@ -11,6 +11,7 @@ import {
     Timer,
     Trash2,
 } from 'lucide-react';
+import { EquipmentChips } from '@/components/equipment/EquipmentChips';
 import { RestTimeSheet } from '@/components/exercises/RestTimeSheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -109,6 +110,7 @@ export function SessionExerciseCard({
                             </button>
                         )}
                     </p>
+                    <EquipmentChips equipment={exercise.exercise.equipment} className="mt-2" />
                     {lastWorkoutSet && !isReadOnly && (
                         <p className="mt-1 text-xs text-muted-foreground">
                             Last workout: {describeSet({ exercise, set: lastWorkoutSet })}

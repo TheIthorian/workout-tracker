@@ -1,4 +1,4 @@
-import { SessionExerciseSource, TrackingType } from '@app/domain';
+import { Equipment, SessionExerciseSource, TrackingType } from '@app/domain';
 import { z } from 'zod';
 import { guidSchema, paginatedResponseSchema, paginationQuerySchema } from './primitives.js';
 
@@ -17,6 +17,8 @@ export const sessionExerciseSummarySchema = z.object({
     id: guidSchema,
     name: z.string(),
     isCatalog: z.boolean(),
+    /** What the movement needs; empty means bodyweight. */
+    equipment: z.array(z.enum(Equipment)),
     archivedAt: z.string().nullable(),
 });
 export const sessionExerciseResponseSchema = z.object({
