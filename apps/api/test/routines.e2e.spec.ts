@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { routineDetailResponseSchema } from '@app/api-contract';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestApp, signIn, TEST_WEB_APP_BASE_URL, type TestApp } from './harness.js';
 
@@ -22,17 +23,19 @@ async function createExercise({
     workspaceId,
     name,
     trackingType = 'weight_reps',
+    equipment,
 }: {
     cookie: string;
     workspaceId: string;
     name: string;
     trackingType?: string;
+    equipment?: string[];
 }): Promise<string> {
     const response = await app.inject({
         method: 'POST',
         url: `/api/v1/workspaces/${workspaceId}/exercises`,
         headers: { cookie },
-        payload: { name, trackingType },
+        payload: { name, trackingType, ...(equipment === undefined ? {} : { equipment }) },
     });
 
     return (JSON.parse(response.body) as { id: string }).id;
@@ -201,6 +204,36 @@ describe('routine routes', () => {
         expect((JSON.parse(removed.body) as { exercises: SlotBody[] }).exercises.map((row) => row.position)).toEqual([
             0,
         ]);
+    });
+
+    it("serves each slot's exercise equipment, empty for a bodyweight movement", async () => {
+        const { cookie, workspaceId } = await signUpUser();
+        const routineId = await createRoutine({ cookie, workspaceId });
+        const benchId = await createExercise({
+            cookie,
+            workspaceId,
+            name: 'Bench',
+            equipment: ['barbell', 'bench'],
+        });
+        const plankId = await createExercise({
+            cookie,
+            workspaceId,
+            name: 'Plank',
+            trackingType: 'duration',
+            equipment: [],
+        });
+        const base = `/api/v1/workspaces/${workspaceId}/routines/${routineId}/exercises`;
+
+        await app.inject({ method: 'POST', url: base, headers: { cookie }, payload: { exerciseId: benchId } });
+        const added = await app.inject({
+            method: 'POST',
+            url: base,
+            headers: { cookie },
+            payload: { exerciseId: plankId },
+        });
+
+        const detail = routineDetailResponseSchema.parse(JSON.parse(added.body));
+        expect(detail.exercises.map((row) => row.exercise.equipment)).toEqual([['barbell', 'bench'], []]);
     });
 
     it('rejects a target that does not fit the tracking type with a 400 problem', async () => {

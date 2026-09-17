@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Reorder, useDragControls } from 'framer-motion';
 import { GripVertical } from 'lucide-react';
+import { EquipmentChips } from '@/components/equipment/EquipmentChips';
+import { TrackingTypeIcon } from '@/components/exercises/TrackingTypeIcon';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { describeTargets, type RoutineExercise } from '@/models/routine';
@@ -82,17 +84,21 @@ function SlotRow({ slot, isSelected, onSelect, onDrop }: SlotRowProps): JSX.Elem
             <button
                 type="button"
                 onClick={onSelect}
-                className="flex min-h-[3.5rem] min-w-0 flex-1 flex-col justify-center py-2 text-left"
+                className="flex min-h-[3.5rem] min-w-0 flex-1 items-center gap-3 py-2 text-left"
             >
-                <span className="flex items-center gap-2">
-                    <span className="truncate font-medium">{slot.exercise.name}</span>
-                    {slot.exercise.archivedAt && (
-                        <Badge variant="destructive" className="shrink-0">
-                            Archived
-                        </Badge>
-                    )}
+                <TrackingTypeIcon type={slot.exercise.trackingType} className="h-10 w-10" iconClassName="h-5 w-5" />
+                <span className="flex min-w-0 flex-1 flex-col justify-center gap-1">
+                    <span className="flex items-center gap-2">
+                        <span className="truncate font-medium">{slot.exercise.name}</span>
+                        {slot.exercise.archivedAt && (
+                            <Badge variant="destructive" className="shrink-0">
+                                Archived
+                            </Badge>
+                        )}
+                    </span>
+                    <span className="text-xs text-muted-foreground">{describeTargets(slot)}</span>
+                    <EquipmentChips equipment={slot.exercise.equipment} max={2} />
                 </span>
-                <span className="text-xs text-muted-foreground">{describeTargets(slot)}</span>
             </button>
         </Reorder.Item>
     );
