@@ -1,5 +1,5 @@
 import { createLogger, type Logger } from '@app/logger';
-import { AppErrorFilter, RequestContextMiddleware, registerRequestLogging } from '@app/nest-common';
+import { AppErrorFilter, PinoNestLogger, RequestContextMiddleware, registerRequestLogging } from '@app/nest-common';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { AppModule } from './app.module.js';
@@ -13,7 +13,9 @@ export async function createApp(): Promise<NestFastifyApplication> {
     const env = loadEnv();
     const logger = createLogger({ context: 'mcp', config: toLoggerConfig(env) });
 
-    const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter({ trustProxy: true }));
+    const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter({ trustProxy: true }), {
+        logger: new PinoNestLogger({ logger }),
+    });
 
     await configureApp(app, { logger });
 

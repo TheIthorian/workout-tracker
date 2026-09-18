@@ -3,6 +3,7 @@ export * from './validation/zod-validation.pipe.js';
 export * from './validation/validated.decorators.js';
 export * from './context/request-context.middleware.js';
 export * from './logging/request-logging.js';
+export * from './logging/pino-nest-logger.js';
 export * from './guards/session-auth.guard.js';
 export * from './guards/current-user.decorator.js';
 export * from './guards/mcp-pat-auth.guard.js';
