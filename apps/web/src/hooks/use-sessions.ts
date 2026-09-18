@@ -278,6 +278,14 @@ function writeSession({
         queryClient.invalidateQueries({
             queryKey: ['exercises', workspaceId, exercise.exercise.id, 'history'],
         });
+
+        // A suggestion only moves once the session is finished, so refetching per logged set would
+        // double the requests a workout makes and never change an answer.
+        if (session.completedAt !== null) {
+            queryClient.invalidateQueries({
+                queryKey: ['exercises', workspaceId, exercise.exercise.id, 'suggestion'],
+            });
+        }
     }
 }
 

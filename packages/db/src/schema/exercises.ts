@@ -5,6 +5,7 @@ import {
     foreignKey,
     index,
     integer,
+    numeric,
     pgEnum,
     pgTable,
     text,
@@ -229,6 +230,54 @@ export const exercisePreferences = pgTable(
             columns: [table.exerciseId],
             foreignColumns: [exercises.id],
             name: 'exercise_preferences_exercise_id_exercises_id_fk',
+        }).onDelete('cascade'),
+    ],
+);
+
+/**
+ * A workspace's target for its next go at an exercise — set by the user or by a coaching agent
+ * through the API. One row per exercise: a target describes the next session, so a second one for
+ * the same exercise would have nothing to distinguish it.
+ */
+export const exerciseTargets = pgTable(
+    'exercise_targets',
+    {
+        id: uuid('id').primaryKey().defaultRandom().notNull(),
+        workspaceId: uuid('workspace_id').notNull(),
+        exerciseId: uuid('exercise_id').notNull(),
+        weightKg: numeric('weight_kg', { precision: 7, scale: 2, mode: 'number' }),
+        reps: integer('reps'),
+        durationSeconds: integer('duration_seconds'),
+        distanceM: numeric('distance_m', { precision: 9, scale: 2, mode: 'number' }),
+        note: text('note'),
+        createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+            .default(sql`now()`)
+            .notNull(),
+        updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' })
+            .default(sql`now()`)
+            .notNull(),
+    },
+    (table) => [
+        index('exercise_targets_workspace_id_idx').using('btree', table.workspaceId.asc().nullsLast().op('uuid_ops')),
+        uniqueIndex('exercise_targets_workspace_id_exercise_id_uidx').on(table.workspaceId, table.exerciseId),
+        check(
+            'exercise_targets_measurements_non_negative_check',
+            sql`coalesce(${table.weightKg}, 0) >= 0 and coalesce(${table.reps}, 0) >= 0 and coalesce(${table.durationSeconds}, 0) >= 0 and coalesce(${table.distanceM}, 0) >= 0`,
+        ),
+        // A row with nothing to aim at would suggest an empty session; clearing a target deletes it.
+        check(
+            'exercise_targets_measurement_present_check',
+            sql`${table.weightKg} is not null or ${table.reps} is not null or ${table.durationSeconds} is not null or ${table.distanceM} is not null`,
+        ),
+        foreignKey({
+            columns: [table.workspaceId],
+            foreignColumns: [workspaces.id],
+            name: 'exercise_targets_workspace_id_workspaces_id_fk',
+        }).onDelete('cascade'),
+        foreignKey({
+            columns: [table.exerciseId],
+            foreignColumns: [exercises.id],
+            name: 'exercise_targets_exercise_id_exercises_id_fk',
         }).onDelete('cascade'),
     ],
 );

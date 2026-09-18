@@ -1,13 +1,18 @@
 import {
     addExerciseLinkToolArgsSchema,
+    clearExerciseTargetToolArgsSchema,
     createExerciseToolArgsSchema,
+    getExerciseSuggestionToolArgsSchema,
     getExerciseToolArgsSchema,
     listExercisesToolArgsSchema,
     paginationQuerySchema,
+    setExerciseTargetToolArgsSchema,
     updateExerciseToolArgsSchema,
     type ExerciseDetailResponse,
     type ExerciseLinkResponse,
     type ExerciseListResponse,
+    type ExerciseSuggestionResponse,
+    type ExerciseTargetResponse,
     type UpdateExerciseToolArgs,
 } from '@app/api-contract';
 import type { ApiClient } from '@app/api-client';
@@ -149,6 +154,73 @@ export function buildExerciseTools({
                         });
 
                         return serializeToolResult({ body: withLinks(exercise) });
+                    },
+                }),
+        }),
+        defineTool({
+            methodName: 'GetExerciseSuggestion',
+            description:
+                'Suggests what to open the next session with for an exercise, and says why. source is ' +
+                'target when a target was set that has not been trained through yet, last_performance ' +
+                'when it is built from the last working set (raised when that set came in at a low RPE), ' +
+                'or baseline when the exercise has never been logged and there is nothing to go on. ' +
+                'isFirstAttempt marks that last case. message is the line the app shows the user. Only ' +
+                "the fields the exercise's trackingType allows are filled in.",
+            inputSchema: getExerciseSuggestionToolArgsSchema,
+            handler: async (args) => {
+                const suggestion = await client.get<ExerciseSuggestionResponse>({
+                    path: `${basePath}/${args.exerciseId}/suggestion`,
+                });
+
+                return serializeToolResult({ body: suggestion });
+            },
+        }),
+        defineTool({
+            methodName: 'SetExerciseTarget',
+            description:
+                'Sets what the user should aim for the next time they train an exercise, which the app ' +
+                'offers them when they start logging it. Give only the fields that match the ' +
+                "exercise's trackingType: weightKg and reps for weight_reps, durationSeconds for " +
+                'duration, distanceM and durationSeconds for distance_time. This replaces the whole ' +
+                'target, so a field left out is cleared rather than kept. note is shown to the user in ' +
+                "place of the app's own wording, so write it as coaching addressed to them. A target is " +
+                'used once: after the exercise is trained again the app goes back to suggesting from ' +
+                'history, so set a new one to steer the session after that.',
+            inputSchema: setExerciseTargetToolArgsSchema,
+            handler: async (args) =>
+                runToolCaught({
+                    toolName: 'set_exercise_target',
+                    logger,
+                    action: async () => {
+                        const target = await client.put<ExerciseTargetResponse>({
+                            path: `${basePath}/${args.exerciseId}/target`,
+                            body: {
+                                weightKg: args.weightKg ?? null,
+                                reps: args.reps ?? null,
+                                durationSeconds: args.durationSeconds ?? null,
+                                distanceM: args.distanceM ?? null,
+                                note: args.note ?? null,
+                            },
+                        });
+
+                        return serializeToolResult({ body: target });
+                    },
+                }),
+        }),
+        defineTool({
+            methodName: 'ClearExerciseTarget',
+            description:
+                'Removes the target for an exercise, so the app goes back to suggesting from what the ' +
+                'user last did. Succeeds whether or not a target was set.',
+            inputSchema: clearExerciseTargetToolArgsSchema,
+            handler: async (args) =>
+                runToolCaught({
+                    toolName: 'clear_exercise_target',
+                    logger,
+                    action: async () => {
+                        await client.delete_({ path: `${basePath}/${args.exerciseId}/target` });
+
+                        return serializeToolResult({ body: { exerciseId: args.exerciseId, target: null } });
                     },
                 }),
         }),

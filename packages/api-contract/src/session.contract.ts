@@ -98,17 +98,18 @@ export const putSessionExerciseOrderRequestSchema = z.object({
         .max(100)
         .refine((ids) => new Set(ids).size === ids.length, { message: 'Each id may appear once' }),
 });
-const measurementsSchema = z.object({
+/** The measurement fields a set carries, in canonical units: kilograms, metres, seconds. */
+export const setMeasurementsSchema = z.object({
     weightKg: z.number().min(0).max(10000).nullable().optional(),
     reps: z.number().int().min(0).max(1000).nullable().optional(),
     durationSeconds: z.number().int().min(0).max(86400).nullable().optional(),
     distanceM: z.number().min(0).max(1000000).nullable().optional(),
 });
-export const postSetRequestSchema = measurementsSchema.extend({
+export const postSetRequestSchema = setMeasurementsSchema.extend({
     isWarmup: z.boolean().default(false),
     rpe: z.number().min(0).max(10).nullable().optional(),
 });
-export const patchSetRequestSchema = measurementsSchema
+export const patchSetRequestSchema = setMeasurementsSchema
     .extend({ isWarmup: z.boolean().optional(), rpe: z.number().min(0).max(10).nullable().optional() })
     .strict()
     .refine((body) => Object.keys(body).length > 0, { message: 'At least one field must be provided' });

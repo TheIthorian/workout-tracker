@@ -8,6 +8,7 @@ import {
     MoreHorizontal,
     Pencil,
     SkipForward,
+    Sparkles,
     Timer,
     Trash2,
 } from 'lucide-react';
@@ -23,8 +24,9 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SetLogForm } from '@/components/sessions/SetLogForm';
-import { useExerciseHistory, useSetExercisePreferences } from '@/hooks/use-exercises';
+import { useExerciseHistory, useExerciseSuggestion, useSetExercisePreferences } from '@/hooks/use-exercises';
 import { toast } from '@/hooks/use-toast';
+import { NextEffortSource } from '@/models/exercise';
 import { formatSessionClock, formatSessionNumber, type LogSetRequest, type SessionExercise } from '@/models/session';
 
 type SessionExerciseCardProps = {
@@ -64,6 +66,11 @@ export function SessionExerciseCard({
     isSetMutating,
 }: SessionExerciseCardProps): JSX.Element {
     const { data: history } = useExerciseHistory({ workspaceId, exerciseId: exercise.exercise.id });
+    const { data: suggestion } = useExerciseSuggestion({
+        workspaceId,
+        exerciseId: exercise.exercise.id,
+        enabled: !isReadOnly,
+    });
     const setPreferences = useSetExercisePreferences({ workspaceId });
     const [isRestOpen, setRestOpen] = useState(false);
     const lastWorkoutSet = latestWorkingSet(history?.data ?? []);
@@ -74,6 +81,9 @@ export function SessionExerciseCard({
     const workingSets = exercise.sets.filter((set) => !set.isWarmup).length;
     const isSkipped = status === SessionExerciseStatus.Skipped;
     const isDone = status === SessionExerciseStatus.Done;
+    // Only a baseline answer has nothing to offer but advice. Until it arrives, show nothing:
+    // telling someone who has trained this for months to find their baseline is worse than late.
+    const needsBaseline = suggestion?.source === NextEffortSource.Baseline && exercise.sets.length === 0;
 
     return (
         <article
@@ -171,6 +181,13 @@ export function SessionExerciseCard({
                 </p>
             )}
 
+            {needsBaseline && !isReadOnly && !isDone && !isSkipped && (
+                <p className="mt-3 flex items-start gap-2 rounded-xl bg-primary/10 p-3 text-sm text-foreground">
+                    <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+                    {suggestion.message}
+                </p>
+            )}
+
             {exercise.notes && (
                 <p className="mt-3 whitespace-pre-line text-sm text-muted-foreground">{exercise.notes}</p>
             )}
@@ -217,7 +234,16 @@ export function SessionExerciseCard({
 
             {!isDone && !isSkipped && !isReadOnly && (
                 <div className="mt-4">
-                    <SetLogForm exercise={exercise} previousSet={previousSet} isPending={isLogging} onLog={onLog} />
+                    <SetLogForm
+                        exercise={exercise}
+                        previousSet={previousSet}
+                        suggestion={suggestion ?? null}
+                        isPending={isLogging}
+                        onLog={onLog}
+                        onApplySuggestion={(applied) =>
+                            toast({ title: 'Suggestion applied', description: applied.message })
+                        }
+                    />
                 </div>
             )}
 

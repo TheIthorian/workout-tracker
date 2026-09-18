@@ -3,7 +3,7 @@ import { fireEvent, render, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { SetLogForm } from './SetLogForm';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { TrackingType } from '@/models/exercise';
+import { NextEffortSource, TrackingType, type ExerciseSuggestion } from '@/models/exercise';
 import type { LogSetRequest, SessionExercise, SessionSet } from '@/models/session';
 
 describe('SetLogForm', () => {
@@ -52,26 +52,120 @@ describe('SetLogForm', () => {
 
         expect(form.rpeInput().value).toBe('8.5');
     });
+
+    it('fills in the suggested weight and reps when the sparkle is tapped', () => {
+        const onApplySuggestion = vi.fn();
+        const form = renderForm({
+            previousSet: buildSet({ weightKg: 60, reps: 8 }),
+            onLog: vi.fn(),
+            suggestion: buildSuggestion({ weightKg: 65, reps: 6 }),
+            onApplySuggestion,
+        });
+
+        fireEvent.click(form.suggestButton());
+
+        expect(form.weightInput().value).toBe('65');
+        expect(form.repsInput().value).toBe('6');
+        expect(onApplySuggestion).toHaveBeenCalledOnce();
+    });
+
+    it('logs the suggested numbers after they are applied', () => {
+        const onLog = vi.fn();
+        const form = renderForm({
+            previousSet: buildSet({ weightKg: 60, reps: 8 }),
+            onLog,
+            suggestion: buildSuggestion({ weightKg: 65, reps: 6 }),
+        });
+
+        fireEvent.click(form.suggestButton());
+        fireEvent.click(form.logButton());
+
+        expect(onLog).toHaveBeenCalledWith(expect.objectContaining({ weightKg: 65, reps: 6 }));
+    });
+
+    it('offers no suggestion on a first attempt, which has numbers to find rather than repeat', () => {
+        const form = renderForm({
+            previousSet: null,
+            onLog: vi.fn(),
+            suggestion: buildSuggestion({
+                weightKg: null,
+                reps: null,
+                source: NextEffortSource.Baseline,
+                isFirstAttempt: true,
+            }),
+        });
+
+        expect(form.querySuggestButton()).toBeNull();
+    });
+
+    it('disables the sparkle until the suggestion has loaded', () => {
+        const form = renderForm({ previousSet: buildSet({}), onLog: vi.fn(), suggestion: null });
+
+        expect(form.suggestButton().hasAttribute('disabled')).toBe(true);
+    });
 });
 
-function renderForm({ previousSet, onLog }: { previousSet: SessionSet | null; onLog: (data: LogSetRequest) => void }): {
+function renderForm({
+    previousSet,
+    onLog,
+    suggestion = null,
+    onApplySuggestion = vi.fn(),
+}: {
+    previousSet: SessionSet | null;
+    onLog: (data: LogSetRequest) => void;
+    suggestion?: ExerciseSuggestion | null;
+    onApplySuggestion?: (suggestion: ExerciseSuggestion) => void;
+}): {
     rpeInput: () => HTMLInputElement;
     rpeIncrease: () => HTMLElement;
     rpeDecrease: () => HTMLElement;
+    weightInput: () => HTMLInputElement;
+    repsInput: () => HTMLInputElement;
     logButton: () => HTMLElement;
+    suggestButton: () => HTMLElement;
+    querySuggestButton: () => HTMLElement | null;
 } {
     const { container } = render(
         <TooltipProvider>
-            <SetLogForm exercise={buildExercise()} previousSet={previousSet} isPending={false} onLog={onLog} />
+            <SetLogForm
+                exercise={buildExercise()}
+                previousSet={previousSet}
+                suggestion={suggestion}
+                isPending={false}
+                onLog={onLog}
+                onApplySuggestion={onApplySuggestion}
+            />
         </TooltipProvider>,
     );
     const scope = within(container);
+    const suggestName = 'Suggest my next set';
 
     return {
         rpeInput: () => scope.getByRole<HTMLInputElement>('spinbutton', { name: 'RPE' }),
         rpeIncrease: () => scope.getByRole('button', { name: 'Increase RPE' }),
         rpeDecrease: () => scope.getByRole('button', { name: 'Decrease RPE' }),
+        weightInput: () => scope.getByRole<HTMLInputElement>('spinbutton', { name: 'Weight (kg)' }),
+        repsInput: () => scope.getByRole<HTMLInputElement>('spinbutton', { name: 'Reps' }),
         logButton: () => scope.getByRole('button', { name: 'Log set' }),
+        suggestButton: () => scope.getByRole('button', { name: suggestName }),
+        querySuggestButton: () => scope.queryByRole('button', { name: suggestName }),
+    };
+}
+
+function buildSuggestion(overrides: Partial<ExerciseSuggestion>): ExerciseSuggestion {
+    return {
+        exerciseId: 'exercise-1',
+        trackingType: TrackingType.WeightReps,
+        source: NextEffortSource.LastPerformance,
+        isFirstAttempt: false,
+        message: 'Last time came in at RPE 6, so this steps you up a little.',
+        weightKg: 65,
+        reps: 8,
+        durationSeconds: null,
+        distanceM: null,
+        lastPerformedAt: '2026-09-10T10:00:00.000Z',
+        target: null,
+        ...overrides,
     };
 }
 

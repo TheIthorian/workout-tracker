@@ -22,6 +22,41 @@ export const TRACKING_TYPE_META: Record<TrackingType, { label: string; icon: Luc
     [TrackingType.DistanceTime]: { label: 'Distance & time', icon: Route },
 };
 
+/** Where a suggested next effort came from. Mirrors `@app/domain`'s enum of the same name. */
+export enum NextEffortSource {
+    Baseline = 'baseline',
+    Target = 'target',
+    LastPerformance = 'last_performance',
+}
+
+/** What to aim for next time on an exercise, set here or by the user's coaching agent. */
+export type ExerciseTarget = {
+    exerciseId: string;
+    trackingType: TrackingType;
+    weightKg: number | null;
+    reps: number | null;
+    durationSeconds: number | null;
+    distanceM: number | null;
+    note: string | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+/** The app's answer to "what should I do this time?", with the line to show explaining it. */
+export type ExerciseSuggestion = {
+    exerciseId: string;
+    trackingType: TrackingType;
+    source: NextEffortSource;
+    isFirstAttempt: boolean;
+    message: string;
+    weightKg: number | null;
+    reps: number | null;
+    durationSeconds: number | null;
+    distanceM: number | null;
+    lastPerformedAt: string | null;
+    target: ExerciseTarget | null;
+};
+
 /** A movement in the user's exercise library. */
 export type Exercise = {
     id: string;

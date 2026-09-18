@@ -56,6 +56,29 @@ export const addExerciseLinkToolArgsSchema = z.strictObject({
     label: z.string().max(200).nullish(),
 });
 
+/**
+ * `set_exercise_target`. Replaces the whole target, so a measurement left out is cleared: a target
+ * describes one upcoming session rather than accumulating across calls.
+ */
+export const setExerciseTargetToolArgsSchema = z.strictObject({
+    exerciseId: guidSchema,
+    weightKg: z.number().min(0).max(10000).nullish(),
+    reps: z.number().int().min(0).max(1000).nullish(),
+    durationSeconds: z.number().int().min(0).max(86400).nullish(),
+    distanceM: z.number().min(0).max(1000000).nullish(),
+    note: z.string().max(500).nullish(),
+});
+
+/** `clear_exercise_target`. */
+export const clearExerciseTargetToolArgsSchema = z.strictObject({
+    exerciseId: guidSchema,
+});
+
+/** `get_exercise_suggestion`. */
+export const getExerciseSuggestionToolArgsSchema = z.strictObject({
+    exerciseId: guidSchema,
+});
+
 /** One slot in a routine as a tool supplies it. Omitted targets are left unset. */
 export const routineExerciseToolInputSchema = z.strictObject({
     exerciseId: guidSchema,
@@ -139,6 +162,9 @@ export type GetExerciseToolArgs = z.infer<typeof getExerciseToolArgsSchema>;
 export type CreateExerciseToolArgs = z.infer<typeof createExerciseToolArgsSchema>;
 export type UpdateExerciseToolArgs = z.infer<typeof updateExerciseToolArgsSchema>;
 export type AddExerciseLinkToolArgs = z.infer<typeof addExerciseLinkToolArgsSchema>;
+export type SetExerciseTargetToolArgs = z.infer<typeof setExerciseTargetToolArgsSchema>;
+export type ClearExerciseTargetToolArgs = z.infer<typeof clearExerciseTargetToolArgsSchema>;
+export type GetExerciseSuggestionToolArgs = z.infer<typeof getExerciseSuggestionToolArgsSchema>;
 export type RoutineExerciseToolInput = z.infer<typeof routineExerciseToolInputSchema>;
 export type ListRoutinesToolArgs = z.infer<typeof listRoutinesToolArgsSchema>;
 export type GetRoutineToolArgs = z.infer<typeof getRoutineToolArgsSchema>;

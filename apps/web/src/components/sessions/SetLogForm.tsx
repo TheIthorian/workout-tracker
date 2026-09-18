@@ -1,17 +1,20 @@
 import { useEffect, useState } from 'react';
-import { Check, Plus } from 'lucide-react';
+import { Check, Plus, Sparkles } from 'lucide-react';
 import { StepperField } from '@/components/common/StepperField';
 import { RpeHint } from '@/components/sessions/RpeHint';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { TrackingType } from '@/models/exercise';
+import { NextEffortSource, TrackingType, type ExerciseSuggestion } from '@/models/exercise';
 import { formatSessionClock, type LogSetRequest, type SessionExercise, type SessionSet } from '@/models/session';
 
 type SetLogFormProps = {
     exercise: SessionExercise;
     previousSet: SessionSet | null;
+    /** What to fill in when the user asks for a suggestion; null while it is still loading. */
+    suggestion: ExerciseSuggestion | null;
     isPending: boolean;
     onLog: (data: LogSetRequest) => void;
+    onApplySuggestion: (suggestion: ExerciseSuggestion) => void;
 };
 
 const WEIGHT_STEP_KG = 2.5;
@@ -23,7 +26,14 @@ const RPE_STEP = 0.5;
 const RPE_EMPTY_DEFAULTS = { increase: 8, decrease: 6 };
 
 /** The one-tap logging form, with only the fields valid for the exercise's tracking type. */
-export function SetLogForm({ exercise, previousSet, isPending, onLog }: SetLogFormProps): JSX.Element {
+export function SetLogForm({
+    exercise,
+    previousSet,
+    suggestion,
+    isPending,
+    onLog,
+    onApplySuggestion,
+}: SetLogFormProps): JSX.Element {
     const [weightKg, setWeightKg] = useState(previousSet?.weightKg ?? exercise.targetWeightKg);
     const [reps, setReps] = useState(previousSet?.reps ?? exercise.targetReps);
     const [durationSeconds, setDurationSeconds] = useState(
@@ -53,6 +63,22 @@ export function SetLogForm({ exercise, previousSet, isPending, onLog }: SetLogFo
         previousSet?.weightKg,
     ]);
 
+    const applySuggestion = (): void => {
+        if (suggestion === null) return;
+
+        if (exercise.trackingType === TrackingType.WeightReps) {
+            setWeightKg(suggestion.weightKg);
+            setReps(suggestion.reps);
+        }
+        if (exercise.trackingType === TrackingType.Duration) setDurationSeconds(suggestion.durationSeconds);
+        if (exercise.trackingType === TrackingType.DistanceTime) {
+            setDistanceM(suggestion.distanceM);
+            setDurationSeconds(suggestion.durationSeconds);
+        }
+
+        onApplySuggestion(suggestion);
+    };
+
     const log = (): void => {
         const data: LogSetRequest = { isWarmup, rpe };
         if (exercise.trackingType === TrackingType.WeightReps) {
@@ -66,6 +92,9 @@ export function SetLogForm({ exercise, previousSet, isPending, onLog }: SetLogFo
         }
         onLog(data);
     };
+
+    // A baseline answer carries advice but no numbers, and the card already shows that advice.
+    const canSuggest = suggestion === null || suggestion.source !== NextEffortSource.Baseline;
 
     const valid =
         exercise.trackingType === TrackingType.WeightReps
@@ -116,6 +145,18 @@ export function SetLogForm({ exercise, previousSet, isPending, onLog }: SetLogFo
                     hint={<RpeHint />}
                 />
             </div>
+            {canSuggest && (
+                <Button
+                    type="button"
+                    variant="outline"
+                    className="min-h-11 w-full gap-2 sm:w-auto"
+                    onClick={applySuggestion}
+                    disabled={suggestion === null}
+                >
+                    <Sparkles className="h-4 w-4" aria-hidden />
+                    Suggest my next set
+                </Button>
+            )}
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <label className="flex min-h-11 items-center gap-2 text-sm text-muted-foreground">
                     <Checkbox checked={isWarmup} onCheckedChange={(checked) => setWarmup(checked === true)} />

@@ -125,6 +125,58 @@ describe('MCP tools', () => {
             expect(toolResultBody(result)).toMatchObject({ url: 'https://example.com/demo' });
         });
 
+        it('advises a baseline for an exercise that has never been logged', async () => {
+            const { id } = await seedExercise(app.db, { userId, workspaceId, name: 'Untrained Exercise' });
+
+            const result = await client.callTool({ name: 'get_exercise_suggestion', arguments: { exerciseId: id } });
+
+            // `serializeToolResult` strips nulls, so a baseline answer is advice with no numbers on it.
+            expect(toolResultBody(result)).toMatchObject({ source: 'baseline', isFirstAttempt: true });
+            expect(toolResultBody(result)).not.toHaveProperty('weightKg');
+        });
+
+        it('sets a target a coach chose and reads it back as the next suggestion', async () => {
+            const { id } = await seedExercise(app.db, { userId, workspaceId, name: 'Targeted Exercise' });
+
+            await client.callTool({
+                name: 'set_exercise_target',
+                arguments: { exerciseId: id, weightKg: 82.5, reps: 5, note: 'Build to a heavy five.' },
+            });
+            const result = await client.callTool({ name: 'get_exercise_suggestion', arguments: { exerciseId: id } });
+
+            expect(toolResultBody(result)).toMatchObject({
+                source: 'target',
+                weightKg: 82.5,
+                reps: 5,
+                message: 'Build to a heavy five.',
+            });
+        });
+
+        it('clears a target, leaving nothing for the suggestion to use', async () => {
+            const { id } = await seedExercise(app.db, { userId, workspaceId, name: 'Cleared Exercise' });
+            await client.callTool({ name: 'set_exercise_target', arguments: { exerciseId: id, weightKg: 60 } });
+
+            await client.callTool({ name: 'clear_exercise_target', arguments: { exerciseId: id } });
+            const result = await client.callTool({ name: 'get_exercise_suggestion', arguments: { exerciseId: id } });
+
+            expect(toolResultBody(result)).toMatchObject({ source: 'baseline' });
+            expect(toolResultBody(result)).not.toHaveProperty('target');
+        });
+
+        // A write tool is wrapped, so the refusal arrives as a problem body rather than isError -
+        // what matters is that it is a 404 and the target never landed.
+        it('cannot set a target on an exercise in another workspace', async () => {
+            const other = await seedWorkspace(app.db, { name: 'Other Targets', ownerId: userId });
+            const { id } = await seedExercise(app.db, { userId, workspaceId: other.id, name: 'Elsewhere Target' });
+
+            const result = await client.callTool({
+                name: 'set_exercise_target',
+                arguments: { exerciseId: id, weightKg: 100 },
+            });
+
+            expect(toolResultBody(result)).toMatchObject({ status: 404 });
+        });
+
         // The pin is the point: a token issued for one workspace must not read another's rows even
         // though its owner is a member of both.
         it('cannot reach an exercise in another workspace the same user owns', async () => {

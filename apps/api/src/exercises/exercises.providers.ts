@@ -3,6 +3,7 @@ import {
     ExerciseGuideService,
     ExerciseImagesService,
     ExerciseHistoryService,
+    ExerciseTargetsService,
     ExercisesService,
     type WorkspaceMembershipService,
 } from '@app/services';
@@ -22,6 +23,9 @@ export const EXERCISE_GUIDE_SERVICE = Symbol('EXERCISE_GUIDE_SERVICE');
 /** DI token for completed-session exercise history. */
 export const EXERCISE_HISTORY_SERVICE = Symbol('EXERCISE_HISTORY_SERVICE');
 
+/** DI token for next-time targets and the suggestion built from them. */
+export const EXERCISE_TARGETS_SERVICE = Symbol('EXERCISE_TARGETS_SERVICE');
+
 /** Split out from `exercises.module.ts` to avoid a circular import between that module and its controllers. */
 export const exerciseServiceProviders: Provider[] = [
     {
@@ -40,6 +44,12 @@ export const exerciseServiceProviders: Provider[] = [
         provide: EXERCISE_GUIDE_SERVICE,
         useFactory: (db: Db, membership: WorkspaceMembershipService): ExerciseGuideService =>
             new ExerciseGuideService({ db, membership }),
+        inject: [DB, WORKSPACE_MEMBERSHIP_SERVICE],
+    },
+    {
+        provide: EXERCISE_TARGETS_SERVICE,
+        useFactory: (db: Db, membership: WorkspaceMembershipService): ExerciseTargetsService =>
+            new ExerciseTargetsService({ db, membership }),
         inject: [DB, WORKSPACE_MEMBERSHIP_SERVICE],
     },
     {

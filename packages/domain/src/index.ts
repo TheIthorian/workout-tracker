@@ -17,6 +17,20 @@ export {
     type RoutineSlotLike,
     type SessionSlotLike,
 } from './routine-duration.js';
+export {
+    DISTANCE_INCREMENT_M,
+    DURATION_INCREMENT_SECONDS,
+    EASY_RPE_CEILING,
+    FIRST_ATTEMPT_MESSAGE,
+    HARD_RPE_FLOOR,
+    NextEffortSource,
+    PROGRESSION_FRACTION,
+    WEIGHT_INCREMENT_KG,
+    suggestNextEffort,
+    type LastPerformance,
+    type NextEffortSuggestion,
+    type NextEffortTarget,
+} from './next-effort.js';
 export { DEFAULT_REST_SECONDS, resolveRestSeconds, restTimer, sessionRestTimer, type RestTimer } from './rest-timer.js';
 export {
     SessionExerciseSource,

@@ -18,6 +18,28 @@ export function exerciseApiPath({ workspaceId, exerciseId }: { workspaceId: stri
     return `/workspaces/${workspaceId}/exercises/${exerciseId}`;
 }
 
+/** An exercise's next-time target, without the `/api/v1` prefix the generator adds. */
+export function exerciseTargetApiPath({
+    workspaceId,
+    exerciseId,
+}: {
+    workspaceId: string;
+    exerciseId: string;
+}): string {
+    return `${exerciseApiPath({ workspaceId, exerciseId })}/target`;
+}
+
+/** An exercise's suggested next effort, without the `/api/v1` prefix the generator adds. */
+export function exerciseSuggestionApiPath({
+    workspaceId,
+    exerciseId,
+}: {
+    workspaceId: string;
+    exerciseId: string;
+}): string {
+    return `${exerciseApiPath({ workspaceId, exerciseId })}/suggestion`;
+}
+
 /** The routine's editor page in the SPA. */
 export function routineWebPath({ routineId }: { routineId: string }): string {
     return `/routines/${routineId}`;
