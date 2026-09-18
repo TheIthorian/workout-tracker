@@ -2,7 +2,7 @@ import compress from '@fastify/compress';
 import cookie from '@fastify/cookie';
 import multipart from '@fastify/multipart';
 import { createLogger, type Logger } from '@app/logger';
-import { AppErrorFilter, RequestContextMiddleware, registerRequestLogging } from '@app/nest-common';
+import { AppErrorFilter, PinoNestLogger, RequestContextMiddleware, registerRequestLogging } from '@app/nest-common';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { AppModule } from './app.module.js';
@@ -29,7 +29,9 @@ export async function createApp(): Promise<NestFastifyApplication> {
 
     // trustProxy: the service always runs behind a proxy in production, so without it every
     // request reports the proxy's address and IP-keyed rate limits bucket all clients together.
-    const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter({ trustProxy: true }));
+    const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter({ trustProxy: true }), {
+        logger: new PinoNestLogger({ logger }),
+    });
 
     await configureApp(app, { logger });
 
