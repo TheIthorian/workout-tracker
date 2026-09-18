@@ -821,6 +821,9 @@ importers:
       '@types/node':
         specifier: 26.2.0
         version: 26.2.0
+      better-auth:
+        specifier: 1.7.1
+        version: 1.7.1(@cloudflare/workers-types@5.20260816.1)(@opentelemetry/api@1.9.1)(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20260816.1)(@opentelemetry/api@1.9.1)(@types/pg@8.23.1)(kysely@0.29.5)(pg@8.23.0))(pg@8.23.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(jsdom@25.0.1)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@1.21.7)(tsx@4.23.12)(yaml@2.9.0)))
       fastify:
         specifier: 5.12.0
         version: 5.12.0

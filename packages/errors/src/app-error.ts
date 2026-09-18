@@ -227,3 +227,25 @@ export class ConfigurationError extends AppError {
         );
     }
 }
+
+/**
+ * Thrown when the session store could not be reached, so whether the caller is signed in is
+ * unknown rather than answered (HTTP 503).
+ *
+ * Distinct from {@link UnauthorizedError} on purpose: a client that treats every failure to resolve
+ * a session as "signed out" logs a visitor out on a database blip. The detail is deliberately
+ * generic - a caller learns to retry, never anything about the store.
+ */
+export class SessionUnavailableError extends AppError {
+    constructor() {
+        super(
+            'Session unavailable',
+            buildProblem({
+                errorName: 'SessionUnavailableError',
+                title: 'Session unavailable',
+                status: 503,
+                detail: 'Could not verify the session right now. Please try again.',
+            }),
+        );
+    }
+}

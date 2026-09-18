@@ -1,6 +1,7 @@
 import type { ExecutionContext } from '@nestjs/common';
-import { TooManyRequestsError, UnauthorizedError } from '@app/errors';
+import { SessionUnavailableError, TooManyRequestsError, UnauthorizedError } from '@app/errors';
 import type { AuthService } from '@app/auth';
+import { APIError } from 'better-auth/api';
 import { describe, expect, it, vi } from 'vitest';
 import { SessionAuthGuard, type AuthenticatedRequest } from './session-auth.guard.js';
 
@@ -31,16 +32,33 @@ describe('SessionAuthGuard', () => {
         await expect(guard.canActivate(context)).rejects.toBeInstanceOf(UnauthorizedError);
     });
 
-    // Finding 1 (fix round 1): a malformed cookie, a session-store error, or any other rejection
-    // from getSession must not escape as an unhandled 500 - this guard promises 401 on every
-    // failure path. The original error is not surfaced to the caller (only a generic
-    // UnauthorizedError is thrown) because an authentication failure must not leak store
-    // internals such as a database error message.
-    it('throws UnauthorizedError, not the original error, when getSession rejects', async () => {
-        const getSession = vi.fn().mockRejectedValue(new Error('session store unreachable'));
+    // A credential Better Auth examined and refused is a genuine 401. The original error is not
+    // surfaced to the caller because an authentication failure must not leak store internals such
+    // as a database error message.
+    it('throws UnauthorizedError, not the original error, when getSession rejects the credential', async () => {
+        const getSession = vi.fn().mockRejectedValue(new APIError('UNAUTHORIZED', { message: 'invalid cookie' }));
         const { guard, context } = makeGuard({ getSession, cookie: 'session=abc' });
 
         await expect(guard.canActivate(context)).rejects.toBeInstanceOf(UnauthorizedError);
+    });
+
+    // A store that never answered leaves the question unanswered, and a 401 there is what signs a
+    // visitor out mid-workout over a dropped database connection: the SPA's interceptor redirects
+    // to the sign-in page on any 401, however healthy the session row still is. 503 says retry.
+    it('throws SessionUnavailableError when the session store fails to answer', async () => {
+        const getSession = vi.fn().mockRejectedValue(new Error('session store unreachable'));
+        const { guard, context } = makeGuard({ getSession, cookie: 'session=abc' });
+
+        await expect(guard.canActivate(context)).rejects.toBeInstanceOf(SessionUnavailableError);
+    });
+
+    it('never leaks the store failure to the caller', async () => {
+        const getSession = vi.fn().mockRejectedValue(new Error('connect ECONNREFUSED 10.0.0.4:5432'));
+        const { guard, context } = makeGuard({ getSession, cookie: 'session=abc' });
+
+        const error = await guard.canActivate(context).catch((thrown: unknown) => thrown);
+
+        expect(JSON.stringify(error)).not.toContain('ECONNREFUSED');
     });
 
     // LockoutService's hooks run for every Better Auth endpoint (including getSession), but they

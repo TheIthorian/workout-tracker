@@ -1,6 +1,6 @@
 import { Inject, Injectable, type CanActivate, type ExecutionContext } from '@nestjs/common';
-import { AppError, UnauthorizedError } from '@app/errors';
-import type { AuthService } from '@app/auth';
+import { AppError, SessionUnavailableError, UnauthorizedError } from '@app/errors';
+import { isCredentialRejection, type AuthService } from '@app/auth';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
 export type CurrentUserContext = { userId: string; email: string };
@@ -60,14 +60,15 @@ export class SessionAuthGuard implements CanActivate {
     }
 
     /**
-     * A malformed cookie, a session-store error, or any other rejection from `getSession` must not
-     * escape as an unhandled 500 - this guard promises 401 on every failure path. A typed
-     * `AppError` (e.g. a 429 from `LockoutService`'s hooks, which run for every Better Auth
-     * endpoint including `getSession`, though they currently no-op outside `/sign-in/email`) is
-     * passed through unflattened rather than downgraded, so a future typed error is never silently
-     * swallowed. Anything else is not surfaced to the caller - only a generic `UnauthorizedError` -
-     * because an authentication failure must not leak session-store internals such as a database
-     * error message.
+     * No rejection from `getSession` escapes as an unhandled 500, but they do not all mean the
+     * same thing. A credential Better Auth examined and refused (a malformed cookie) is a 401. A
+     * session store that did not answer - a dropped connection, an exhausted pool - is a 503:
+     * whether the caller is signed in is unknown, and a 401 there tells the browser to sign a
+     * perfectly valid session out. Neither carries the original error, because an authentication
+     * failure must not leak store internals such as a database error message. A typed `AppError`
+     * (e.g. a 429 from `LockoutService`'s hooks, which run for every Better Auth endpoint
+     * including `getSession`, though they currently no-op outside `/sign-in/email`) is passed
+     * through unflattened, so a future typed error is never silently swallowed.
      */
     private async resolveSession(cookie: string): Promise<ResolvedSession> {
         try {
@@ -84,7 +85,9 @@ export class SessionAuthGuard implements CanActivate {
         } catch (error) {
             if (error instanceof AppError) throw error;
 
-            throw new UnauthorizedError();
+            if (isCredentialRejection(error)) throw new UnauthorizedError();
+
+            throw new SessionUnavailableError();
         }
     }
 }
