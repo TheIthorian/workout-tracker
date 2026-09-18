@@ -412,3 +412,7 @@ PR descriptions use exactly three headings, in this order, and stay concise:
 - **How** — the approach, and any non-obvious decision or deployment hazard.
 
 No other headings. Keep each section short; the diff carries the detail.
+
+This applies to every PR on the repository, however it was opened. A PR created from the Claude
+Code UI, a template, or any other tool arrives with whatever description that tool generated —
+rewrite the title and body into this format rather than leaving them.
