@@ -29,8 +29,12 @@ export enum NextEffortSource {
     LastPerformance = 'last_performance',
 }
 
-/** What to aim for next time on an exercise, set here or by the user's coaching agent. */
+/**
+ * What to aim for next time on an exercise, set here or by the user's coaching agent. Targets are
+ * appended rather than overwritten, so this is the newest one and `createdAt` is when it was set.
+ */
 export type ExerciseTarget = {
+    id: string;
     exerciseId: string;
     trackingType: TrackingType;
     weightKg: number | null;
@@ -39,7 +43,6 @@ export type ExerciseTarget = {
     distanceM: number | null;
     note: string | null;
     createdAt: string;
-    updatedAt: string;
 };
 
 /** The app's answer to "what should I do this time?", with the line to show explaining it. */

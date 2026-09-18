@@ -7,6 +7,7 @@ import type { WorkspaceMembershipService } from './workspace-membership.service.
 const { exercises, exerciseTargets, sessionExercises, setEntries, workoutSessions } = schema;
 
 export type ExerciseTarget = {
+    id: string;
     exerciseId: string;
     trackingType: TrackingType;
     weightKg: number | null;
@@ -15,7 +16,6 @@ export type ExerciseTarget = {
     distanceM: number | null;
     note: string | null;
     createdAt: string;
-    updatedAt: string;
 };
 
 export type ExerciseSuggestion = NextEffortSuggestion & {
@@ -26,8 +26,13 @@ export type ExerciseSuggestion = NextEffortSuggestion & {
 };
 
 /**
- * The target a workspace has set for its next go at an exercise, and the suggestion built from it
+ * The targets a workspace has set for an exercise, and the suggestion built from the newest of them
  * and the exercise's history.
+ *
+ * Targets are appended rather than overwritten, so what was prescribed over time stays readable;
+ * only the newest row is ever applied. A clear appends a row with no measurements, which is how an
+ * append-only log says there is no longer a target — deleting instead would silently hand the
+ * exercise back to the target before it.
  *
  * A target may be set against a catalog exercise as well as a custom one: the target belongs to the
  * workspace, not to the shared exercise, so it is stored and read with `scopedToWorkspace` while
@@ -43,7 +48,7 @@ export class ExerciseTargetsService {
     }
 
     /**
-     * Replaces the target for an exercise with the measurements given.
+     * Sets the target for an exercise, superseding any target before it.
      *
      * @throws EntityNotFoundError when the exercise is not visible to the workspace.
      */
@@ -68,21 +73,17 @@ export class ExerciseTargetsService {
     }): Promise<ExerciseTarget> {
         await this.membership.require({ userId, workspaceId });
         const trackingType = await this.requireExercise({ workspaceId, exerciseId });
-        const now = new Date().toISOString();
-        const values = {
-            weightKg: weightKg ?? null,
-            reps: reps ?? null,
-            durationSeconds: durationSeconds ?? null,
-            distanceM: distanceM ?? null,
-            note: note ?? null,
-        };
 
         const [row] = await this.db
             .insert(exerciseTargets)
-            .values({ workspaceId, exerciseId, ...values, updatedAt: now })
-            .onConflictDoUpdate({
-                target: [exerciseTargets.workspaceId, exerciseTargets.exerciseId],
-                set: { ...values, updatedAt: now },
+            .values({
+                workspaceId,
+                exerciseId,
+                weightKg: weightKg ?? null,
+                reps: reps ?? null,
+                durationSeconds: durationSeconds ?? null,
+                distanceM: distanceM ?? null,
+                note: note ?? null,
             })
             .returning();
 
@@ -92,8 +93,9 @@ export class ExerciseTargetsService {
     }
 
     /**
-     * Removes the target for an exercise. Succeeds whether or not one was set, so a caller clearing
-     * an already-clear target is not an error.
+     * Retires the current target for an exercise by appending a row with nothing to aim at, leaving
+     * the targets before it in place as a record. Clearing when there is no target does nothing, so
+     * the log does not fill with repeated clears.
      *
      * @throws EntityNotFoundError when the exercise is not visible to the workspace.
      */
@@ -107,11 +109,11 @@ export class ExerciseTargetsService {
         exerciseId: string;
     }): Promise<void> {
         await this.membership.require({ userId, workspaceId });
-        await this.requireExercise({ workspaceId, exerciseId });
+        const trackingType = await this.requireExercise({ workspaceId, exerciseId });
 
-        await this.db
-            .delete(exerciseTargets)
-            .where(scopedToWorkspace(exerciseTargets, workspaceId, eq(exerciseTargets.exerciseId, exerciseId)));
+        if ((await this.loadTarget({ workspaceId, exerciseId, trackingType })) === null) return;
+
+        await this.db.insert(exerciseTargets).values({ workspaceId, exerciseId });
     }
 
     /**
@@ -138,7 +140,7 @@ export class ExerciseTargetsService {
 
         const suggestion = suggestNextEffort({
             trackingType,
-            target: target === null ? null : { ...target, setAt: target.updatedAt },
+            target: target === null ? null : { ...target, setAt: target.createdAt },
             lastPerformance,
         });
 
@@ -169,6 +171,11 @@ export class ExerciseTargetsService {
         return exercise.trackingType;
     }
 
+    /**
+     * Reads the newest target for an exercise, or null when there is none or the newest row is a
+     * clear. The id breaks a tie between two targets stored in the same instant: which of them wins
+     * is arbitrary, but it has to be the same one on every read.
+     */
     private async loadTarget({
         workspaceId,
         exerciseId,
@@ -181,9 +188,15 @@ export class ExerciseTargetsService {
         const [row] = await this.db
             .select()
             .from(exerciseTargets)
-            .where(scopedToWorkspace(exerciseTargets, workspaceId, eq(exerciseTargets.exerciseId, exerciseId)));
+            .where(scopedToWorkspace(exerciseTargets, workspaceId, eq(exerciseTargets.exerciseId, exerciseId)))
+            .orderBy(desc(exerciseTargets.createdAt), desc(exerciseTargets.id))
+            .limit(1);
 
-        return row === undefined ? null : toTarget({ row, trackingType });
+        if (row === undefined) return null;
+
+        const target = toTarget({ row, trackingType });
+
+        return hasMeasurement(target) ? target : null;
     }
 
     /**
@@ -231,6 +244,7 @@ type ExerciseTargetRow = typeof exerciseTargets.$inferSelect;
 /** Adds the exercise's tracking type, which the stored row does not carry, to the wire shape. */
 function toTarget({ row, trackingType }: { row: ExerciseTargetRow; trackingType: TrackingType }): ExerciseTarget {
     return {
+        id: row.id,
         exerciseId: row.exerciseId,
         trackingType,
         weightKg: row.weightKg,
@@ -239,6 +253,10 @@ function toTarget({ row, trackingType }: { row: ExerciseTargetRow; trackingType:
         distanceM: row.distanceM,
         note: row.note,
         createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
     };
+}
+
+/** A row with no measurement at all is a clear, not something to aim at. */
+function hasMeasurement(target: ExerciseTarget): boolean {
+    return [target.weightKg, target.reps, target.durationSeconds, target.distanceM].some((value) => value !== null);
 }

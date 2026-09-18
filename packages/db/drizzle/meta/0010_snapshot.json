@@ -1,5 +1,5 @@
 {
-  "id": "cecf2bcd-cb74-4d4d-be94-1ab66fb48a94",
+  "id": "9bf38f80-7bbb-4c61-b0c0-d98f2ef85f12",
   "prevId": "2953f7f4-413f-439c-bbc6-56b85938f2a8",
   "version": "7",
   "dialect": "postgresql",
@@ -1143,13 +1143,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
         }
       },
       "indexes": {
@@ -1169,8 +1162,8 @@
           "method": "btree",
           "with": {}
         },
-        "exercise_targets_workspace_id_exercise_id_uidx": {
-          "name": "exercise_targets_workspace_id_exercise_id_uidx",
+        "exercise_targets_latest_idx": {
+          "name": "exercise_targets_latest_idx",
           "columns": [
             {
               "expression": "workspace_id",
@@ -1183,9 +1176,15 @@
               "isExpression": false,
               "asc": true,
               "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
             }
           ],
-          "isUnique": true,
+          "isUnique": false,
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -1226,10 +1225,6 @@
         "exercise_targets_measurements_non_negative_check": {
           "name": "exercise_targets_measurements_non_negative_check",
           "value": "coalesce(\"exercise_targets\".\"weight_kg\", 0) >= 0 and coalesce(\"exercise_targets\".\"reps\", 0) >= 0 and coalesce(\"exercise_targets\".\"duration_seconds\", 0) >= 0 and coalesce(\"exercise_targets\".\"distance_m\", 0) >= 0"
-        },
-        "exercise_targets_measurement_present_check": {
-          "name": "exercise_targets_measurement_present_check",
-          "value": "\"exercise_targets\".\"weight_kg\" is not null or \"exercise_targets\".\"reps\" is not null or \"exercise_targets\".\"duration_seconds\" is not null or \"exercise_targets\".\"distance_m\" is not null"
         }
       },
       "isRLSEnabled": false

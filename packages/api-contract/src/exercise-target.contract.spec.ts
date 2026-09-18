@@ -7,6 +7,7 @@ import {
 } from './exercise-target.contract.js';
 
 const EXERCISE_ID = '3f1b2c44-8a3e-4f5b-9f0a-2c1d4e5f6a7b';
+const TARGET_ID = '9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d';
 
 describe('putExerciseTargetRequestSchema', () => {
     it('accepts a single measurement', () => {
@@ -37,6 +38,7 @@ describe('putExerciseTargetRequestSchema', () => {
 describe('exerciseTargetResponseSchema', () => {
     it('accepts a stored target with the measurements its tracking type leaves unset', () => {
         const parsed = exerciseTargetResponseSchema.parse({
+            id: TARGET_ID,
             exerciseId: EXERCISE_ID,
             trackingType: 'weight_reps',
             weightKg: 82.5,
@@ -45,7 +47,6 @@ describe('exerciseTargetResponseSchema', () => {
             distanceM: null,
             note: null,
             createdAt: '2026-09-17T10:00:00.000Z',
-            updatedAt: '2026-09-17T10:00:00.000Z',
         });
 
         expect(parsed.trackingType).toBe(TrackingType.WeightReps);
@@ -83,6 +84,7 @@ describe('exerciseSuggestionResponseSchema', () => {
             reps: 5,
             lastPerformedAt: '2026-09-10T10:00:00.000Z',
             target: {
+                id: TARGET_ID,
                 exerciseId: EXERCISE_ID,
                 trackingType: 'weight_reps',
                 weightKg: 82.5,
@@ -91,7 +93,6 @@ describe('exerciseSuggestionResponseSchema', () => {
                 distanceM: null,
                 note: null,
                 createdAt: '2026-09-17T10:00:00.000Z',
-                updatedAt: '2026-09-17T10:00:00.000Z',
             },
         });
 

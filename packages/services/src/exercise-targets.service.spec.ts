@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { schema, type Db } from '@app/db';
+import { schema, scopedToWorkspace, type Db } from '@app/db';
 import { startTestDatabase } from '@app/db/testing';
 import { FIRST_ATTEMPT_MESSAGE, NextEffortSource, TrackingType } from '@app/domain';
 import { EntityNotFoundError } from '@app/errors';
+import { asc, eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ExerciseTargetsService } from './exercise-targets.service.js';
 import { seedCatalogExercise, seedUser, seedWorkspace } from './testing.js';
@@ -68,6 +69,19 @@ async function performOnce({
         rpe,
     });
     await sessions.complete({ userId, workspaceId, sessionId: started.id });
+}
+
+/** Every stored target row for an exercise, oldest first — including the rows a clear appended. */
+async function storedTargetIds(exerciseId: string): Promise<string[]> {
+    const rows = await db
+        .select({ id: schema.exerciseTargets.id })
+        .from(schema.exerciseTargets)
+        .where(
+            scopedToWorkspace(schema.exerciseTargets, workspaceId, eq(schema.exerciseTargets.exerciseId, exerciseId)),
+        )
+        .orderBy(asc(schema.exerciseTargets.createdAt));
+
+    return rows.map((row) => row.id);
 }
 
 describe('suggest', () => {
@@ -205,13 +219,26 @@ describe('suggest', () => {
 });
 
 describe('set and clear', () => {
-    it('replaces the stored target rather than merging into it', async () => {
+    it('stores a whole new target rather than merging into the one before it', async () => {
         const exerciseId = await seedCatalogExercise(db, { slug: `catalog-${randomUUID()}` });
 
         await targets.set({ userId, workspaceId, exerciseId, weightKg: 60, reps: 10, note: 'First pass.' });
-        const replaced = await targets.set({ userId, workspaceId, exerciseId, reps: 5 });
+        const stored = await targets.set({ userId, workspaceId, exerciseId, reps: 5 });
 
-        expect(replaced).toMatchObject({ weightKg: null, reps: 5, note: null });
+        expect(stored).toMatchObject({ weightKg: null, reps: 5, note: null });
+    });
+
+    it('applies the newest target and keeps the ones before it', async () => {
+        const exerciseId = await seedCatalogExercise(db, { slug: `catalog-${randomUUID()}` });
+
+        const first = await targets.set({ userId, workspaceId, exerciseId, weightKg: 60, reps: 10 });
+        const second = await targets.set({ userId, workspaceId, exerciseId, weightKg: 70, reps: 8 });
+
+        const suggestion = await targets.suggest({ userId, workspaceId, exerciseId });
+
+        expect(suggestion).toMatchObject({ source: NextEffortSource.Target, weightKg: 70, reps: 8 });
+        expect(suggestion.target?.id).toBe(second.id);
+        expect(await storedTargetIds(exerciseId)).toEqual(expect.arrayContaining([first.id, second.id]));
     });
 
     it('clears a target, and clearing again is not an error', async () => {
@@ -222,6 +249,39 @@ describe('set and clear', () => {
         await targets.clear({ userId, workspaceId, exerciseId });
 
         expect((await targets.suggest({ userId, workspaceId, exerciseId })).target).toBeNull();
+    });
+
+    it('records a clear once, leaving the cleared target readable', async () => {
+        const exerciseId = await seedCatalogExercise(db, { slug: `catalog-${randomUUID()}` });
+        const set = await targets.set({ userId, workspaceId, exerciseId, weightKg: 60 });
+
+        await targets.clear({ userId, workspaceId, exerciseId });
+        await targets.clear({ userId, workspaceId, exerciseId });
+
+        const stored = await storedTargetIds(exerciseId);
+        expect(stored).toHaveLength(2);
+        expect(stored).toContain(set.id);
+    });
+
+    it('does not record a clear when there was no target to retire', async () => {
+        const exerciseId = await seedCatalogExercise(db, { slug: `catalog-${randomUUID()}` });
+
+        await targets.clear({ userId, workspaceId, exerciseId });
+
+        expect(await storedTargetIds(exerciseId)).toEqual([]);
+    });
+
+    it('sets a target again after a clear', async () => {
+        const exerciseId = await seedCatalogExercise(db, { slug: `catalog-${randomUUID()}` });
+        await targets.set({ userId, workspaceId, exerciseId, weightKg: 60 });
+        await targets.clear({ userId, workspaceId, exerciseId });
+
+        await targets.set({ userId, workspaceId, exerciseId, weightKg: 75 });
+
+        expect(await targets.suggest({ userId, workspaceId, exerciseId })).toMatchObject({
+            source: NextEffortSource.Target,
+            weightKg: 75,
+        });
     });
 });
 

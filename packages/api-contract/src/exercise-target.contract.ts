@@ -3,8 +3,12 @@ import { z } from 'zod';
 import { guidSchema } from './primitives.js';
 import { setMeasurementsSchema } from './session.contract.js';
 
-/** A target waiting to be used, as stored for one exercise in one workspace. */
+/**
+ * The target that currently applies to an exercise. Targets are appended rather than overwritten,
+ * so this is the newest one stored, and `createdAt` is when it was set.
+ */
 export const exerciseTargetResponseSchema = z.object({
+    id: guidSchema,
     exerciseId: guidSchema,
     trackingType: z.enum(TrackingType),
     weightKg: z.number().nullable(),
@@ -14,13 +18,12 @@ export const exerciseTargetResponseSchema = z.object({
     /** What the app says when it offers the target; a coach's own wording wins over the default. */
     note: z.string().nullable(),
     createdAt: z.string(),
-    updatedAt: z.string(),
 });
 
 /**
- * The body of `PUT /api/v1/workspaces/{workspaceId}/exercises/{exerciseId}/target`. The whole target
- * is replaced, so an omitted measurement is cleared rather than kept — a partially updated target
- * would mix two sessions' intentions.
+ * The body of `PUT /api/v1/workspaces/{workspaceId}/exercises/{exerciseId}/target`. Each call stores
+ * a whole new target, so an omitted measurement is absent from it rather than carried over from the
+ * target before — merging the two would mix two sessions' intentions.
  */
 export const putExerciseTargetRequestSchema = setMeasurementsSchema
     .extend({ note: z.string().max(500).nullable().optional() })
@@ -47,7 +50,7 @@ export const exerciseSuggestionResponseSchema = z.object({
     distanceM: z.number().nullable(),
     /** When the exercise was last trained, or null on a first attempt. */
     lastPerformedAt: z.string().nullable(),
-    /** The stored target, present even when it has been spent and no longer drives the suggestion. */
+    /** The newest stored target, present even when it has been spent and no longer drives this answer. */
     target: exerciseTargetResponseSchema.nullable(),
 });
 

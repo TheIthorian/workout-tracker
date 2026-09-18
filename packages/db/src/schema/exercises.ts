@@ -235,9 +235,12 @@ export const exercisePreferences = pgTable(
 );
 
 /**
- * A workspace's target for its next go at an exercise — set by the user or by a coaching agent
- * through the API. One row per exercise: a target describes the next session, so a second one for
- * the same exercise would have nothing to distinguish it.
+ * A workspace's targets for an exercise — set by the user or by a coaching agent through the API.
+ *
+ * Append-only: each target is a row, and the newest one for an exercise is the one that applies, so
+ * what was prescribed over time stays readable instead of being overwritten. A row with no
+ * measurement at all is how a clear is recorded; nothing else may write one, because a target with
+ * nothing to aim at would otherwise prescribe an empty session.
  */
 export const exerciseTargets = pgTable(
     'exercise_targets',
@@ -253,21 +256,14 @@ export const exerciseTargets = pgTable(
         createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
             .default(sql`now()`)
             .notNull(),
-        updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' })
-            .default(sql`now()`)
-            .notNull(),
     },
     (table) => [
         index('exercise_targets_workspace_id_idx').using('btree', table.workspaceId.asc().nullsLast().op('uuid_ops')),
-        uniqueIndex('exercise_targets_workspace_id_exercise_id_uidx').on(table.workspaceId, table.exerciseId),
+        // Covers the only read there is: the newest target for one exercise in one workspace.
+        index('exercise_targets_latest_idx').on(table.workspaceId, table.exerciseId, table.createdAt.desc()),
         check(
             'exercise_targets_measurements_non_negative_check',
             sql`coalesce(${table.weightKg}, 0) >= 0 and coalesce(${table.reps}, 0) >= 0 and coalesce(${table.durationSeconds}, 0) >= 0 and coalesce(${table.distanceM}, 0) >= 0`,
-        ),
-        // A row with nothing to aim at would suggest an empty session; clearing a target deletes it.
-        check(
-            'exercise_targets_measurement_present_check',
-            sql`${table.weightKg} is not null or ${table.reps} is not null or ${table.durationSeconds} is not null or ${table.distanceM} is not null`,
         ),
         foreignKey({
             columns: [table.workspaceId],
