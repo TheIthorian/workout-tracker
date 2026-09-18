@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": ["dumbbell"],
     "notes": "Front-loaded kettlebell or dumbbell squat.",
+    "muscles": { "primary": ["quads", "glutes"], "secondary": ["adductors", "abs"] },
     "guide": {
         "setup": "Hold one dumbbell or kettlebell close to the chest, feet about shoulder width, and brace the trunk.",
         "execution": "Sit down between the hips while keeping the load close, then stand by pushing through the whole foot.",

@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": ["barbell"],
     "notes": "Barbell hip hinge emphasizing the hamstrings.",
+    "muscles": { "primary": ["hamstrings", "glutes"], "secondary": ["lower_back", "traps", "forearms"] },
     "guide": {
         "setup": "Stand tall holding the bar at the thighs with feet hip width, a soft knee bend, and a braced trunk.",
         "execution": "Push the hips back while sliding the bar down the legs, then drive the hips forward once the hamstrings are stretched.",

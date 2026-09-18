@@ -15,6 +15,7 @@ import {
 import { EmptyState } from '@/components/common/EmptyState';
 import { isAxiosError } from 'axios';
 import { ExerciseGuide } from '@/components/exercises/ExerciseGuide';
+import { MuscleTargets } from '@/components/muscles/MuscleTargets';
 import { ExerciseGuideEditor } from '@/components/exercises/ExerciseGuideEditor';
 import { RestTimeSheet } from '@/components/exercises/RestTimeSheet';
 import { LoadingState } from '@/components/common/LoadingState';
@@ -146,6 +147,11 @@ export default function ExerciseDetailPage(): JSX.Element {
                     </Button>
                 )}
             </div>
+
+            <MuscleTargets
+                muscles={{ primaryMuscles: exercise.primaryMuscles, secondaryMuscles: exercise.secondaryMuscles }}
+                className="mt-8"
+            />
 
             <div className="mt-8">
                 {isEditing ? (

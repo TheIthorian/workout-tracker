@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": [],
     "notes": "One leg at a time, bodyweight or holding a dumbbell. Record reps per leg.",
+    "muscles": { "primary": ["calves"], "secondary": [] },
     "guide": {
         "setup": "Place the ball of one foot on a stable step with the heel free, and rest a hand on a wall or rail for balance.",
         "execution": "Lower the heel into a controlled stretch, then press through the ball of the foot to rise as high as possible.",

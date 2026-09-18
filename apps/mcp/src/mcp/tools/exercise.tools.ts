@@ -54,7 +54,8 @@ export function buildExerciseTools({
                 'distance_time) decides which fields a logged set for it carries. Each entry includes ' +
                 'webUrl, the page for that exercise in the web app. Pass equipment to keep only exercises ' +
                 "that need nothing beyond it; an empty list means bodyweight only. Each exercise's equipment " +
-                'lists what it requires.',
+                'lists what it requires. Pass muscle to keep only exercises that work it, whether as a primary ' +
+                'or a secondary target.',
             inputSchema: listExercisesToolArgsSchema,
             handler: async (args) => {
                 const pagination = paginationQuerySchema.parse({
@@ -70,6 +71,7 @@ export function buildExerciseTools({
                         search: args.search ?? undefined,
                         includeArchived: args.includeArchived ?? undefined,
                         equipment: args.equipment == null ? undefined : args.equipment.join(','),
+                        muscle: args.muscle ?? undefined,
                     },
                 });
 
@@ -96,7 +98,9 @@ export function buildExerciseTools({
                 'Creates an exercise. trackingType decides which fields a logged set ' +
                 'for this exercise must carry: weight_reps needs reps (and usually weightKg), duration needs ' +
                 'durationSeconds, and distance_time needs both distanceM and durationSeconds - choose the type ' +
-                'that matches how this exercise will actually be logged, not a guess. Returns the created ' +
+                'that matches how this exercise will actually be logged, not a guess. primaryMuscles are what ' +
+                'the movement is for and secondaryMuscles what it also works; both feed the muscle heatmap. ' +
+                'Returns the created ' +
                 'exercise, including webUrl for its page in the web app.',
             inputSchema: createExerciseToolArgsSchema,
             handler: async (args) =>
@@ -110,6 +114,8 @@ export function buildExerciseTools({
                                 name: args.name,
                                 trackingType: args.trackingType,
                                 equipment: args.equipment ?? undefined,
+                                primaryMuscles: args.primaryMuscles ?? undefined,
+                                secondaryMuscles: args.secondaryMuscles ?? undefined,
                                 notes: args.notes ?? null,
                                 guideSetup: args.guideSetup ?? null,
                                 guideExecution: args.guideExecution ?? null,
@@ -128,7 +134,8 @@ export function buildExerciseTools({
                 'Updates an exercise. Omitted fields keep their stored value; pass an empty string for a guide ' +
                 'field to clear it. trackingType (weight_reps, duration, or distance_time) decides which fields ' +
                 'a logged set for this exercise carries, so only change it if the exercise is genuinely tracked ' +
-                'differently now. Set archived to true or false to archive or restore the exercise. Not ' +
+                'differently now. primaryMuscles and secondaryMuscles each replace the stored list outright. ' +
+                'Set archived to true or false to archive or restore the exercise. Not ' +
                 'applicable to catalog exercises, which answer not-found.',
             inputSchema: updateExerciseToolArgsSchema,
             handler: async (args) =>
@@ -183,6 +190,10 @@ function buildExercisePatch(args: UpdateExerciseToolArgs): Record<string, unknow
     if (args.name !== undefined) patch['name'] = args.name;
     if (args.trackingType !== undefined) patch['trackingType'] = args.trackingType;
     if (args.equipment !== undefined && args.equipment !== null) patch['equipment'] = args.equipment;
+    if (args.primaryMuscles !== undefined && args.primaryMuscles !== null)
+        patch['primaryMuscles'] = args.primaryMuscles;
+    if (args.secondaryMuscles !== undefined && args.secondaryMuscles !== null)
+        patch['secondaryMuscles'] = args.secondaryMuscles;
 
     for (const field of ['notes', 'guideSetup', 'guideExecution', 'guideCues', 'guideMistakes'] as const) {
         const value = args[field];

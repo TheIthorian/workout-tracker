@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": ["machine"],
     "notes": "Seated or lying machine hamstring curl.",
+    "muscles": { "primary": ["hamstrings"], "secondary": ["calves"] },
     "guide": {
         "setup": "Align the knee joint with the machine pivot and place the pad securely above the ankles.",
         "execution": "Curl the pad through a controlled range, squeeze briefly, then return slowly until the knees are nearly straight.",

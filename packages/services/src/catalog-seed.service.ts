@@ -88,6 +88,8 @@ export class CatalogSeedService {
                 trackingType: exercise.entry.trackingType,
                 equipment: exercise.entry.equipment,
                 notes: exercise.entry.notes,
+                primaryMuscles: exercise.entry.muscles.primary,
+                secondaryMuscles: exercise.entry.muscles.secondary,
                 guideSetup: exercise.entry.guide.setup,
                 guideExecution: exercise.entry.guide.execution,
                 guideCues: exercise.entry.guide.cues,
@@ -200,6 +202,8 @@ type DesiredRow = {
     trackingType: LoadedExercise['entry']['trackingType'];
     equipment: LoadedExercise['entry']['equipment'];
     notes: string | null;
+    primaryMuscles: LoadedExercise['entry']['muscles']['primary'];
+    secondaryMuscles: LoadedExercise['entry']['muscles']['secondary'];
     guideSetup: string | null;
     guideExecution: string | null;
     guideCues: string | null;
@@ -214,6 +218,8 @@ async function syncRow({ tx, id, desired }: { tx: Tx; id: string; desired: Desir
             trackingType: exercises.trackingType,
             equipment: exercises.equipment,
             notes: exercises.notes,
+            primaryMuscles: exercises.primaryMuscles,
+            secondaryMuscles: exercises.secondaryMuscles,
             guideSetup: exercises.guideSetup,
             guideExecution: exercises.guideExecution,
             guideCues: exercises.guideCues,

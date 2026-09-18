@@ -3,6 +3,7 @@
   "trackingType": "weight_reps",
   "equipment": ["barbell", "squat_rack"],
   "notes": null,
+  "muscles": { "primary": ["quads", "glutes"], "secondary": ["hamstrings", "adductors", "lower_back", "abs"] },
   "guide": {
     "setup": "Bar across the upper back, hands just outside the shoulders, elbows pulled down. Feet shoulder-width, toes turned out slightly.",
     "execution": "Big breath into the belly and brace. Sit down between the hips, keeping the whole foot planted, until the crease of the hip is below the knee. Drive the floor away.",

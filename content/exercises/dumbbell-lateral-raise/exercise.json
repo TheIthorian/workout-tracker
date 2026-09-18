@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": ["dumbbell"],
     "notes": "Standing shoulder isolation. Record the load of one dumbbell.",
+    "muscles": { "primary": ["side_delts"], "secondary": ["front_delts", "traps"] },
     "guide": {
         "setup": "Stand with dumbbells at the sides, a soft bend in the elbows, and a tall chest without arching the lower back.",
         "execution": "Raise the arms out and slightly forward to near shoulder height, then lower slowly.",

@@ -3,6 +3,7 @@
     "trackingType": "duration",
     "equipment": [],
     "notes": "Bodyweight lateral core hold. Record each side separately if needed.",
+    "muscles": { "primary": ["obliques"], "secondary": ["abs", "abductors", "side_delts"] },
     "guide": {
         "setup": "Lie on one side with the elbow under the shoulder and legs stacked or staggered.",
         "execution": "Lift the hips until the body forms a straight line from head to feet, then hold while breathing steadily.",

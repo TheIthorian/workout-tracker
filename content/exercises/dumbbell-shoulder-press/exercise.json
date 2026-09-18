@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": ["dumbbell"],
     "notes": "Seated or standing dumbbell overhead press. Record the load of one dumbbell.",
+    "muscles": { "primary": ["front_delts"], "secondary": ["side_delts", "triceps", "upper_back"] },
     "guide": {
         "setup": "Hold dumbbells at shoulder level with forearms near vertical and ribs stacked over the hips.",
         "execution": "Press overhead until the arms are straight, then lower the dumbbells with control to shoulder height.",

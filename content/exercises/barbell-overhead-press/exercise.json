@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": ["barbell"],
     "notes": "Standing strict press.",
+    "muscles": { "primary": ["front_delts"], "secondary": ["side_delts", "triceps", "upper_back", "abs"] },
     "guide": {
         "setup": "Stand tall with the bar at the upper chest, forearms vertical, glutes squeezed, and hands just outside the shoulders.",
         "execution": "Brace, press the bar overhead, and move the head through once it clears the forehead. Lower under control.",

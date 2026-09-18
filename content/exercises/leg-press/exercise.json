@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": ["machine"],
     "notes": "45-degree or horizontal sled leg press.",
+    "muscles": { "primary": ["quads", "glutes"], "secondary": ["hamstrings", "adductors"] },
     "guide": {
         "setup": "Sit with the lower back and hips against the pad, feet about shoulder width on the platform, and knees tracking over the toes.",
         "execution": "Lower the sled to a comfortable depth without the hips rolling up, then press through the whole foot without snapping the knees straight.",

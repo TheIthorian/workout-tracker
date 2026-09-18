@@ -3,6 +3,7 @@ import { formatDate } from '@/lib/date-format';
 import { ChevronRight } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { LoadingState } from '@/components/common/LoadingState';
+import { MuscleHeatmap } from '@/components/muscles/MuscleHeatmap';
 import { Button } from '@/components/ui/button';
 import { useSessions } from '@/hooks/use-sessions';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
@@ -21,6 +22,7 @@ export default function HistoryPage(): JSX.Element {
             <p className="eyebrow mb-3">Look how far you’ve come</p>
             <h1 className="page-title">Your history.</h1>
             <p className="mt-1.5 text-muted-foreground">Your completed workouts and their recorded sets.</p>
+            <MuscleHeatmap workspaceId={workspaceId} className="mt-8" />
             <div className="mt-8">
                 {isLoading ? (
                     <LoadingState label="Loading history…" />

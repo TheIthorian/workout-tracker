@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": ["pull_up_bar"],
     "notes": "Bodyweight vertical pull. Add external load only when appropriate.",
+    "muscles": { "primary": ["lats"], "secondary": ["biceps", "upper_back", "rear_delts", "forearms"] },
     "guide": {
         "setup": "Hang from a bar with hands just outside shoulder width and shoulders pulled gently away from the ears.",
         "execution": "Drive the elbows down to pull the chest toward the bar, then lower under control to a still full hang.",

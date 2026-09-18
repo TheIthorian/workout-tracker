@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": ["dumbbell"],
     "notes": "Standing curl. Record the load of one dumbbell.",
+    "muscles": { "primary": ["biceps"], "secondary": ["forearms"] },
     "guide": {
         "setup": "Stand tall holding dumbbells at the sides with palms forward and elbows close to the ribs.",
         "execution": "Curl toward the shoulders while keeping the upper arms still, then lower slowly to full elbow extension.",

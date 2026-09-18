@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": ["barbell"],
     "notes": "Conventional deadlift from the floor.",
+    "muscles": { "primary": ["hamstrings", "glutes", "lower_back"], "secondary": ["quads", "traps", "lats", "forearms", "abs"] },
     "guide": {
         "setup": "Stand with the bar over mid-foot, hinge down to grip it just outside the legs, then brace the back and abdomen.",
         "execution": "Push the floor away and keep the bar close to the legs. Stand tall by extending the hips, then guide the bar back to the floor.",

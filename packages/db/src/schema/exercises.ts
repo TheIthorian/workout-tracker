@@ -1,4 +1,4 @@
-import { Equipment, TrackingType } from '@app/domain';
+import { Equipment, MuscleGroup, TrackingType } from '@app/domain';
 import { sql } from 'drizzle-orm';
 import {
     check,
@@ -36,6 +36,28 @@ export const equipmentEnum = pgEnum('equipment', [
     Equipment.RowingMachine,
 ]);
 
+export const muscleGroupEnum = pgEnum('muscle_group', [
+    MuscleGroup.Chest,
+    MuscleGroup.FrontDelts,
+    MuscleGroup.SideDelts,
+    MuscleGroup.RearDelts,
+    MuscleGroup.Biceps,
+    MuscleGroup.Triceps,
+    MuscleGroup.Forearms,
+    MuscleGroup.Abs,
+    MuscleGroup.Obliques,
+    MuscleGroup.Lats,
+    MuscleGroup.UpperBack,
+    MuscleGroup.Traps,
+    MuscleGroup.LowerBack,
+    MuscleGroup.Glutes,
+    MuscleGroup.Quads,
+    MuscleGroup.Hamstrings,
+    MuscleGroup.Calves,
+    MuscleGroup.Adductors,
+    MuscleGroup.Abductors,
+]);
+
 /**
  * The exercise library: catalog exercises shared by every workspace, and each workspace's own
  * custom ones. `workspace_id IS NULL` marks a catalog row; `slug` is the seed's stable key for it.
@@ -60,6 +82,14 @@ export const exercises = pgTable(
             .notNull()
             .default(sql`'{}'::equipment[]`),
         notes: text('notes'),
+        primaryMuscles: muscleGroupEnum('primary_muscles')
+            .array()
+            .notNull()
+            .default(sql`'{}'::muscle_group[]`),
+        secondaryMuscles: muscleGroupEnum('secondary_muscles')
+            .array()
+            .notNull()
+            .default(sql`'{}'::muscle_group[]`),
         guideSetup: text('guide_setup'),
         guideExecution: text('guide_execution'),
         guideCues: text('guide_cues'),

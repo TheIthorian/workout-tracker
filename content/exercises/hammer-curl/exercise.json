@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": ["dumbbell"],
     "notes": "Neutral-grip dumbbell curl. Record the load of one dumbbell.",
+    "muscles": { "primary": ["biceps", "forearms"], "secondary": [] },
     "guide": {
         "setup": "Stand tall holding dumbbells at the sides with palms facing in and elbows close to the ribs.",
         "execution": "Curl toward the shoulders keeping the palms facing in, then lower slowly to full elbow extension.",

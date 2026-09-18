@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": ["machine"],
     "notes": "Cable pulldown to the upper chest.",
+    "muscles": { "primary": ["lats"], "secondary": ["biceps", "upper_back", "rear_delts"] },
     "guide": {
         "setup": "Sit with thighs secured under the pad, grip the bar just outside shoulder width, and lift the chest with only a slight lean back.",
         "execution": "Drive the elbows down to pull the bar to the upper chest, then return slowly to a full overhead stretch.",

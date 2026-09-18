@@ -9,6 +9,11 @@ The starter library covers common strength, bodyweight, core, and cardio movemen
 `distance_time` for cardio. Keep an entry focused on one movement; use `notes` to clarify equipment
 or how to record a single-dumbbell or alternating movement.
 
+`muscles` tags what the movement trains (see `MuscleGroup` in `@app/domain`): `primary` is what the
+movement is for, `secondary` what it also works without being the point of it. Both feed the body
+diagram on the exercise page and the muscle heatmap over workout history, where a secondary muscle
+counts half a set. Leave a list empty rather than guessing.
+
 `equipment` lists everything the movement requires (see `Equipment` in `@app/domain`); leave it
 empty for bodyweight and outdoor work. `machine` covers pin- and plate-loaded machines; `cable` is a
 cable stack.

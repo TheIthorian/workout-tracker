@@ -50,6 +50,7 @@ export class ExercisesController {
             search: query.search,
             includeArchived: query.includeArchived,
             equipment: query.equipment,
+            muscle: query.muscle,
         });
     }
 

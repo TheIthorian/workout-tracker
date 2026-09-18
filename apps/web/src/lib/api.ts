@@ -17,6 +17,7 @@ import type {
     SaveExerciseRequest,
 } from '@/models/exercise';
 import type { McpAccessTokenCreated, McpAccessTokenListItem } from '@/models/mcp';
+import type { MuscleVolumeResponse } from '@/models/muscle';
 import type { PaginatedResponse } from '@/models/pagination';
 import type {
     ActiveSessionResponse,
@@ -119,6 +120,14 @@ export const exercisesApi = {
     getHistory: (workspaceId: string, exerciseId: string, limit = 10) =>
         httpClient.get<ExerciseHistoryResponse>(`/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/history`, {
             params: { limit },
+        }),
+};
+
+/** Training summaries derived from completed workout history. */
+export const analyticsApi = {
+    getMuscleVolume: ({ workspaceId, days }: { workspaceId: string; days: number }) =>
+        httpClient.get<MuscleVolumeResponse>(`/api/v1/workspaces/${workspaceId}/analytics/muscle-volume`, {
+            params: { days },
         }),
 };
 

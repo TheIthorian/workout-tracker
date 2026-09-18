@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AnalyticsModule } from './analytics/analytics.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { EquipmentPresetsModule } from './equipment-presets/equipment-presets.module.js';
 import { ExercisesModule } from './exercises/exercises.module.js';
@@ -34,6 +35,7 @@ import { WorkspacesModule } from './workspaces/workspaces.module.js';
         ExercisesModule,
         RoutinesModule,
         SessionsModule,
+        AnalyticsModule,
     ],
     controllers: [HealthController],
 })

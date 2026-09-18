@@ -3,6 +3,7 @@
   "trackingType": "weight_reps",
   "equipment": ["dumbbell", "bench"],
   "notes": "Flat dumbbell press. Record the load of one dumbbell.",
+  "muscles": { "primary": ["chest"], "secondary": ["triceps", "front_delts"] },
   "guide": {
     "setup": "Lie on a flat bench with a dumbbell in each hand, feet planted, and shoulder blades pulled together.",
     "execution": "Lower the dumbbells to either side of the lower chest, then press them up until the arms are straight.",

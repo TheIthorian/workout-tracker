@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": ["cable"],
     "notes": "Neutral-grip seated cable row.",
+    "muscles": { "primary": ["upper_back", "lats"], "secondary": ["biceps", "rear_delts", "lower_back"] },
     "guide": {
         "setup": "Sit tall with feet braced, knees soft, arms extended, and the chest lifted while holding a neutral-grip attachment.",
         "execution": "Pull the handle to the lower ribs by driving the elbows back, then reach forward under control.",

@@ -64,6 +64,13 @@
             "when": 1789456952528,
             "tag": "0008_smooth_quentin_quire",
             "breakpoints": true
+        },
+        {
+            "idx": 9,
+            "version": "7",
+            "when": 1789734377079,
+            "tag": "0009_magenta_bloodstrike",
+            "breakpoints": true
         }
     ]
 }

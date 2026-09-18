@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": ["barbell"],
     "notes": "Bent-over row from a braced hinge position.",
+    "muscles": { "primary": ["lats", "upper_back"], "secondary": ["rear_delts", "biceps", "lower_back", "forearms"] },
     "guide": {
         "setup": "Hold the bar just outside the legs, hinge until the torso is roughly 30 to 45 degrees from the floor, and brace.",
         "execution": "Pull the bar toward the lower ribs, pause, and lower without changing the torso angle.",
