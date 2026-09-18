@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, within } from '@testing-library/react';
+import { fireEvent, render, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { SetLogForm } from './SetLogForm';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -27,10 +27,37 @@ describe('SetLogForm', () => {
 
         expect(form.rpeInput().value).toBe('');
     });
+
+    it('starts RPE at 8 when stepping up from empty', () => {
+        const form = renderForm({ previousSet: buildSet({ rpe: null }), onLog: vi.fn() });
+
+        fireEvent.click(form.rpeIncrease(), { detail: 0 });
+
+        expect(form.rpeInput().value).toBe('8');
+    });
+
+    it('starts RPE at 6 when stepping down from empty', () => {
+        const form = renderForm({ previousSet: buildSet({ rpe: null }), onLog: vi.fn() });
+
+        fireEvent.click(form.rpeDecrease(), { detail: 0 });
+
+        expect(form.rpeInput().value).toBe('6');
+    });
+
+    it('steps by the usual increment once RPE has a value', () => {
+        const form = renderForm({ previousSet: buildSet({ rpe: null }), onLog: vi.fn() });
+
+        fireEvent.click(form.rpeIncrease(), { detail: 0 });
+        fireEvent.click(form.rpeIncrease(), { detail: 0 });
+
+        expect(form.rpeInput().value).toBe('8.5');
+    });
 });
 
 function renderForm({ previousSet, onLog }: { previousSet: SessionSet | null; onLog: (data: LogSetRequest) => void }): {
     rpeInput: () => HTMLInputElement;
+    rpeIncrease: () => HTMLElement;
+    rpeDecrease: () => HTMLElement;
     logButton: () => HTMLElement;
 } {
     const { container } = render(
@@ -42,6 +69,8 @@ function renderForm({ previousSet, onLog }: { previousSet: SessionSet | null; on
 
     return {
         rpeInput: () => scope.getByRole<HTMLInputElement>('spinbutton', { name: 'RPE' }),
+        rpeIncrease: () => scope.getByRole('button', { name: 'Increase RPE' }),
+        rpeDecrease: () => scope.getByRole('button', { name: 'Decrease RPE' }),
         logButton: () => scope.getByRole('button', { name: 'Log set' }),
     };
 }

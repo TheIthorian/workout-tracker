@@ -19,6 +19,8 @@ const DURATION_STEP_SECONDS = 5;
 const CARDIO_TIME_STEP_SECONDS = 30;
 const DISTANCE_STEP_M = 100;
 const RPE_STEP = 0.5;
+// Most sets land between 6 and 8, so an empty field jumps straight to the nearer end.
+const RPE_EMPTY_DEFAULTS = { increase: 8, decrease: 6 };
 
 /** The one-tap logging form, with only the fields valid for the exercise's tracking type. */
 export function SetLogForm({ exercise, previousSet, isPending, onLog }: SetLogFormProps): JSX.Element {
@@ -104,7 +106,15 @@ export function SetLogForm({ exercise, previousSet, isPending, onLog }: SetLogFo
                         required
                     />
                 )}
-                <StepperField label="RPE" value={rpe} onChange={setRpe} step={RPE_STEP} max={10} hint={<RpeHint />} />
+                <StepperField
+                    label="RPE"
+                    value={rpe}
+                    onChange={setRpe}
+                    step={RPE_STEP}
+                    emptyDefaults={RPE_EMPTY_DEFAULTS}
+                    max={10}
+                    hint={<RpeHint />}
+                />
             </div>
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <label className="flex min-h-11 items-center gap-2 text-sm text-muted-foreground">

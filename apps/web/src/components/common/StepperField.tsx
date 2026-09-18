@@ -9,6 +9,8 @@ type StepperFieldProps = {
     value: number | null;
     onChange: (value: number | null) => void;
     step: number;
+    /** Values a first press lands on while the field is empty, instead of stepping from zero. */
+    emptyDefaults?: { increase: number; decrease: number };
     min?: number;
     max?: number;
     /** Renders the value read-only in this form instead of as an editable number input. */
@@ -31,6 +33,7 @@ export function StepperField({
     value,
     onChange,
     step,
+    emptyDefaults,
     min = 0,
     max,
     format,
@@ -52,9 +55,16 @@ export function StepperField({
     useEffect(() => stopHold, []);
 
     const nudge = (direction: 1 | -1): void => {
-        const current = latest.current.value ?? 0;
-        const next = clamp(roundToStep(current + direction * step, step), min, max);
-        if (next !== current) latest.current.onChange(next);
+        const current = latest.current.value;
+
+        if (current === null && emptyDefaults !== undefined) {
+            latest.current.onChange(clamp(emptyDefaults[direction === 1 ? 'increase' : 'decrease'], min, max));
+            return;
+        }
+
+        const from = current ?? 0;
+        const next = clamp(roundToStep(from + direction * step, step), min, max);
+        if (next !== from) latest.current.onChange(next);
     };
 
     const startHold =
