@@ -16,6 +16,8 @@ loadDotenv();
 const schema = Joi.object({
     PORT: Joi.number().default(3000),
     NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
+    // Set by Railway to the commit the running image was built from; empty in any other environment.
+    RAILWAY_GIT_COMMIT_SHA: Joi.string().allow('').default(''),
     LOG_LEVEL: Joi.string()
         .valid(...LOG_LEVELS)
         .default('info'),

@@ -23,6 +23,9 @@ export async function createApp(): Promise<NestFastifyApplication> {
     // trace from whichever subsystem happened to read it first.
     const env = loadEnv();
     const logger = createLogger({ context: 'api', config: toLoggerConfig(env) });
+    const commitSha = String(env['RAILWAY_GIT_COMMIT_SHA']);
+
+    logger.info({ commitSha: commitSha === '' ? 'unknown' : commitSha }, 'API starting');
 
     // trustProxy: the service always runs behind a proxy in production, so without it every
     // request reports the proxy's address and IP-keyed rate limits bucket all clients together.
