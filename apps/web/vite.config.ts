@@ -1,11 +1,13 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import path from 'path';
+import type { Plugin } from 'vite';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), '');
     const apiProxyTarget = env.VITE_API_PROXY_TARGET || env.VITE_API_BASE_URL || 'http://127.0.0.1:3000';
+    const siteOrigin = (env.VITE_SITE_URL || '').replace(/\/+$/, '');
 
     return {
         server: {
@@ -44,7 +46,7 @@ export default defineConfig(({ mode }) => {
                 },
             },
         },
-        plugins: [react()],
+        plugins: [react(), siteOriginHtmlPlugin({ siteOrigin })],
         resolve: {
             alias: {
                 '@': path.resolve(__dirname, './src'),
@@ -53,3 +55,20 @@ export default defineConfig(({ mode }) => {
         },
     };
 });
+
+/**
+ * Resolves the `%SITE_ORIGIN%` placeholder the link/preview meta tags in index.html are written
+ * against. Crawlers resolve relative URLs inconsistently, so a deployment that wants a link
+ * preview sets VITE_SITE_URL to its public origin; unset, the tags fall back to same-origin paths.
+ */
+function siteOriginHtmlPlugin({ siteOrigin }: { siteOrigin: string }): Plugin {
+    return {
+        name: 'forma-site-origin-html',
+        transformIndexHtml: {
+            order: 'pre',
+            handler(html: string): string {
+                return html.replaceAll('%SITE_ORIGIN%', siteOrigin);
+            },
+        },
+    };
+}
