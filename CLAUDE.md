@@ -157,9 +157,14 @@ scoped by user and an unpinned token would otherwise reach every workspace its o
 
 **Drizzle authors the schema.** `packages/db/src/schema/` is the source of truth; run
 `pnpm --filter @app/db db:generate` after any change and commit the generated SQL in
-`packages/db/drizzle/`. Those migration files are what `db:migrate` applies to a deployment and what
-the test fixture applies to each throwaway test database, so a test database cannot drift from
-production.
+`packages/db/drizzle/`. Those migration files are what the test fixture applies to each throwaway
+test database and what `runMigrations` applies at `apps/api` boot, so a test database cannot drift
+from production.
+
+**Deployments migrate themselves.** `apps/api`'s `main.ts` calls `runMigrations` before it listens,
+under a Postgres advisory lock so concurrent replicas cannot race; a failed migration fails the boot
+and the previous healthy version keeps serving. `DB_MIGRATE_ON_STARTUP=false` opts a deployment out.
+Never ask someone to point a local `DATABASE_URL` at a deployed database to ship a schema change.
 
 Read the generated SQL before applying it — especially any `DROP`. `drizzle-kit` will happily
 generate a destructive migration from an innocent-looking rename.
@@ -245,7 +250,8 @@ A small CLI for one-off operational tasks. Keep it narrow — check that a new c
 belongs here rather than in the API before adding it.
 
 `seed-exercises` publishes `content/exercises/` into the shared catalog; it is the only writer of
-catalog rows.
+catalog rows. It runs in CI (`.github/workflows/seed-exercises.yml`) on every push to `main`
+touching `content/exercises/**`, and on demand - not from an operator's laptop.
 
 ### apps/web
 

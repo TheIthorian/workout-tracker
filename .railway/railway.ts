@@ -54,6 +54,7 @@ export default defineRailway(() => {
             CATALOG_IMAGE_BASE_URL: preserve(),
             CORS_ORIGIN: preserve(),
             DATABASE_URL: preserve(),
+            DB_MIGRATE_ON_STARTUP: preserve(),
             LLM_API_KEY: preserve(),
             MCP_BASE_URL: preserve(),
             PROBLEM_TYPE_BASE: preserve(),

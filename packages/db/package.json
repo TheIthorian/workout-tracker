@@ -2,6 +2,10 @@
     "name": "@app/db",
     "version": "0.0.1",
     "private": true,
+    "files": [
+        "dist",
+        "drizzle"
+    ],
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "exports": {

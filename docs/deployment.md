@@ -109,25 +109,38 @@ Set these on `mcp`:
 Set `LOG_PRETTY=false` and `LOG_REDACT=true`. Railway supplies `PORT`. The API health check is
 `/api/health/ready`; MCP uses `/health`. Keep these paths unchanged.
 
-## 3. Apply database migrations
+## 3. Database migrations
 
-Run from a trusted machine after Postgres exists and before serving users:
+`apps/api` applies the committed `packages/db/drizzle` migrations on boot, before it listens, so a
+release ships its own schema and nobody needs a psql session or a production `DATABASE_URL` on a
+laptop. Concurrent replicas are serialised by a Postgres advisory lock, and a migration that fails
+fails the boot: the deploy's readiness probe never passes, Railway keeps the previous healthy
+version serving, and the bad release is rolled back rather than half-applied.
+
+The consequence to plan for is that a destructive or long-running migration blocks the new version
+from starting, so generate and _read_ the SQL locally before committing it:
+
+```bash
+pnpm --filter @app/db db:generate
+```
+
+Set `DB_MIGRATE_ON_STARTUP=false` on a deployment that would rather run migrations as its own step;
+the manual command is then:
 
 ```bash
 pnpm install --frozen-lockfile
 DATABASE_URL='<production DATABASE_URL>' pnpm --filter @app/db db:migrate
 ```
 
-There is intentionally no migration-on-boot: a failed migration must not prevent a previous healthy
-version from starting. Generate and review migrations locally before committing them:
-
-```bash
-pnpm --filter @app/db db:generate
-```
-
 ## 4. Publish the exercise catalog
 
-The catalog seed is idempotent and must be run manually after catalog content changes. It converts
+The `Seed exercises` GitHub Actions workflow (`.github/workflows/seed-exercises.yml`) runs the seed
+on every push to `main` that touches `content/exercises/**`, and on demand from the Actions tab. It
+reads `DATABASE_URL` and the `S3_*` credentials from the `production` environment's secrets
+(`S3_FORCE_PATH_STYLE` is a variable, `false` for R2), so publishing catalog content is a merge
+rather than an operator run.
+
+The seed is idempotent, so running it by hand against the same database is always safe. It converts
 each source image to WebP (longest side 1200 px, quality 80) on the machine running the seed — the
 API never processes images — and uploads only objects that are not already in the bucket:
 
@@ -245,6 +258,7 @@ Fork pull requests are skipped because they cannot receive production secrets. D
 Railway infrastructure should go through a pull request; direct pushes have no reviewed plan.
 
 Code deployment is automatic from `main` for all three apps: Railway builds and deploys `api` and
-`mcp` from its GitHub source, and `deploy-web` publishes the SPA to Pages. Database migrations and
-catalog publishing remain manual because they change production data and should be run after
-reviewing the release.
+`mcp` from its GitHub source, and `deploy-web` publishes the SPA to Pages. Database migrations ride
+the `api` deploy itself, and `seed-exercises` publishes catalog content from `main` — both change
+production data, so the review that matters is the one on the pull request that introduces the
+migration SQL or the content.

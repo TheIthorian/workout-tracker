@@ -24,6 +24,10 @@ const schema = Joi.object({
     LOG_PRETTY: Joi.boolean().default(false),
     LOG_REDACT: Joi.boolean().default(true),
     DATABASE_URL: Joi.string().uri().required(),
+    // Applies the committed `packages/db/drizzle` migrations during boot, before the server
+    // listens. On by default so a deployment needs no separate release step and no operator with
+    // a psql session; set it to false where a platform runs migrations as its own job.
+    DB_MIGRATE_ON_STARTUP: Joi.boolean().default(true),
     AUTH_SECRET: Joi.string().required(),
     AUTH_BASE_URL: Joi.string().uri().required(),
     AUTH_TRUSTED_ORIGINS: Joi.string().optional(),
