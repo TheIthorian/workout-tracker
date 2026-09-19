@@ -1,7 +1,7 @@
 import { DEFAULT_REST_SECONDS } from '@app/domain';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Archive, ArrowLeft, BookOpen, Pencil, PersonStanding, RotateCcw, Timer } from 'lucide-react';
+import { Archive, ArrowLeft, BookOpen, Pencil, PersonStanding, RotateCcw, Timer, TrendingUp } from 'lucide-react';
 import { formatDate } from '@/lib/date-format';
 import { toast } from '@/hooks/use-toast';
 import {
@@ -17,6 +17,7 @@ import { isAxiosError } from 'axios';
 import { ExerciseGuide } from '@/components/exercises/ExerciseGuide';
 import { MuscleTargets } from '@/components/muscles/MuscleTargets';
 import { ExerciseGuideEditor } from '@/components/exercises/ExerciseGuideEditor';
+import { ExerciseProgress } from '@/components/exercises/ExerciseProgress';
 import { RestTimeSheet } from '@/components/exercises/RestTimeSheet';
 import { LoadingState } from '@/components/common/LoadingState';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +30,12 @@ import { formatSessionClock, type SessionSet } from '@/models/session';
 import ForbiddenError from '@/pages/ForbiddenError';
 import NotFoundError from '@/pages/NotFoundError';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
+
+/** Enough completed workouts to draw a meaningful trend without a second request. */
+const PROGRESS_HISTORY_LIMIT = 50;
+
+/** The recent-workouts list stays skimmable; the progress tab is what the longer history is for. */
+const RECENT_WORKOUTS_SHOWN = 10;
 
 /**
  * One exercise's how-to guide: read it in a few seconds mid-rest, or switch to editing it.
@@ -52,7 +59,11 @@ export default function ExerciseDetailPage(): JSX.Element {
     const [tab, setTab] = useState('guide');
 
     const { data: exercise, isLoading, isError, error, refetch } = useExercise({ workspaceId, exerciseId });
-    const { data: history, isLoading: isHistoryLoading } = useExerciseHistory({ workspaceId, exerciseId });
+    const { data: history, isLoading: isHistoryLoading } = useExerciseHistory({
+        workspaceId,
+        exerciseId,
+        limit: PROGRESS_HISTORY_LIMIT,
+    });
     const setPreferences = useSetExercisePreferences({ workspaceId });
 
     if (isLoading) {
@@ -81,8 +92,7 @@ export default function ExerciseDetailPage(): JSX.Element {
     }
 
     const { label, icon: Icon } = TRACKING_TYPE_META[exercise.trackingType];
-    // A tab strip of one is just a heading. Catalog exercises nobody here can tag, and that carry
-    // no tags, get the guide on its own instead.
+    // Catalog exercises nobody here can tag, and that carry no tags, have nothing to show.
     const showMusclesTab =
         !exercise.isCatalog || exercise.primaryMuscles.length > 0 || exercise.secondaryMuscles.length > 0;
     const restSeconds = exercise.restSeconds ?? DEFAULT_REST_SECONDS;
@@ -163,10 +173,6 @@ export default function ExerciseDetailPage(): JSX.Element {
                         onDone={() => setEditing(false)}
                     />
                 </div>
-            ) : !showMusclesTab ? (
-                <div className="mt-8">
-                    <ExerciseGuide exercise={exercise} />
-                </div>
             ) : (
                 // Held here rather than inside Tabs' own state so the chosen tab survives a trip
                 // through the editor and back.
@@ -179,21 +185,36 @@ export default function ExerciseDetailPage(): JSX.Element {
                             <BookOpen className="h-4 w-4 shrink-0 opacity-70" aria-hidden />
                             Guide
                         </TabsTrigger>
-                        <TabsTrigger value="muscles" className="min-h-11 flex-1 gap-2 rounded-lg">
-                            <PersonStanding className="h-4 w-4 shrink-0 opacity-70" aria-hidden />
-                            Muscles
+                        {showMusclesTab && (
+                            <TabsTrigger value="muscles" className="min-h-11 flex-1 gap-2 rounded-lg">
+                                <PersonStanding className="h-4 w-4 shrink-0 opacity-70" aria-hidden />
+                                Muscles
+                            </TabsTrigger>
+                        )}
+                        <TabsTrigger value="progress" className="min-h-11 flex-1 gap-2 rounded-lg">
+                            <TrendingUp className="h-4 w-4 shrink-0 opacity-70" aria-hidden />
+                            Progress
                         </TabsTrigger>
                     </TabsList>
                     <TabsContent value="guide" className="mt-6 focus-visible:outline-none">
                         <ExerciseGuide exercise={exercise} />
                     </TabsContent>
-                    <TabsContent value="muscles" className="mt-6 focus-visible:outline-none">
-                        <MuscleTargets
-                            muscles={{
-                                primaryMuscles: exercise.primaryMuscles,
-                                secondaryMuscles: exercise.secondaryMuscles,
-                            }}
-                            onEdit={exercise.isCatalog ? undefined : () => setEditing(true)}
+                    {showMusclesTab && (
+                        <TabsContent value="muscles" className="mt-6 focus-visible:outline-none">
+                            <MuscleTargets
+                                muscles={{
+                                    primaryMuscles: exercise.primaryMuscles,
+                                    secondaryMuscles: exercise.secondaryMuscles,
+                                }}
+                                onEdit={exercise.isCatalog ? undefined : () => setEditing(true)}
+                            />
+                        </TabsContent>
+                    )}
+                    <TabsContent value="progress" className="mt-6 focus-visible:outline-none">
+                        <ExerciseProgress
+                            trackingType={exercise.trackingType}
+                            history={history?.data ?? []}
+                            isLoading={isHistoryLoading}
                         />
                     </TabsContent>
                 </Tabs>
@@ -272,7 +293,7 @@ export default function ExerciseDetailPage(): JSX.Element {
                     <p className="mt-3 text-sm text-muted-foreground">No completed workouts for this exercise yet.</p>
                 ) : (
                     <ul className="mt-4 space-y-3">
-                        {history?.data.map((appearance) => (
+                        {history?.data.slice(0, RECENT_WORKOUTS_SHOWN).map((appearance) => (
                             <li
                                 key={appearance.sessionExerciseId}
                                 className="rounded-xl border border-border bg-card p-4"

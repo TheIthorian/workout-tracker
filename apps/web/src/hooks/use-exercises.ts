@@ -82,13 +82,15 @@ export function useExercise({
 export function useExerciseHistory({
     workspaceId,
     exerciseId,
+    limit,
 }: {
     workspaceId: string;
     exerciseId: string;
+    limit?: number;
 }): UseQueryResult<ExerciseHistoryResponse, Error> {
     return useQuery({
-        queryKey: ['exercises', workspaceId, exerciseId, 'history'],
-        queryFn: () => exercisesApi.getHistory(workspaceId, exerciseId),
+        queryKey: ['exercises', workspaceId, exerciseId, 'history', limit ?? null],
+        queryFn: () => exercisesApi.getHistory(workspaceId, exerciseId, limit),
         enabled: Boolean(workspaceId && exerciseId),
     });
 }
