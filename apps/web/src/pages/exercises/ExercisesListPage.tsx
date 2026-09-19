@@ -283,7 +283,7 @@ export default function ExercisesListPage(): JSX.Element {
                             <p className="mt-2 text-xs text-muted-foreground">Leave empty for bodyweight.</p>
                         </fieldset>
                         <fieldset>
-                            <legend className="mb-3 text-sm font-medium">What does it work?</legend>
+                            <legend className="mb-3 text-sm font-medium">Muscles worked</legend>
                             <MuscleTagPicker value={muscles} onChange={setMuscles} />
                         </fieldset>
                         <DialogFooter>

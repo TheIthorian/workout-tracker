@@ -5,7 +5,7 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { LoadingState } from '@/components/common/LoadingState';
 import { BodyDiagram, type MuscleShades } from '@/components/muscles/BodyDiagram';
 import { useMuscleVolume } from '@/hooks/use-muscle-volume';
-import { MUSCLE_META, type MuscleVolumeEntry, type MuscleVolumeExercise } from '@/models/muscle';
+import { MUSCLE_META, type MuscleGroup, type MuscleVolumeEntry, type MuscleVolumeExercise } from '@/models/muscle';
 
 /** The windows the heatmap offers, shortest first. */
 const WINDOWS: { days: number; label: string }[] = [
@@ -15,12 +15,11 @@ const WINDOWS: { days: number; label: string }[] = [
 ];
 
 /**
- * Where recent training actually landed: completed workouts turned into a shaded body, with the
- * muscles ranked underneath.
+ * Completed workouts as sets per muscle: a shaded body, then the same muscles ranked.
  *
- * The shading is relative to the hardest-worked muscle in the window rather than to an absolute
- * set count, so the picture answers "what am I neglecting?" — which is the question a training
- * balance check is really asking — regardless of how heavy the period as a whole was.
+ * Shading is relative to the hardest-worked muscle in the window rather than to an absolute set
+ * count, so a light week and a heavy one are read the same way — the question being asked is which
+ * muscles are behind the others, not how much was lifted.
  */
 export function MuscleHeatmap({ workspaceId, className }: { workspaceId: string; className?: string }): JSX.Element {
     const [days, setDays] = useState(30);
@@ -34,13 +33,11 @@ export function MuscleHeatmap({ workspaceId, className }: { workspaceId: string;
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h2 id="muscle-heatmap-heading" className="font-heading text-xl">
-                        Where the work landed
+                        Muscles trained
                     </h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        Muscles your completed workouts trained, shaded against your hardest-worked one.
-                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">Sets per muscle from your finished workouts.</p>
                 </div>
-                <div role="group" aria-label="Heatmap period" className="flex gap-1 rounded-xl bg-secondary p-1">
+                <div role="group" aria-label="Time period" className="flex gap-1 rounded-xl bg-secondary p-1">
                     {WINDOWS.map((window) => (
                         <button
                             key={window.days}
@@ -61,7 +58,7 @@ export function MuscleHeatmap({ workspaceId, className }: { workspaceId: string;
             </div>
 
             {isLoading ? (
-                <LoadingState label="Reading your history…" />
+                <LoadingState label="Loading…" />
             ) : isError ? (
                 <EmptyState
                     title="Your heatmap couldn’t load"
@@ -72,15 +69,15 @@ export function MuscleHeatmap({ workspaceId, className }: { workspaceId: string;
             ) : data === undefined || data.muscles.length === 0 ? (
                 <p className="mt-6 text-sm text-muted-foreground">
                     {data && data.totalSets > 0
-                        ? 'Your workouts in this period use exercises with no muscles tagged yet. Tag them on their exercise page and they’ll show up here.'
-                        : 'Complete a workout and the muscles it trained will light up here.'}
+                        ? 'None of the exercises you trained have muscles tagged yet. Tag them on their exercise pages to see them here.'
+                        : 'No finished workouts in this period.'}
                 </p>
             ) : (
                 <>
                     <BodyDiagram
                         className="mt-6"
                         shades={shadesFrom(data.muscles)}
-                        describeMuscle={(muscle) => describeMuscle({ muscle, muscles: data.muscles })}
+                        labelForPart={(parts) => describePart({ parts, muscles: data.muscles })}
                     />
                     <p className="mt-4 text-center text-xs text-muted-foreground">
                         {data.sessionCount} {data.sessionCount === 1 ? 'workout' : 'workouts'} · {data.totalSets}{' '}
@@ -122,7 +119,7 @@ function ExerciseBreakdown({ exercises }: { exercises: MuscleVolumeExercise[] })
 
     return (
         <details className="mt-6 border-t border-border pt-4">
-            <summary className="min-h-10 cursor-pointer text-sm font-medium">What drove it</summary>
+            <summary className="min-h-10 cursor-pointer text-sm font-medium">By exercise</summary>
             <ul className="mt-3 space-y-2">
                 {exercises.map((exercise) => (
                     <li key={exercise.exerciseId} className="flex items-baseline justify-between gap-3 text-sm">
@@ -147,17 +144,18 @@ function shadesFrom(muscles: MuscleVolumeEntry[]): MuscleShades {
     return shades;
 }
 
-function describeMuscle({
-    muscle,
-    muscles,
-}: {
-    muscle: MuscleVolumeEntry['muscle'];
-    muscles: MuscleVolumeEntry[];
-}): string {
-    const { label } = MUSCLE_META[muscle];
-    const entry = muscles.find((candidate) => candidate.muscle === muscle);
+/**
+ * Names a shape and what it took. Where several muscles share a shape only the trained ones are
+ * named, so a shoulder reads as the head that was actually worked rather than all three.
+ */
+function describePart({ parts, muscles }: { parts: MuscleGroup[]; muscles: MuscleVolumeEntry[] }): string {
+    const trained = parts
+        .map((muscle) => muscles.find((entry) => entry.muscle === muscle))
+        .filter((entry): entry is MuscleVolumeEntry => entry !== undefined);
 
-    return entry === undefined ? `${label} — untrained` : `${label} — ${formatSets(entry.weightedSets)}`;
+    if (trained.length === 0) return `${parts.map((muscle) => MUSCLE_META[muscle].label).join(' / ')} — nothing yet`;
+
+    return trained.map((entry) => `${MUSCLE_META[entry.muscle].label} — ${formatSets(entry.weightedSets)}`).join(' · ');
 }
 
 /** Weighted sets are halves at worst, so one decimal is enough and a whole number stays whole. */

@@ -44,8 +44,8 @@ export function MuscleTagPicker({
     return (
         <div role="group" aria-label="Muscles worked" className="space-y-4">
             <p className="text-xs text-muted-foreground">
-                Tap once for a muscle the movement is <span className="font-medium text-foreground">for</span>, twice
-                for one it <span className="font-medium text-foreground">also works</span>, and again to clear it.
+                Tap once for a <span className="font-medium text-foreground">main</span> muscle, twice for one it{' '}
+                <span className="font-medium text-foreground">also works</span>, again to clear.
             </p>
             {MUSCLE_REGIONS.map(({ region, muscles }) => (
                 <div key={region}>
@@ -75,7 +75,7 @@ export function MuscleTagPicker({
                                     {MUSCLE_META[muscle].label}
                                     <span className="sr-only">
                                         {state === TagState.Primary
-                                            ? ', primary target'
+                                            ? ', main muscle'
                                             : state === TagState.Secondary
                                               ? ', also worked'
                                               : ', not tagged'}

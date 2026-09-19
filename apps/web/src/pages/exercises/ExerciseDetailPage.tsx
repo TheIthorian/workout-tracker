@@ -150,6 +150,7 @@ export default function ExerciseDetailPage(): JSX.Element {
 
             <MuscleTargets
                 muscles={{ primaryMuscles: exercise.primaryMuscles, secondaryMuscles: exercise.secondaryMuscles }}
+                onEdit={exercise.isCatalog || isEditing ? undefined : () => setEditing(true)}
                 className="mt-8"
             />
 
