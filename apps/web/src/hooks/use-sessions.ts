@@ -212,7 +212,7 @@ export function useLogSet({
                         sets: [
                             ...exercise.sets,
                             {
-                                id: `optimistic-${crypto.randomUUID()}`,
+                                id: nextOptimisticSetId(),
                                 setIndex: exercise.sets.length + 1,
                                 completedAt: now,
                                 isWarmup: variables.data.isWarmup ?? false,
@@ -279,6 +279,22 @@ function writeSession({
         });
     }
 }
+
+/**
+ * A React key for a set row that exists only until the server's aggregate replaces it.
+ *
+ * Deliberately not `crypto.randomUUID()`: that is undefined outside a secure context, and the
+ * workout screen is opened over plain HTTP often enough — a phone on gym wifi pointed at a dev
+ * server or a LAN preview — that reaching for it loses the set. `onMutate` throwing fails the
+ * mutation before the request is ever sent, so the lifter taps "log set" and nothing is recorded.
+ */
+function nextOptimisticSetId(): string {
+    optimisticSetCount += 1;
+
+    return `optimistic-${optimisticSetCount}`;
+}
+
+let optimisticSetCount = 0;
 
 /** Builds the stable detail-query key shared by reads, optimistic updates, and mutations. */
 function sessionKey({ workspaceId, sessionId }: { workspaceId: string; sessionId: string }): readonly string[] {
