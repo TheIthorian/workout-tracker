@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { ExerciseGuideController } from './exercise-guide.controller.js';
 import { ExerciseHistoryController } from './exercise-history.controller.js';
 import { ExercisePreferencesController } from './exercise-preferences.controller.js';
+import { ExerciseTargetsController } from './exercise-targets.controller.js';
 import { ExercisesController } from './exercises.controller.js';
 import { exerciseServiceProviders } from './exercises.providers.js';
 
@@ -14,6 +15,7 @@ import { exerciseServiceProviders } from './exercises.providers.js';
         ExerciseGuideController,
         ExerciseHistoryController,
         ExercisePreferencesController,
+        ExerciseTargetsController,
     ],
     providers: [...exerciseServiceProviders],
 })

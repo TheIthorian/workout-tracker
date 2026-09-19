@@ -71,6 +71,13 @@
             "when": 1789734377079,
             "tag": "0009_magenta_bloodstrike",
             "breakpoints": true
+        },
+        {
+            "idx": 10,
+            "version": "7",
+            "when": 1789851419419,
+            "tag": "0010_clumsy_redwing",
+            "breakpoints": true
         }
     ]
 }

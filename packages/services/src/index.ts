@@ -3,6 +3,7 @@ export { CatalogSeedService, SeedOutcome, catalogImageKey, type ImageProcessor }
 export { runCatalogSeed, type CatalogSeedReport } from './catalog-seed-runner.js';
 export { ExerciseGuideService } from './exercise-guide.service.js';
 export { ExerciseHistoryService, type ExerciseHistory, type ExerciseHistoryEntry } from './exercise-history.service.js';
+export { ExerciseTargetsService, type ExerciseSuggestion, type ExerciseTarget } from './exercise-targets.service.js';
 export { EquipmentPresetsService, type EquipmentPreset } from './equipment-presets.service.js';
 export { MuscleVolumeService, type MuscleVolumeExercise, type MuscleVolumeSummary } from './muscle-volume.service.js';
 export {

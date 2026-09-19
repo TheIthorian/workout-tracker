@@ -5,6 +5,7 @@ import {
     foreignKey,
     index,
     integer,
+    numeric,
     pgEnum,
     pgTable,
     text,
@@ -229,6 +230,50 @@ export const exercisePreferences = pgTable(
             columns: [table.exerciseId],
             foreignColumns: [exercises.id],
             name: 'exercise_preferences_exercise_id_exercises_id_fk',
+        }).onDelete('cascade'),
+    ],
+);
+
+/**
+ * A workspace's targets for an exercise — set by the user or by a coaching agent through the API.
+ *
+ * Append-only: each target is a row, and the newest one for an exercise is the one that applies, so
+ * what was prescribed over time stays readable instead of being overwritten. A row with no
+ * measurement at all is how a clear is recorded; nothing else may write one, because a target with
+ * nothing to aim at would otherwise prescribe an empty session.
+ */
+export const exerciseTargets = pgTable(
+    'exercise_targets',
+    {
+        id: uuid('id').primaryKey().defaultRandom().notNull(),
+        workspaceId: uuid('workspace_id').notNull(),
+        exerciseId: uuid('exercise_id').notNull(),
+        weightKg: numeric('weight_kg', { precision: 7, scale: 2, mode: 'number' }),
+        reps: integer('reps'),
+        durationSeconds: integer('duration_seconds'),
+        distanceM: numeric('distance_m', { precision: 9, scale: 2, mode: 'number' }),
+        note: text('note'),
+        createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+            .default(sql`now()`)
+            .notNull(),
+    },
+    (table) => [
+        index('exercise_targets_workspace_id_idx').using('btree', table.workspaceId.asc().nullsLast().op('uuid_ops')),
+        // Covers the only read there is: the newest target for one exercise in one workspace.
+        index('exercise_targets_latest_idx').on(table.workspaceId, table.exerciseId, table.createdAt.desc()),
+        check(
+            'exercise_targets_measurements_non_negative_check',
+            sql`coalesce(${table.weightKg}, 0) >= 0 and coalesce(${table.reps}, 0) >= 0 and coalesce(${table.durationSeconds}, 0) >= 0 and coalesce(${table.distanceM}, 0) >= 0`,
+        ),
+        foreignKey({
+            columns: [table.workspaceId],
+            foreignColumns: [workspaces.id],
+            name: 'exercise_targets_workspace_id_workspaces_id_fk',
+        }).onDelete('cascade'),
+        foreignKey({
+            columns: [table.exerciseId],
+            foreignColumns: [exercises.id],
+            name: 'exercise_targets_exercise_id_exercises_id_fk',
         }).onDelete('cascade'),
     ],
 );

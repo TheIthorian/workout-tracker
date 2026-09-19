@@ -10,6 +10,7 @@ import type {
     Exercise,
     ExerciseDetail,
     ExerciseLink,
+    ExerciseSuggestion,
     PatchExerciseLinkRequest,
     PatchExerciseRequest,
     SaveExerciseLinkRequest,
@@ -121,6 +122,8 @@ export const exercisesApi = {
         httpClient.get<ExerciseHistoryResponse>(`/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/history`, {
             params: { limit },
         }),
+    getSuggestion: (workspaceId: string, exerciseId: string) =>
+        httpClient.get<ExerciseSuggestion>(`/api/v1/workspaces/${workspaceId}/exercises/${exerciseId}/suggestion`),
 };
 
 /** Training summaries derived from completed workout history. */

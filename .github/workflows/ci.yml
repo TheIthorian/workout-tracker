@@ -64,9 +64,12 @@ jobs:
       - run: pnpm lint
 
       # Formatting is the cheapest thing that can fail, so it fails before the long steps rather
-      # than after them.
-      - run: pnpm format
-      - run: git diff --exit-code
+      # than after them. oxfmt rewrites files in place, so anything it changes here was pushed
+      # unformatted — run `pnpm format` locally and commit the result.
+      - name: Apply formatting rules (oxfmt)
+        run: pnpm format
+      - name: Check every file already followed the formatting rules
+        run: git diff --exit-code
 
       - run: pnpm typecheck
       - run: pnpm build

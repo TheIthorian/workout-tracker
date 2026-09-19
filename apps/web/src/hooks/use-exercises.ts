@@ -13,6 +13,7 @@ import type {
     Exercise,
     ExerciseDetail,
     ExerciseLink,
+    ExerciseSuggestion,
     PatchExerciseLinkRequest,
     PatchExerciseRequest,
     SaveExerciseLinkRequest,
@@ -89,6 +90,28 @@ export function useExerciseHistory({
         queryKey: ['exercises', workspaceId, exerciseId, 'history'],
         queryFn: () => exercisesApi.getHistory(workspaceId, exerciseId),
         enabled: Boolean(workspaceId && exerciseId),
+    });
+}
+
+/**
+ * Gets what to open the next set with for an exercise, and the line explaining it.
+ *
+ * Fetched with the card rather than on the sparkle tap, so the suggestion is already in hand when
+ * the user asks for it — a spinner between the tap and the numbers would defeat the point.
+ */
+export function useExerciseSuggestion({
+    workspaceId,
+    exerciseId,
+    enabled = true,
+}: {
+    workspaceId: string;
+    exerciseId: string;
+    enabled?: boolean;
+}): UseQueryResult<ExerciseSuggestion, Error> {
+    return useQuery({
+        queryKey: ['exercises', workspaceId, exerciseId, 'suggestion'],
+        queryFn: () => exercisesApi.getSuggestion(workspaceId, exerciseId),
+        enabled: enabled && Boolean(workspaceId && exerciseId),
     });
 }
 
