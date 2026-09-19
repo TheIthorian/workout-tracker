@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": ["barbell", "bench"],
     "notes": "Barbell hip extension with the upper back supported on a bench.",
+    "muscles": { "primary": ["glutes"], "secondary": ["hamstrings", "quads"] },
     "guide": {
         "setup": "Sit with the upper back against a stable bench, the padded bar across the hip crease, and feet about shoulder width.",
         "execution": "Drive through the heels and squeeze the glutes until the torso is level, then lower with control.",

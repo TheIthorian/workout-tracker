@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": ["dumbbell"],
     "notes": "Crunch holding a dumbbell or plate. Record the load being held.",
+    "muscles": { "primary": ["abs"], "secondary": ["obliques"] },
     "guide": {
         "setup": "Lie on your back with knees bent and feet flat, holding a dumbbell against the chest or over the head.",
         "execution": "Curl the shoulder blades off the floor by shortening through the abs, then lower under control.",

@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": [],
     "notes": "Bodyweight horizontal press.",
+    "muscles": { "primary": ["chest"], "secondary": ["triceps", "front_delts", "abs"] },
     "guide": {
         "setup": "Place hands slightly wider than the shoulders and step into a straight plank with abs and glutes braced.",
         "execution": "Lower the chest between the hands with elbows at a comfortable angle, then press the floor away to straight arms.",

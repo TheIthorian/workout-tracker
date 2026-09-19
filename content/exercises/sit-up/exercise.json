@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": [],
     "notes": "Bodyweight sit-up performed on the floor.",
+    "muscles": { "primary": ["abs"], "secondary": ["obliques"] },
     "guide": {
         "setup": "Lie on your back with the knees bent and the feet flat, heels a short way from the hips, and the hands crossed on the chest or resting lightly by the temples.",
         "execution": "Curl the spine off the floor one segment at a time until the torso is upright over the hips, then reverse the movement and lower under control until the shoulder blades touch down.",

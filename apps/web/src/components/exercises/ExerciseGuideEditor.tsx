@@ -1,6 +1,7 @@
 import { useBlocker, useBeforeUnload } from 'react-router-dom';
 import { ExerciseImagesEditor } from './ExerciseImagesEditor';
 import { EquipmentTileGrid } from '@/components/equipment/EquipmentTileGrid';
+import { MuscleTagPicker } from '@/components/muscles/MuscleTagPicker';
 import { useEffect, useRef, useState } from 'react';
 import { Check, Pencil, Plus, Trash2 } from 'lucide-react';
 import {
@@ -26,6 +27,7 @@ import {
 import { toast } from '@/hooks/use-toast';
 import type { ExerciseDetail, ExerciseLink } from '@/models/exercise';
 import type { Equipment } from '@/models/equipment';
+import type { MuscleEngagementValue } from '@/models/muscle';
 import { ExerciseGuide } from './ExerciseGuide';
 
 /**
@@ -53,6 +55,7 @@ export function ExerciseGuideEditor({
     const [cues, setCues] = useState('');
     const [mistakes, setMistakes] = useState('');
     const [equipment, setEquipment] = useState<Equipment[]>([]);
+    const [muscles, setMuscles] = useState<MuscleEngagementValue>({ primaryMuscles: [], secondaryMuscles: [] });
 
     // Seeded once per exercise, not on every render of `exercise`: a link mutation invalidates the
     // same query and hands back a new object identity, which would otherwise wipe out guide text
@@ -67,6 +70,7 @@ export function ExerciseGuideEditor({
         setCues(exercise.guideCues ?? '');
         setMistakes(exercise.guideMistakes ?? '');
         setEquipment(exercise.equipment);
+        setMuscles({ primaryMuscles: exercise.primaryMuscles, secondaryMuscles: exercise.secondaryMuscles });
     }, [exercise]);
 
     const updateExercise = useUpdateExercise({ workspaceId });
@@ -88,7 +92,9 @@ export function ExerciseGuideEditor({
         execution.trim() !== (exercise.guideExecution ?? '') ||
         cues.trim() !== (exercise.guideCues ?? '') ||
         mistakes.trim() !== (exercise.guideMistakes ?? '') ||
-        [...equipment].sort().join() !== [...exercise.equipment].sort().join();
+        [...equipment].sort().join() !== [...exercise.equipment].sort().join() ||
+        [...muscles.primaryMuscles].sort().join() !== [...exercise.primaryMuscles].sort().join() ||
+        [...muscles.secondaryMuscles].sort().join() !== [...exercise.secondaryMuscles].sort().join();
 
     // Link mutations save immediately on their own "Add"/"Save" actions, so the only things a close
     // could still silently drop are drafts sitting in these forms that were never submitted: a
@@ -115,6 +121,7 @@ export function ExerciseGuideEditor({
         guideCues: cues,
         guideMistakes: mistakes,
         equipment,
+        ...muscles,
     };
 
     const handleSaveGuide = (): void => {
@@ -127,6 +134,7 @@ export function ExerciseGuideEditor({
                     guideCues: cues.trim() || null,
                     guideMistakes: mistakes.trim() || null,
                     equipment,
+                    ...muscles,
                 },
             },
             { onSuccess: () => toast({ title: 'Guide saved' }) },
@@ -163,6 +171,7 @@ export function ExerciseGuideEditor({
                     guideCues: cues.trim() || null,
                     guideMistakes: mistakes.trim() || null,
                     equipment,
+                    ...muscles,
                 },
             },
             {
@@ -255,6 +264,10 @@ export function ExerciseGuideEditor({
                         <h3 className="font-heading text-lg text-foreground">Equipment</h3>
                         <EquipmentTileGrid value={equipment} onChange={setEquipment} aria-label="Required equipment" />
                         <p className="text-xs text-muted-foreground">Leave empty for bodyweight.</p>
+                    </section>
+                    <section className="space-y-3">
+                        <h3 className="font-heading text-lg text-foreground">Muscles worked</h3>
+                        <MuscleTagPicker value={muscles} onChange={setMuscles} />
                     </section>
                     <section className="space-y-4">
                         <div className="space-y-2">

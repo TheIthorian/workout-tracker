@@ -6,6 +6,7 @@ import { InfoHint } from '@/components/common/InfoHint';
 import { LoadingState } from '@/components/common/LoadingState';
 import { EquipmentFilterChip } from '@/components/equipment/EquipmentFilterChip';
 import { EquipmentTileGrid } from '@/components/equipment/EquipmentTileGrid';
+import { MuscleTagPicker } from '@/components/muscles/MuscleTagPicker';
 import { TrackingTypeLegendCard, TrackingTypeLegendStrip } from '@/components/exercises/TrackingTypeLegend';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,6 +26,7 @@ import { TRACKING_TYPE_META, TrackingType, type Exercise } from '@/models/exerci
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { useActiveEquipmentPreset } from '@/hooks/use-equipment-presets';
 import { summarizeEquipment, type Equipment } from '@/models/equipment';
+import { summarizeMuscles, type MuscleEngagementValue } from '@/models/muscle';
 
 /** A paginated library with a quick search and visible, accessible creation controls. */
 export default function ExercisesListPage(): JSX.Element {
@@ -34,6 +36,7 @@ export default function ExercisesListPage(): JSX.Element {
     const [name, setName] = useState('');
     const [trackingType, setTrackingType] = useState(TrackingType.WeightReps);
     const [equipment, setEquipment] = useState<Equipment[]>([]);
+    const [muscles, setMuscles] = useState<MuscleEngagementValue>({ primaryMuscles: [], secondaryMuscles: [] });
     const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');
     const [includeArchived, setIncludeArchived] = useState(false);
@@ -59,13 +62,14 @@ export default function ExercisesListPage(): JSX.Element {
         setName('');
         setTrackingType(TrackingType.WeightReps);
         setEquipment([]);
+        setMuscles({ primaryMuscles: [], secondaryMuscles: [] });
         setCreateOpen(true);
     };
     const handleCreate = (event: React.FormEvent): void => {
         event.preventDefault();
         if (!name.trim() || createExercise.isPending) return;
         createExercise.mutate(
-            { name: name.trim(), trackingType, equipment },
+            { name: name.trim(), trackingType, equipment, ...muscles },
             {
                 onSuccess: (created) => {
                     toast({ title: 'Exercise added. Make it yours.' });
@@ -278,6 +282,10 @@ export default function ExercisesListPage(): JSX.Element {
                             />
                             <p className="mt-2 text-xs text-muted-foreground">Leave empty for bodyweight.</p>
                         </fieldset>
+                        <fieldset>
+                            <legend className="mb-3 text-sm font-medium">Muscles worked</legend>
+                            <MuscleTagPicker value={muscles} onChange={setMuscles} />
+                        </fieldset>
                         <DialogFooter>
                             <Button type="button" variant="ghost" onClick={() => setCreateOpen(false)}>
                                 Cancel
@@ -313,6 +321,12 @@ function ExerciseRow({ exercise }: { exercise: Exercise }): JSX.Element {
                             <>
                                 <span aria-hidden>·</span>
                                 <span>{summarizeEquipment(exercise.equipment)}</span>
+                            </>
+                        )}
+                        {exercise.primaryMuscles.length > 0 && (
+                            <>
+                                <span aria-hidden>·</span>
+                                <span>{summarizeMuscles({ muscles: exercise.primaryMuscles })}</span>
                             </>
                         )}
                         {exercise.isCatalog && (

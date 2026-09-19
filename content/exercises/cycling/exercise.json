@@ -3,6 +3,7 @@
     "trackingType": "distance_time",
     "equipment": [],
     "notes": "Indoor or outdoor ride tracked by distance and elapsed time.",
+    "muscles": { "primary": ["quads"], "secondary": ["glutes", "hamstrings", "calves"] },
     "guide": {
         "setup": "Set the saddle so the knee has a slight bend at the bottom of the pedal stroke, with relaxed hands on the bars.",
         "execution": "Pedal smoothly at a sustainable cadence and shift resistance or gears to match the planned effort.",

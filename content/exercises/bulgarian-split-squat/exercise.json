@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": ["bench"],
     "notes": "Rear-foot-elevated split squat, one leg at a time. Bodyweight or loaded; record the load of one dumbbell.",
+    "muscles": { "primary": ["quads", "glutes"], "secondary": ["hamstrings", "adductors", "abductors"] },
     "guide": {
         "setup": "Stand a stride in front of a bench and rest the top of the rear foot on it, with the front foot flat and the trunk braced.",
         "execution": "Lower until the front thigh is near parallel and the rear knee is close to the floor, then drive up through the front foot.",

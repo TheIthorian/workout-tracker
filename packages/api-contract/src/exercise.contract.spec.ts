@@ -1,4 +1,4 @@
-import { Equipment, TrackingType } from '@app/domain';
+import { Equipment, MuscleGroup, TrackingType } from '@app/domain';
 import { describe, expect, it } from 'vitest';
 import {
     exerciseListQuerySchema,
@@ -126,5 +126,34 @@ describe('putExercisePreferencesRequestSchema', () => {
     it('rejects a negative or fractional rest', () => {
         expect(putExercisePreferencesRequestSchema.safeParse({ restSeconds: -1 }).success).toBe(false);
         expect(putExercisePreferencesRequestSchema.safeParse({ restSeconds: 1.5 }).success).toBe(false);
+    });
+});
+
+describe('exercise muscles', () => {
+    it('defaults both lists to empty on create and rejects an unknown or repeated muscle', () => {
+        const created = postExerciseRequestSchema.parse({ name: 'Plank', trackingType: 'duration' });
+
+        expect(created.primaryMuscles).toEqual([]);
+        expect(created.secondaryMuscles).toEqual([]);
+        expect(
+            postExerciseRequestSchema.safeParse({
+                name: 'Curl',
+                trackingType: 'weight_reps',
+                primaryMuscles: [MuscleGroup.Biceps, MuscleGroup.Biceps],
+            }).success,
+        ).toBe(false);
+        expect(
+            postExerciseRequestSchema.safeParse({
+                name: 'Curl',
+                trackingType: 'weight_reps',
+                primaryMuscles: ['spleen'],
+            }).success,
+        ).toBe(false);
+    });
+
+    it('accepts a single muscle as a library filter and rejects anything else', () => {
+        expect(exerciseListQuerySchema.parse({}).muscle).toBeUndefined();
+        expect(exerciseListQuerySchema.parse({ muscle: 'lats' }).muscle).toBe(MuscleGroup.Lats);
+        expect(exerciseListQuerySchema.safeParse({ muscle: 'spleen' }).success).toBe(false);
     });
 });

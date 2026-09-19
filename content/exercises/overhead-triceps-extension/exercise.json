@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": ["dumbbell"],
     "notes": "Seated or standing, one dumbbell held in both hands. Record the load of the dumbbell.",
+    "muscles": { "primary": ["triceps"], "secondary": [] },
     "guide": {
         "setup": "Sit or stand tall holding one dumbbell overhead in both hands with the upper arms close to the ears.",
         "execution": "Lower the dumbbell behind the head by bending the elbows, then extend until the arms are straight overhead.",

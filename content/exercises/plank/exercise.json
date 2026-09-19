@@ -3,6 +3,7 @@
     "trackingType": "duration",
     "equipment": [],
     "notes": "Bodyweight hold.",
+    "muscles": { "primary": ["abs"], "secondary": ["obliques", "lower_back", "front_delts"] },
     "guide": {
         "setup": "Forearms on the floor, elbows under the shoulders, feet together.",
         "execution": "Squeeze the glutes, tuck the ribs, and hold a straight line from head to heels for the target time.",

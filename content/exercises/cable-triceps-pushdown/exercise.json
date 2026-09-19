@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": ["cable"],
     "notes": "Rope or straight-bar cable pushdown.",
+    "muscles": { "primary": ["triceps"], "secondary": [] },
     "guide": {
         "setup": "Face a high cable with elbows tucked at the sides and hands holding the attachment near chest height.",
         "execution": "Extend the elbows until the arms are straight, then return only as far as the elbows can stay fixed by the sides.",

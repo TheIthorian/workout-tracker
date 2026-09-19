@@ -1,4 +1,4 @@
-import { Equipment, TrackingType } from '@app/domain';
+import { Equipment, MuscleGroup, TrackingType } from '@app/domain';
 import { z } from 'zod';
 import { guidSchema, paginatedResponseSchema, paginationQuerySchema } from './primitives.js';
 
@@ -9,6 +9,12 @@ export const equipmentListSchema = z
     .array(z.enum(Equipment))
     .max(Object.values(Equipment).length)
     .refine((list) => new Set(list).size === list.length, { message: 'Equipment must not repeat' });
+
+/** A set of muscles with no repeats. */
+export const muscleListSchema = z
+    .array(z.enum(MuscleGroup))
+    .max(Object.values(MuscleGroup).length)
+    .refine((list) => new Set(list).size === list.length, { message: 'Muscles must not repeat' });
 
 export const exerciseGuideImageResponseSchema = z.object({
     id: guidSchema,
@@ -34,6 +40,10 @@ export const exerciseResponseSchema = z.object({
     isCatalog: z.boolean(),
     trackingType: z.enum(TrackingType),
     equipment: z.array(z.enum(Equipment)),
+    /** What the movement is for. */
+    primaryMuscles: z.array(z.enum(MuscleGroup)),
+    /** What it also works, without being the point of the movement. */
+    secondaryMuscles: z.array(z.enum(MuscleGroup)),
     notes: z.string().nullable(),
     /** This workspace's rest between sets for the exercise; null until it sets one. */
     restSeconds: z.number().int().nullable(),
@@ -61,6 +71,8 @@ export const exerciseListQuerySchema = paginationQuerySchema.extend({
         .enum(['true', 'false'])
         .optional()
         .transform((value) => value === 'true'),
+    /** A single muscle the exercise must name, primary or secondary. Absent: no filter. */
+    muscle: z.enum(MuscleGroup).optional(),
     /** Comma-separated. Absent: no filter. Empty: bodyweight only. Otherwise: only exercises needing a subset. */
     equipment: z
         .string()
@@ -82,6 +94,8 @@ export const postExerciseRequestSchema = z.object({
     name: z.string().min(1, 'Name is required').max(200, 'Name must not exceed 200 characters'),
     trackingType: z.enum(TrackingType),
     equipment: equipmentListSchema.default([]),
+    primaryMuscles: muscleListSchema.default([]),
+    secondaryMuscles: muscleListSchema.default([]),
     notes: z.string().max(2000).nullable().optional(),
     guideSetup: guideFieldSchema.nullable().optional(),
     guideExecution: guideFieldSchema.nullable().optional(),
@@ -95,6 +109,8 @@ export const patchExerciseRequestSchema = z
         name: z.string().min(1).max(200).optional(),
         trackingType: z.enum(TrackingType).optional(),
         equipment: equipmentListSchema.optional(),
+        primaryMuscles: muscleListSchema.optional(),
+        secondaryMuscles: muscleListSchema.optional(),
         notes: z.string().max(2000).nullable().optional(),
         guideSetup: guideFieldSchema.nullable().optional(),
         guideExecution: guideFieldSchema.nullable().optional(),

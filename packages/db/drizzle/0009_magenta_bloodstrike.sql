@@ -1,0 +1,3 @@
+CREATE TYPE "public"."muscle_group" AS ENUM('chest', 'front_delts', 'side_delts', 'rear_delts', 'biceps', 'triceps', 'forearms', 'abs', 'obliques', 'lats', 'upper_back', 'traps', 'lower_back', 'glutes', 'quads', 'hamstrings', 'calves', 'adductors', 'abductors');--> statement-breakpoint
+ALTER TABLE "exercises" ADD COLUMN "primary_muscles" "muscle_group"[] DEFAULT '{}'::muscle_group[] NOT NULL;--> statement-breakpoint
+ALTER TABLE "exercises" ADD COLUMN "secondary_muscles" "muscle_group"[] DEFAULT '{}'::muscle_group[] NOT NULL;

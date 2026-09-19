@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": ["barbell", "bench"],
     "notes": "Incline barbell press, bench set around 30 degrees.",
+    "muscles": { "primary": ["chest", "front_delts"], "secondary": ["triceps"] },
     "guide": {
         "setup": "Lie back on a bench inclined around 30 degrees with feet planted, shoulder blades pulled together, and hands just wider than shoulder width.",
         "execution": "Unrack over the shoulders, lower with control to the upper chest, then press up until the elbows lock.",

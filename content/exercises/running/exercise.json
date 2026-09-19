@@ -3,6 +3,7 @@
     "trackingType": "distance_time",
     "equipment": [],
     "notes": "Treadmill or outdoor run tracked by distance and elapsed time.",
+    "muscles": { "primary": ["quads", "hamstrings", "calves"], "secondary": ["glutes"] },
     "guide": {
         "setup": "Start at an easy pace with an upright posture, relaxed shoulders, and feet landing under the body.",
         "execution": "Maintain the planned pace using short, light steps and a relaxed arm swing, then slow gradually to finish.",

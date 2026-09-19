@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": [],
     "notes": "Bodyweight or loaded reverse lunge. Count total steps unless a routine specifies otherwise.",
+    "muscles": { "primary": ["quads", "glutes"], "secondary": ["hamstrings", "adductors", "abductors"] },
     "guide": {
         "setup": "Stand tall with feet hip width, holding dumbbells at the sides if loaded, and brace before stepping.",
         "execution": "Step back and lower until both knees are near 90 degrees, then push through the front foot to return to standing.",

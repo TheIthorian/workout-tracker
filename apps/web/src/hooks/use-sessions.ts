@@ -10,6 +10,7 @@ import {
     type UseQueryResult,
 } from '@tanstack/react-query';
 import { sessionsApi } from '@/lib/api';
+import { randomUuid } from '@/lib/random-uuid';
 import type { PaginatedResponse } from '@/models/pagination';
 import type {
     ActiveSessionResponse,
@@ -212,7 +213,7 @@ export function useLogSet({
                         sets: [
                             ...exercise.sets,
                             {
-                                id: `optimistic-${crypto.randomUUID()}`,
+                                id: `optimistic-${randomUuid()}`,
                                 setIndex: exercise.sets.length + 1,
                                 completedAt: now,
                                 isWarmup: variables.data.isWarmup ?? false,

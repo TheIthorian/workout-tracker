@@ -4,6 +4,7 @@ export * from './workspace.contract.js';
 export * from './user.contract.js';
 export * from './exercise.contract.js';
 export * from './equipment-preset.contract.js';
+export * from './muscle-volume.contract.js';
 export * from './onboarding.contract.js';
 export * from './routine.contract.js';
 export * from './session.contract.js';

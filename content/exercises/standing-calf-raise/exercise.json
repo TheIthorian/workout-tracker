@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": [],
     "notes": "Standing machine, smith machine, or bodyweight calf raise.",
+    "muscles": { "primary": ["calves"], "secondary": [] },
     "guide": {
         "setup": "Place the balls of the feet on a stable step or platform with the heels free to move.",
         "execution": "Lower the heels into a controlled stretch, then press through the balls of the feet to rise as high as possible.",

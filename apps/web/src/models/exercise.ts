@@ -1,5 +1,6 @@
 import { Dumbbell, Route, Timer, type LucideIcon } from 'lucide-react';
 import type { Equipment } from './equipment';
+import type { MuscleGroup } from './muscle';
 
 /** How an exercise's work is measured. Mirrors `@app/domain`'s enum of the same name. */
 export enum TrackingType {
@@ -31,6 +32,10 @@ export type Exercise = {
     isCatalog: boolean;
     trackingType: TrackingType;
     equipment: Equipment[];
+    /** What the movement is for. */
+    primaryMuscles: MuscleGroup[];
+    /** What it also works, without being the point of the movement. */
+    secondaryMuscles: MuscleGroup[];
     notes: string | null;
     /** This workspace's rest between sets; null until set, when the app's default applies. */
     restSeconds: number | null;
@@ -70,6 +75,8 @@ export type SaveExerciseRequest = {
     name: string;
     trackingType: TrackingType;
     equipment?: Equipment[];
+    primaryMuscles?: MuscleGroup[];
+    secondaryMuscles?: MuscleGroup[];
     notes?: string | null;
     guideSetup?: string | null;
     guideExecution?: string | null;
@@ -81,6 +88,8 @@ export type PatchExerciseRequest = {
     name?: string;
     trackingType?: TrackingType;
     equipment?: Equipment[];
+    primaryMuscles?: MuscleGroup[];
+    secondaryMuscles?: MuscleGroup[];
     notes?: string | null;
     guideSetup?: string | null;
     guideExecution?: string | null;

@@ -3,6 +3,7 @@
     "trackingType": "distance_time",
     "equipment": ["rowing_machine"],
     "notes": "Ergometer or on-water rowing tracked by distance and elapsed time.",
+    "muscles": { "primary": ["lats", "upper_back"], "secondary": ["quads", "glutes", "biceps", "lower_back"] },
     "guide": {
         "setup": "Set the foot straps securely and sit tall with relaxed shoulders and shins near vertical at the catch.",
         "execution": "Drive with the legs first, swing the torso back, then draw the handle to the lower ribs. Reverse the sequence smoothly.",

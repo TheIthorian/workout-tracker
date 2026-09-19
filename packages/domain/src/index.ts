@@ -1,6 +1,14 @@
 export { Decimal } from './decimal.js';
 export { Equipment, OnboardingStage } from './equipment.js';
 export {
+    MUSCLE_ENGAGEMENT_WEIGHT,
+    MuscleEngagement,
+    MuscleGroup,
+    summariseMuscleVolume,
+    type MuscleVolumeContribution,
+    type MuscleVolumeTotal,
+} from './muscle-group.js';
+export {
     DEFAULT_SET_WORK_SECONDS,
     SECONDS_PER_REP,
     SETUP_SECONDS_PER_EXERCISE,

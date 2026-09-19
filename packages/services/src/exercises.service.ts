@@ -1,5 +1,5 @@
 import { schema, scopedToWorkspace, scopedToWorkspaceOrGlobal, type Db } from '@app/db';
-import type { Equipment, TrackingType } from '@app/domain';
+import type { Equipment, MuscleGroup, TrackingType } from '@app/domain';
 import { EntityNotFoundError } from '@app/errors';
 import { asc, count, desc, eq, ilike, isNull, sql, type SQL } from 'drizzle-orm';
 import type { WorkspaceMembershipService } from './workspace-membership.service.js';
@@ -13,6 +13,8 @@ export type ExerciseSummary = {
     isCatalog: boolean;
     trackingType: TrackingType;
     equipment: Equipment[];
+    primaryMuscles: MuscleGroup[];
+    secondaryMuscles: MuscleGroup[];
     notes: string | null;
     restSeconds: number | null;
     archivedAt: string | null;
@@ -76,6 +78,7 @@ export class ExercisesService {
      * @param search matches anywhere in the name, case-insensitively.
      * @param equipment when given, keeps only exercises whose required equipment is a subset of it
      * (bodyweight exercises always match, including against an empty list).
+     * @param muscle when given, keeps only exercises naming it, primary or secondary.
      * @throws EntityNotFoundError when the caller is not a member of the workspace.
      */
     async list({
@@ -86,6 +89,7 @@ export class ExercisesService {
         search,
         includeArchived,
         equipment,
+        muscle,
     }: {
         userId: string;
         workspaceId: string;
@@ -94,6 +98,7 @@ export class ExercisesService {
         search?: string;
         includeArchived?: boolean;
         equipment?: Equipment[];
+        muscle?: MuscleGroup;
     }): Promise<PaginatedExercises> {
         await this.membership.require({ userId, workspaceId });
 
@@ -103,6 +108,7 @@ export class ExercisesService {
             search === undefined || search === '' ? undefined : ilike(exercises.name, `%${search}%`),
             includeArchived === true ? undefined : isNull(exercises.archivedAt),
             equipment === undefined ? undefined : requiresOnly(equipment),
+            muscle === undefined ? undefined : targetsMuscle(muscle),
         );
 
         const [data, [totals]] = await Promise.all([
@@ -153,6 +159,8 @@ export class ExercisesService {
         name,
         trackingType,
         equipment,
+        primaryMuscles,
+        secondaryMuscles,
         notes,
         guideSetup,
         guideExecution,
@@ -164,6 +172,8 @@ export class ExercisesService {
         name: string;
         trackingType: TrackingType;
         equipment?: Equipment[];
+        primaryMuscles?: MuscleGroup[];
+        secondaryMuscles?: MuscleGroup[];
         notes?: string | null;
         guideSetup?: string | null;
         guideExecution?: string | null;
@@ -180,6 +190,8 @@ export class ExercisesService {
                 name,
                 trackingType,
                 equipment: equipment ?? [],
+                primaryMuscles: primaryMuscles ?? [],
+                secondaryMuscles: secondaryMuscles ?? [],
                 notes: notes ?? null,
                 guideSetup: guideSetup ?? null,
                 guideExecution: guideExecution ?? null,
@@ -205,6 +217,8 @@ export class ExercisesService {
         name,
         trackingType,
         equipment,
+        primaryMuscles,
+        secondaryMuscles,
         notes,
         guideSetup,
         guideExecution,
@@ -218,6 +232,8 @@ export class ExercisesService {
         name?: string;
         trackingType?: TrackingType;
         equipment?: Equipment[];
+        primaryMuscles?: MuscleGroup[];
+        secondaryMuscles?: MuscleGroup[];
         notes?: string | null;
         guideSetup?: string | null;
         guideExecution?: string | null;
@@ -235,6 +251,8 @@ export class ExercisesService {
                 ...(name === undefined ? {} : { name }),
                 ...(trackingType === undefined ? {} : { trackingType }),
                 ...(equipment === undefined ? {} : { equipment }),
+                ...(primaryMuscles === undefined ? {} : { primaryMuscles }),
+                ...(secondaryMuscles === undefined ? {} : { secondaryMuscles }),
                 ...(notes === undefined ? {} : { notes }),
                 ...(guideSetup === undefined ? {} : { guideSetup }),
                 ...(guideExecution === undefined ? {} : { guideExecution }),
@@ -352,6 +370,14 @@ function requiresOnly(available: Equipment[]): SQL {
     return sql`${exercises.equipment} <@ ${`{${available.join(',')}}`}::equipment[]`;
 }
 
+/**
+ * Admits an exercise that names the muscle at all, primary or secondary. Enum members are never
+ * user text, so the literal is safe to build; see `requiresOnly` for why it is not bound.
+ */
+function targetsMuscle(muscle: MuscleGroup): SQL {
+    return sql`(${exercises.primaryMuscles} || ${exercises.secondaryMuscles}) && ${`{${muscle}}`}::muscle_group[]`;
+}
+
 const EXERCISE_SUMMARY_COLUMNS = {
     id: exercises.id,
     name: exercises.name,
@@ -359,6 +385,8 @@ const EXERCISE_SUMMARY_COLUMNS = {
     isCatalog: sql<boolean>`${exercises.workspaceId} is null`,
     trackingType: exercises.trackingType,
     equipment: exercises.equipment,
+    primaryMuscles: exercises.primaryMuscles,
+    secondaryMuscles: exercises.secondaryMuscles,
     notes: exercises.notes,
     restSeconds: exercisePreferences.restSeconds,
     archivedAt: exercises.archivedAt,

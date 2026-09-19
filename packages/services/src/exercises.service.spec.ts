@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { schema, type Db } from '@app/db';
 import { startTestDatabase } from '@app/db/testing';
-import { Equipment, TrackingType } from '@app/domain';
+import { Equipment, MuscleGroup, TrackingType } from '@app/domain';
 import { EntityNotFoundError } from '@app/errors';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -427,5 +427,80 @@ describe('setPreferences', () => {
         await expect(
             exercises.setPreferences({ userId, workspaceId: otherWorkspaceId, exerciseId: theirs.id, restSeconds: 30 }),
         ).rejects.toBeInstanceOf(EntityNotFoundError);
+    });
+});
+
+describe('muscle tags', () => {
+    it('stores what an exercise targets and replaces each list on update', async () => {
+        const created = await exercises.create({
+            userId,
+            workspaceId,
+            name: `Tagged ${randomUUID()}`,
+            trackingType: TrackingType.WeightReps,
+            primaryMuscles: [MuscleGroup.Chest],
+            secondaryMuscles: [MuscleGroup.Triceps, MuscleGroup.FrontDelts],
+        });
+
+        expect(created.primaryMuscles).toEqual([MuscleGroup.Chest]);
+        expect(created.secondaryMuscles).toEqual([MuscleGroup.Triceps, MuscleGroup.FrontDelts]);
+
+        const updated = await exercises.update({
+            userId,
+            workspaceId,
+            exerciseId: created.id,
+            secondaryMuscles: [],
+        });
+
+        expect(updated.primaryMuscles).toEqual([MuscleGroup.Chest]);
+        expect(updated.secondaryMuscles).toEqual([]);
+    });
+
+    it('defaults to no muscles rather than null', async () => {
+        const created = await exercises.create({
+            userId,
+            workspaceId,
+            name: `Untagged ${randomUUID()}`,
+            trackingType: TrackingType.Duration,
+        });
+
+        expect(created.primaryMuscles).toEqual([]);
+        expect(created.secondaryMuscles).toEqual([]);
+    });
+
+    it('filters the library by a muscle named either primary or secondary', async () => {
+        const ownerId = await seedUser(db);
+        const scopedWorkspaceId = await seedWorkspace(db, ownerId);
+        await exercises.create({
+            userId: ownerId,
+            workspaceId: scopedWorkspaceId,
+            name: 'Curl',
+            trackingType: TrackingType.WeightReps,
+            primaryMuscles: [MuscleGroup.Biceps],
+        });
+        await exercises.create({
+            userId: ownerId,
+            workspaceId: scopedWorkspaceId,
+            name: 'Row',
+            trackingType: TrackingType.WeightReps,
+            primaryMuscles: [MuscleGroup.Lats],
+            secondaryMuscles: [MuscleGroup.Biceps],
+        });
+        await exercises.create({
+            userId: ownerId,
+            workspaceId: scopedWorkspaceId,
+            name: 'Squat',
+            trackingType: TrackingType.WeightReps,
+            primaryMuscles: [MuscleGroup.Quads],
+        });
+
+        const matching = await exercises.list({
+            userId: ownerId,
+            workspaceId: scopedWorkspaceId,
+            ...page,
+            muscle: MuscleGroup.Biceps,
+        });
+
+        expect(matching.data.map((exercise) => exercise.name)).toEqual(['Curl', 'Row']);
+        expect(matching.totalCount).toBe(2);
     });
 });

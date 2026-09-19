@@ -3,6 +3,7 @@
     "trackingType": "weight_reps",
     "equipment": ["dumbbell", "bench"],
     "notes": "Single dumbbell held in both hands. Record the load of the dumbbell.",
+    "muscles": { "primary": ["lats"], "secondary": ["chest", "triceps"] },
     "guide": {
         "setup": "Lie on a flat bench holding one dumbbell over the chest with both hands cupping the top end and elbows softly bent.",
         "execution": "Lower the dumbbell back over the head until the lats are stretched, then pull it back over the chest.",
