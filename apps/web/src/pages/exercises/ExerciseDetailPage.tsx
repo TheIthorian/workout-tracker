@@ -148,24 +148,35 @@ export default function ExerciseDetailPage(): JSX.Element {
                 )}
             </div>
 
-            <MuscleTargets
-                muscles={{ primaryMuscles: exercise.primaryMuscles, secondaryMuscles: exercise.secondaryMuscles }}
-                onEdit={exercise.isCatalog || isEditing ? undefined : () => setEditing(true)}
-                className="mt-8"
-            />
-
-            <div className="mt-8">
-                {isEditing ? (
+            {isEditing ? (
+                <div className="mt-8">
                     <ExerciseGuideEditor
                         key={exercise.id}
                         workspaceId={workspaceId}
                         exercise={exercise}
                         onDone={() => setEditing(false)}
                     />
-                ) : (
-                    <ExerciseGuide exercise={exercise} />
-                )}
-            </div>
+                </div>
+            ) : (
+                /* The guide takes the page's width and the muscles ride alongside it, rather than
+                   each taking a full-width band of its own — three badges do not need 1,000px. The
+                   aside is first in the markup so a phone, which has one column, still meets the
+                   muscles before scrolling the whole guide. */
+                <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_21rem]">
+                    <aside className="min-w-0 lg:sticky lg:top-8 lg:order-2">
+                        <MuscleTargets
+                            muscles={{
+                                primaryMuscles: exercise.primaryMuscles,
+                                secondaryMuscles: exercise.secondaryMuscles,
+                            }}
+                            onEdit={exercise.isCatalog ? undefined : () => setEditing(true)}
+                        />
+                    </aside>
+                    <div className="min-w-0 lg:order-1">
+                        <ExerciseGuide exercise={exercise} />
+                    </div>
+                </div>
+            )}
 
             {!exercise.isCatalog && (
                 <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t pt-6">

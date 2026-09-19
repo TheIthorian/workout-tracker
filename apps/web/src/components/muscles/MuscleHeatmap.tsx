@@ -74,18 +74,23 @@ export function MuscleHeatmap({ workspaceId, className }: { workspaceId: string;
                 </p>
             ) : (
                 <>
-                    <BodyDiagram
-                        className="mt-6"
-                        shades={shadesFrom(data.muscles)}
-                        labelForPart={(parts) => describePart({ parts, muscles: data.muscles })}
-                    />
-                    <p className="mt-4 text-center text-xs text-muted-foreground">
-                        {data.sessionCount} {data.sessionCount === 1 ? 'workout' : 'workouts'} · {data.totalSets}{' '}
-                        working
-                        {data.totalSets === 1 ? ' set' : ' sets'}
-                        {data.untaggedSets > 0 && ` · ${data.untaggedSets} from untagged exercises`}
-                    </p>
-                    <MuscleRanking muscles={data.muscles} />
+                    {/* Map and ranking side by side on a wide screen: they are two readings of one
+                        set of numbers, and comparing a shape to its row is the point. */}
+                    <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]">
+                        <div>
+                            <BodyDiagram
+                                shades={shadesFrom(data.muscles)}
+                                labelForPart={(parts) => describePart({ parts, muscles: data.muscles })}
+                            />
+                            <p className="mt-4 text-center text-xs text-muted-foreground">
+                                {data.sessionCount} {data.sessionCount === 1 ? 'workout' : 'workouts'} ·{' '}
+                                {data.totalSets} working
+                                {data.totalSets === 1 ? ' set' : ' sets'}
+                                {data.untaggedSets > 0 && ` · ${data.untaggedSets} from untagged exercises`}
+                            </p>
+                        </div>
+                        <MuscleRanking muscles={data.muscles} />
+                    </div>
                     <ExerciseBreakdown exercises={data.exercises} />
                 </>
             )}
@@ -95,7 +100,7 @@ export function MuscleHeatmap({ workspaceId, className }: { workspaceId: string;
 
 function MuscleRanking({ muscles }: { muscles: MuscleVolumeEntry[] }): JSX.Element {
     return (
-        <ul className="mt-6 space-y-2">
+        <ul className="space-y-2 lg:mt-1">
             {muscles.map((entry) => (
                 <li key={entry.muscle} className="flex items-center gap-3">
                     <span className="w-28 shrink-0 text-sm">{MUSCLE_META[entry.muscle].label}</span>

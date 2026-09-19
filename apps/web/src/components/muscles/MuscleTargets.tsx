@@ -10,7 +10,7 @@ import { MUSCLE_META, MuscleGroup, orderMuscles, type MuscleEngagementValue } fr
 const BodyDiagram = lazy(async () => ({ default: (await import('@/components/muscles/BodyDiagram')).BodyDiagram }));
 
 /**
- * What an exercise works: the body map and the same muscles written out beside it.
+ * What an exercise works: the body map and the same muscles written out under it.
  *
  * The map is shown outright rather than behind a control. It is the faster of the two to read
  * between sets, and a reader who wants it every time should not have to ask for it every time.
@@ -47,7 +47,9 @@ export function MuscleTargets({
     return (
         <section className={cn('rounded-2xl border border-border bg-card p-5', className)} aria-label="Muscles worked">
             <h2 className="font-heading text-lg">Muscles worked</h2>
-            <div className="mt-4 grid items-start gap-5 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+            {/* Stacked at every width: this card's own column is narrow on a desktop, so a
+                breakpoint on the viewport would put two columns inside 21rem and crush both. */}
+            <div className="mt-4 space-y-5">
                 <Suspense fallback={<div className="h-48" aria-hidden />}>
                     <BodyDiagram
                         shades={shadesFor({ main, also })}
@@ -88,7 +90,7 @@ function MuscleList({
     );
 }
 
-/** Main muscles are shaded fully and the rest faintly, matching the two lists beside the map. */
+/** Main muscles are shaded fully and the rest faintly, matching the two lists under the map. */
 function shadesFor({ main, also }: { main: MuscleGroup[]; also: MuscleGroup[] }): MuscleShades {
     const shades: MuscleShades = {};
 
