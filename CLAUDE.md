@@ -394,6 +394,9 @@ scope: optional, e.g. api | mcp | web | db | auth
 
 ## Pull Requests — Title and What / Why / How
 
+**Open a pull request whenever you push a branch**, without waiting to be asked, and always with a
+description — a pushed branch with no PR is unfinished work.
+
 **PR titles follow Conventional Commits**, same format as commit messages above:
 `<type>(<scope>): <description>`.
 
