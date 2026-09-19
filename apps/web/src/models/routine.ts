@@ -10,6 +10,8 @@ export type Routine = {
     exerciseCount: number;
     /** Estimated seconds to work through the routine; 0 when nothing in it has a usable target. */
     estimatedDurationSeconds: number;
+    /** When a workout from this routine was last completed; null when it never has been. */
+    lastCompletedAt: string | null;
     createdAt: string;
     updatedAt: string;
 };
@@ -70,6 +72,27 @@ export function formatEstimatedDuration(totalSeconds: number): string | null {
 }
 
 /**
+ * How long ago the routine was last done, as `Last done today`, `Last done yesterday` or
+ * `Last done 12 days ago`. Null when it has never been completed, so a new routine shows nothing
+ * rather than an empty promise.
+ *
+ * @param now the instant to measure against; injectable so the text is testable.
+ */
+export function formatLastDone(lastCompletedAt: string | null, now: Date = new Date()): string | null {
+    if (lastCompletedAt === null) return null;
+
+    const completed = new Date(lastCompletedAt);
+    if (!Number.isFinite(completed.getTime())) return null;
+
+    // Calendar days apart, not 24-hour blocks: a workout last night reads "yesterday" all morning.
+    const days = Math.round((startOfDay(now).getTime() - startOfDay(completed).getTime()) / MS_PER_DAY);
+    if (days <= 0) return 'Last done today';
+    if (days === 1) return 'Last done yesterday';
+
+    return `Last done ${days} days ago`;
+}
+
+/**
  * Everything a routine's slots need between them, deduplicated and in the library's display order
  * so the same routine always reads the same way. Empty when every exercise is bodyweight.
  */
@@ -77,4 +100,10 @@ export function aggregateRoutineEquipment(slots: RoutineExercise[]): Equipment[]
     const needed = new Set(slots.flatMap((slot) => slot.exercise.equipment));
 
     return EQUIPMENT_ORDER.filter((item) => needed.has(item));
+}
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+function startOfDay(date: Date): Date {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }

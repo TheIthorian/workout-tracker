@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useCreateRoutine, useRoutines } from '@/hooks/use-routines';
 import { toast } from '@/hooks/use-toast';
-import { formatEstimatedDuration, type Routine } from '@/models/routine';
+import { formatEstimatedDuration, formatLastDone, type Routine } from '@/models/routine';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 
 /** The user's routines: a searchable single-column list, with creation leading straight into the editor. */
@@ -179,6 +179,7 @@ export default function RoutinesListPage(): JSX.Element {
 function RoutineRow({ routine }: { routine: Routine }): JSX.Element {
     const count = routine.exerciseCount;
     const estimatedDuration = formatEstimatedDuration(routine.estimatedDurationSeconds);
+    const lastDone = formatLastDone(routine.lastCompletedAt);
 
     return (
         <li>
@@ -198,6 +199,7 @@ function RoutineRow({ routine }: { routine: Routine }): JSX.Element {
                             </span>
                         )}
                     </span>
+                    {lastDone !== null && <span className="block text-xs text-muted-foreground">{lastDone}</span>}
                 </span>
                 <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
             </Link>

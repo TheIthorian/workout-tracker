@@ -35,6 +35,8 @@ export const routineResponseSchema = z.object({
     exerciseCount: z.number().int(),
     /** Estimated seconds to work through the routine; 0 when nothing in it has a usable target. */
     estimatedDurationSeconds: z.number().int().nonnegative(),
+    /** When a workout from this routine was last completed; null when it never has been. */
+    lastCompletedAt: z.string().nullable(),
     createdAt: z.string(),
     updatedAt: z.string(),
 });

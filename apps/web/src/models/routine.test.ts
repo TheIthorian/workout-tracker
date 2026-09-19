@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Equipment } from './equipment';
 import { TrackingType } from './exercise';
-import { aggregateRoutineEquipment, formatEstimatedDuration, type RoutineExercise } from './routine';
+import { aggregateRoutineEquipment, formatEstimatedDuration, formatLastDone, type RoutineExercise } from './routine';
 
 function slot(
     overrides: Partial<RoutineExercise> & { trackingType: TrackingType; equipment?: Equipment[] },
@@ -74,5 +74,29 @@ describe('aggregateRoutineEquipment', () => {
         ];
 
         expect(aggregateRoutineEquipment(slots)).toEqual([Equipment.Barbell, Equipment.Dumbbell, Equipment.Treadmill]);
+    });
+});
+
+describe('formatLastDone', () => {
+    const now = new Date('2026-09-19T08:00:00');
+
+    it('shows nothing for a routine that has never been completed', () => {
+        expect(formatLastDone(null, now)).toBeNull();
+    });
+
+    it('reads today for a completion earlier the same day', () => {
+        expect(formatLastDone('2026-09-19T06:30:00', now)).toBe('Last done today');
+    });
+
+    it('reads yesterday for the previous calendar day, however few hours ago', () => {
+        expect(formatLastDone('2026-09-18T22:00:00', now)).toBe('Last done yesterday');
+    });
+
+    it('counts calendar days for anything older', () => {
+        expect(formatLastDone('2026-09-07T19:00:00', now)).toBe('Last done 12 days ago');
+    });
+
+    it('shows nothing for an unparseable timestamp', () => {
+        expect(formatLastDone('not a date', now)).toBeNull();
     });
 });
