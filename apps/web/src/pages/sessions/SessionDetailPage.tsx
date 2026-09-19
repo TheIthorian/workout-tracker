@@ -203,12 +203,13 @@ export default function SessionDetailPage(): JSX.Element {
                         )}
                     </p>
                 </div>
-                <div className="flex gap-2">
-                    <Button variant="outline" className="gap-2" onClick={handleCopySummary}>
-                        <ClipboardCopy className="h-4 w-4" aria-hidden />
-                        Get summary
-                    </Button>
-                    {!isComplete && (
+                <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+                    {isComplete ? (
+                        <Button variant="outline" className="gap-2" onClick={handleCopySummary}>
+                            <ClipboardCopy className="h-4 w-4" aria-hidden />
+                            Get summary
+                        </Button>
+                    ) : (
                         <>
                             <Button variant="ghost" onClick={() => setAbandonOpen(true)} disabled={abandon.isPending}>
                                 Abandon
@@ -216,7 +217,7 @@ export default function SessionDetailPage(): JSX.Element {
                             <Button
                                 onClick={() => setCompleteOpen(true)}
                                 disabled={!session.state.canComplete}
-                                className="gap-2"
+                                className="flex-1 gap-2 sm:flex-none"
                             >
                                 <CheckCircle2 className="h-4 w-4" aria-hidden />
                                 Finish workout
