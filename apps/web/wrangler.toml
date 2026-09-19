@@ -6,7 +6,3 @@ pages_build_output_dir = "dist"
 # Not a secret — it is the public URL of the deployed API.
 [vars]
 API_ORIGIN = "https://api-production-ac4e.up.railway.app"
-
-# Read by the Vite build (see vite.config.ts) to make the canonical link and social preview meta
-# tags absolute. Not a secret — it is this deployment's own public origin.
-VITE_SITE_URL = "https://workout-tracker-app-web.pages.dev"

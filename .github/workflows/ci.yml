@@ -128,13 +128,15 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # PostHog is read through import.meta.env, so it is baked in here rather than supplied at
-      # request time like API_ORIGIN. Unset secrets simply build without analytics.
+      # PostHog and the site origin are read through import.meta.env, so they are baked in here
+      # rather than supplied at request time like API_ORIGIN. Unset secrets simply build without
+      # analytics; an unset VITE_SITE_URL leaves the preview meta tags relative.
       - name: Build apps/web
         run: pnpm --filter @app/web build
         env:
           VITE_PUBLIC_POSTHOG_KEY: ${{ secrets.VITE_PUBLIC_POSTHOG_KEY }}
           VITE_PUBLIC_POSTHOG_HOST: ${{ secrets.VITE_PUBLIC_POSTHOG_HOST }}
+          VITE_SITE_URL: ${{ vars.VITE_SITE_URL }}
 
       # The pinned wrangler from the lockfile, not a third-party action, so the deploy runs the
       # same version a maintainer runs by hand. Project name and output directory come from

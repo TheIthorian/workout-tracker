@@ -1,14 +1,13 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import path from 'path';
-import fs from 'fs';
 import type { Plugin } from 'vite';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), '');
     const apiProxyTarget = env.VITE_API_PROXY_TARGET || env.VITE_API_BASE_URL || 'http://127.0.0.1:3000';
-    const siteOrigin = (env.VITE_SITE_URL || readWranglerVar('VITE_SITE_URL')).replace(/\/+$/, '');
+    const siteOrigin = (env.VITE_SITE_URL || '').replace(/\/+$/, '');
 
     return {
         server: {
@@ -58,27 +57,9 @@ export default defineConfig(({ mode }) => {
 });
 
 /**
- * Reads a `[vars]` entry out of wrangler.toml. Cloudflare Pages projects configured from a
- * wrangler.toml cannot also set build environment variables in the dashboard, so the build reads
- * the deployment's own origin from the same file the deployment is described in.
- */
-function readWranglerVar(name: string): string {
-    const wranglerPath = path.resolve(__dirname, './wrangler.toml');
-
-    if (!fs.existsSync(wranglerPath)) {
-        return '';
-    }
-
-    const match = fs.readFileSync(wranglerPath, 'utf8').match(new RegExp(`^\\s*${name}\\s*=\\s*["']([^"']*)["']`, 'm'));
-
-    return match?.[1] ?? '';
-}
-
-/**
  * Resolves the `%SITE_ORIGIN%` placeholder the link/preview meta tags in index.html are written
  * against. Crawlers resolve relative URLs inconsistently, so a deployment that wants a link
- * preview sets VITE_SITE_URL — in its environment, or in wrangler.toml's `[vars]` — to its public
- * origin; unset, the tags fall back to same-origin paths.
+ * preview sets VITE_SITE_URL to its public origin; unset, the tags fall back to same-origin paths.
  */
 function siteOriginHtmlPlugin({ siteOrigin }: { siteOrigin: string }): Plugin {
     return {
