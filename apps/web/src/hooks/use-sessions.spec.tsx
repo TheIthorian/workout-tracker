@@ -5,6 +5,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useLogSet } from './use-sessions';
 import { sessionsApi } from '@/lib/api';
+import { withoutRandomUUID } from '@/lib/testing';
 import { TrackingType } from '@/models/exercise';
 import type { SessionDetail } from '@/models/session';
 
@@ -18,17 +19,20 @@ afterEach(() => {
 });
 
 describe('useLogSet', () => {
-    it('logs a set in a browser without crypto.randomUUID', async () => {
-        // A page served over plain HTTP — a phone on gym wifi — has no secure-context crypto.
-        vi.spyOn(globalThis.crypto, 'randomUUID').mockImplementation(() => {
-            throw new TypeError('crypto.randomUUID is not a function');
-        });
+    it('logs a set on a page with no secure context', async () => {
+        // Building the optimistic row must not be what decides whether the set reaches the server.
         const logSet = vi.mocked(sessionsApi.logSet).mockResolvedValue(buildSession());
         const { result, client } = renderLogSet();
 
-        result.current.mutate({ sessionId, variables: { sessionExerciseId: 'session-exercise-1', data: { reps: 8 } } });
+        await withoutRandomUUID(async () => {
+            result.current.mutate({
+                sessionId,
+                variables: { sessionExerciseId: 'session-exercise-1', data: { reps: 8 } },
+            });
 
-        await waitFor(() => expect(result.current.isSuccess).toBe(true));
+            await waitFor(() => expect(result.current.isSuccess).toBe(true));
+        });
+
         expect(logSet).toHaveBeenCalledWith(workspaceId, sessionId, 'session-exercise-1', { reps: 8 });
         client.clear();
     });
