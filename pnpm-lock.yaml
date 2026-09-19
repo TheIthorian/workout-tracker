@@ -793,9 +793,6 @@ importers:
 
   packages/nest-common:
     dependencies:
-      '@app/auth':
-        specifier: workspace:*
-        version: link:../auth
       '@app/errors':
         specifier: workspace:*
         version: link:../errors
@@ -815,6 +812,9 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
     devDependencies:
+      '@app/auth':
+        specifier: workspace:*
+        version: link:../auth
       '@app/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig

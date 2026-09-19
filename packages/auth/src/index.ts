@@ -20,6 +20,7 @@ export {
     McpTokenService,
     type McpTokenValidationResult,
 } from './mcp-token.js';
+export { toSessionFailure } from './session-failure.js';
 export {
     type SignUpParams,
     type UserProvisioningConfig,

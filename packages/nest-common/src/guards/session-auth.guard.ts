@@ -1,18 +1,9 @@
 import { Inject, Injectable, type CanActivate, type ExecutionContext } from '@nestjs/common';
-import { AppError, UnauthorizedError } from '@app/errors';
+import { UnauthorizedError } from '@app/errors';
 import type { AuthService } from '@app/auth';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
 export type CurrentUserContext = { userId: string; email: string };
-
-/**
- * What `getSession` resolves to with `returnHeaders: true`: the session body it would otherwise
- * return on its own, plus the response headers Better Auth built alongside it.
- */
-type ResolvedSession = {
-    headers: Headers;
-    response: Awaited<ReturnType<AuthService['instance']['api']['getSession']>>;
-};
 
 /** The request property the guard writes and `@CurrentUser()` reads. */
 export type AuthenticatedRequest = FastifyRequest & { currentUser?: CurrentUserContext };
@@ -48,7 +39,11 @@ export class SessionAuthGuard implements CanActivate {
 
         if (!cookie) throw new UnauthorizedError();
 
-        const { response, headers } = await this.resolveSession(cookie);
+        // `AuthService.resolveSession` owns which error a failed lookup is: a refused credential is
+        // a 401, a session store that did not answer is a 503. Deciding that here would mean this
+        // package importing Better Auth to recognise its errors, and every Nest app that uses the
+        // validation pipe or the MCP guard loading it.
+        const { response, headers } = await this.auth.resolveSession({ cookieHeader: cookie });
 
         if (!response?.user) throw new UnauthorizedError();
 
@@ -57,35 +52,6 @@ export class SessionAuthGuard implements CanActivate {
         request.currentUser = { userId: String(response.user.id), email: String(response.user.email) };
 
         return true;
-    }
-
-    /**
-     * A malformed cookie, a session-store error, or any other rejection from `getSession` must not
-     * escape as an unhandled 500 - this guard promises 401 on every failure path. A typed
-     * `AppError` (e.g. a 429 from `LockoutService`'s hooks, which run for every Better Auth
-     * endpoint including `getSession`, though they currently no-op outside `/sign-in/email`) is
-     * passed through unflattened rather than downgraded, so a future typed error is never silently
-     * swallowed. Anything else is not surfaced to the caller - only a generic `UnauthorizedError` -
-     * because an authentication failure must not leak session-store internals such as a database
-     * error message.
-     */
-    private async resolveSession(cookie: string): Promise<ResolvedSession> {
-        try {
-            return await this.auth.instance.api.getSession({
-                headers: new Headers({ cookie }),
-                // Better Auth slides a session forward once it is older than `session.updateAge`:
-                // it extends `expires_at` in the database AND emits a fresh `Set-Cookie` carrying
-                // the new `Max-Age`. Without `returnHeaders` that header is dropped, so the row
-                // slides but the browser's cookie keeps the `Max-Age` it was issued at sign-in and
-                // the user is signed out `session.expiresIn` after signing in however active they
-                // were.
-                returnHeaders: true,
-            });
-        } catch (error) {
-            if (error instanceof AppError) throw error;
-
-            throw new UnauthorizedError();
-        }
     }
 }
 
