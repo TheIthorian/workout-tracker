@@ -97,6 +97,7 @@ describe('routineResponseSchema', () => {
         archivedAt: null,
         exerciseCount: 2,
         estimatedDurationSeconds: 2400,
+        lastCompletedAt: null,
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
     };
@@ -109,6 +110,17 @@ describe('routineResponseSchema', () => {
         expect(routineResponseSchema.parse({ ...routine, estimatedDurationSeconds: 0 }).estimatedDurationSeconds).toBe(
             0,
         );
+    });
+
+    it('carries the last completion, and null for a routine never done', () => {
+        expect(routineResponseSchema.parse(routine).lastCompletedAt).toBeNull();
+        expect(
+            routineResponseSchema.parse({ ...routine, lastCompletedAt: '2026-01-05T09:00:00.000Z' }).lastCompletedAt,
+        ).toBe('2026-01-05T09:00:00.000Z');
+    });
+
+    it('rejects a missing last completion', () => {
+        expect(routineResponseSchema.safeParse({ ...routine, lastCompletedAt: undefined }).success).toBe(false);
     });
 
     it('rejects a missing or negative duration', () => {

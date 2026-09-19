@@ -7,10 +7,10 @@ import {
     type TrackingType,
 } from '@app/domain';
 import { EntityNotFoundError, SetShapeMismatchError } from '@app/errors';
-import { asc, count, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm';
+import { asc, count, eq, ilike, inArray, isNotNull, isNull, max, or, sql } from 'drizzle-orm';
 import type { WorkspaceMembershipService } from './workspace-membership.service.js';
 
-const { exercises, routineExercises, routines } = schema;
+const { exercises, routineExercises, routines, workoutSessions } = schema;
 
 export type RoutineSummary = {
     id: string;
@@ -20,6 +20,8 @@ export type RoutineSummary = {
     exerciseCount: number;
     /** Estimated seconds to work through the routine; 0 when nothing in it has a usable target. */
     estimatedDurationSeconds: number;
+    /** When a workout from this routine was last completed; null when it never has been. */
+    lastCompletedAt: string | null;
     createdAt: string;
     updatedAt: string;
 };
@@ -120,16 +122,17 @@ export class RoutinesService {
         ]);
 
         const totalCount = totals?.totalCount ?? 0;
-        const estimates = await this.estimateByRoutine({
-            db: this.db,
-            workspaceId,
-            routineIds: data.map((routine) => routine.id),
-        });
+        const routineIds = data.map((routine) => routine.id);
+        const [estimates, lastCompleted] = await Promise.all([
+            this.estimateByRoutine({ db: this.db, workspaceId, routineIds }),
+            this.lastCompletedByRoutine({ db: this.db, workspaceId, routineIds }),
+        ]);
 
         return {
             data: data.map((routine) => ({
                 ...routine,
                 estimatedDurationSeconds: estimates.get(routine.id) ?? 0,
+                lastCompletedAt: lastCompleted.get(routine.id) ?? null,
             })),
             page,
             pageSize,
@@ -552,11 +555,51 @@ export class RoutinesService {
             .where(scopedToWorkspace(routineExercises, workspaceId, eq(routineExercises.routineId, routineId)))
             .orderBy(asc(routineExercises.position));
 
+        const lastCompleted = await this.lastCompletedByRoutine({ db, workspaceId, routineIds: [routineId] });
+
         return {
             ...routine,
             estimatedDurationSeconds: estimateRoutineSeconds(slots.map(toSlotLike)),
+            lastCompletedAt: lastCompleted.get(routineId) ?? null,
             exercises: slots,
         };
+    }
+
+    /**
+     * The most recent completion of a workout started from each of `routineIds`, in one query
+     * rather than one per routine. Routines never completed are absent from the map.
+     */
+    private async lastCompletedByRoutine({
+        db,
+        workspaceId,
+        routineIds,
+    }: {
+        db: Db | Tx;
+        workspaceId: string;
+        routineIds: string[];
+    }): Promise<Map<string, string>> {
+        if (routineIds.length === 0) return new Map();
+
+        const rows = await db
+            .select({ routineId: workoutSessions.routineId, lastCompletedAt: max(workoutSessions.completedAt) })
+            .from(workoutSessions)
+            .where(
+                scopedToWorkspace(
+                    workoutSessions,
+                    workspaceId,
+                    inArray(workoutSessions.routineId, routineIds),
+                    isNotNull(workoutSessions.completedAt),
+                ),
+            )
+            .groupBy(workoutSessions.routineId);
+
+        const byRoutine = new Map<string, string>();
+        for (const row of rows) {
+            if (row.routineId !== null && row.lastCompletedAt !== null)
+                byRoutine.set(row.routineId, row.lastCompletedAt);
+        }
+
+        return byRoutine;
     }
 
     /** Estimated seconds for each of `routineIds`, in one query rather than one per routine. */

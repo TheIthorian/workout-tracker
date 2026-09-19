@@ -621,3 +621,63 @@ describe('estimated duration', () => {
         ).rejects.toBeInstanceOf(EntityNotFoundError);
     });
 });
+
+describe('last completed', () => {
+    async function seedSession({
+        sessionWorkspaceId,
+        routineId,
+        completedAt,
+    }: {
+        sessionWorkspaceId: string;
+        routineId: string;
+        completedAt: string | null;
+    }): Promise<void> {
+        await db.insert(schema.workoutSessions).values({
+            workspaceId: sessionWorkspaceId,
+            routineId,
+            name: 'Session',
+            startedAt: completedAt ?? '2026-01-01T00:00:00.000Z',
+            completedAt,
+        });
+    }
+
+    it('is null for a routine never done', async () => {
+        const routineId = await createRoutine(`Never done ${randomUUID()}`);
+
+        expect((await routines.get({ userId, workspaceId, routineId })).lastCompletedAt).toBeNull();
+
+        const listed = await routines.list({ userId, workspaceId, ...page });
+        expect(listed.data.find((row) => row.id === routineId)?.lastCompletedAt).toBeNull();
+    });
+
+    it('reports the most recent completion on both the detail and the list', async () => {
+        const routineId = await createRoutine(`Done twice ${randomUUID()}`);
+        await seedSession({ sessionWorkspaceId: workspaceId, routineId, completedAt: '2026-02-01T10:00:00.000Z' });
+        await seedSession({ sessionWorkspaceId: workspaceId, routineId, completedAt: '2026-03-05T18:30:00.000Z' });
+
+        const detail = await routines.get({ userId, workspaceId, routineId });
+        expect(new Date(detail.lastCompletedAt ?? '').toISOString()).toBe('2026-03-05T18:30:00.000Z');
+
+        const listed = await routines.list({ userId, workspaceId, ...page });
+        const row = listed.data.find((entry) => entry.id === routineId);
+        expect(new Date(row?.lastCompletedAt ?? '').toISOString()).toBe('2026-03-05T18:30:00.000Z');
+    });
+
+    it('ignores a session still in progress', async () => {
+        const routineId = await createRoutine(`In progress ${randomUUID()}`);
+        await seedSession({ sessionWorkspaceId: workspaceId, routineId, completedAt: null });
+
+        expect((await routines.get({ userId, workspaceId, routineId })).lastCompletedAt).toBeNull();
+    });
+
+    it('never counts a session recorded in another workspace', async () => {
+        const routineId = await createRoutine(`Cross tenant ${randomUUID()}`);
+        await seedSession({
+            sessionWorkspaceId: otherWorkspaceId,
+            routineId,
+            completedAt: '2026-04-01T12:00:00.000Z',
+        });
+
+        expect((await routines.get({ userId, workspaceId, routineId })).lastCompletedAt).toBeNull();
+    });
+});
