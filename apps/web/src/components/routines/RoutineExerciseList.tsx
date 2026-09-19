@@ -6,7 +6,7 @@ import { EquipmentChips } from '@/components/equipment/EquipmentChips';
 import { TrackingTypeIcon } from '@/components/exercises/TrackingTypeIcon';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { describeTargets, type RoutineExercise } from '@/models/routine';
+import type { RoutineExercise } from '@/models/routine';
 
 type RoutineExerciseListProps = {
     slots: RoutineExercise[];
@@ -89,9 +89,6 @@ function SlotRow({ slot, isSelected, onSelect, onDrop }: SlotRowProps): JSX.Elem
             >
                 <span className="flex min-w-0 flex-1 flex-col justify-center gap-1">
                     <span className="flex items-center gap-2">
-                        <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                            {describeTargets(slot)}
-                        </span>
                         <span className="truncate font-medium">{slot.exercise.name}</span>
                         {slot.exercise.archivedAt && (
                             <Badge variant="destructive" className="shrink-0">
