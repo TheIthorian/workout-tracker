@@ -4,6 +4,7 @@ import { betterAuth, type Auth, type BetterAuthOptions } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { AUTH_SCHEMA, buildAuthOptions, type AuthConfig } from './auth-options.js';
 import { LockoutService } from './lockout.service.js';
+import { toSessionFailure } from './session-failure.js';
 import type { SignUpParams, UserProvisioningService } from './user-provisioning.service.js';
 
 /**
@@ -18,6 +19,19 @@ export type AuthHandlerResponse = {
 };
 
 export type LoginParams = { email: string; password: string };
+export type ResolveSessionParams = {
+    /** The incoming request's `Cookie` header, forwarded so Better Auth can find the session. */
+    cookieHeader: string;
+};
+
+/**
+ * What a session lookup resolves to: the session body Better Auth returns, plus the response
+ * headers it built alongside it - which carry the `Set-Cookie` that slides a session forward.
+ */
+export type ResolvedSession = {
+    headers: Headers;
+    response: Awaited<ReturnType<Auth<BetterAuthOptions>['api']['getSession']>>;
+};
 export type LogoutParams = {
     /** The incoming request's `Cookie` header, forwarded so Better Auth can find the session to end. */
     cookieHeader?: string;
@@ -133,6 +147,34 @@ export class AuthService {
                 };
             }
             throw error;
+        }
+    }
+
+    /**
+     * Resolves the session a request's cookie names, with the headers Better Auth produced for it.
+     *
+     * `returnHeaders` is what makes a rolling session work: Better Auth slides a session forward
+     * once it is older than `session.updateAge` by extending `expires_at` AND emitting a fresh
+     * `Set-Cookie` carrying the new `Max-Age`. Without the headers that one is dropped, so the row
+     * slides while the browser's cookie keeps the `Max-Age` it was issued at sign-in and the user
+     * is signed out `session.expiresIn` after signing in however active they were. A caller must
+     * forward them onto its own response.
+     *
+     * A session that simply is not there resolves to a null `response.session` rather than
+     * throwing. Every rejection is classified by `toSessionFailure`, so a store that did not answer
+     * is a 503 and only a refused credential is a 401.
+     *
+     * @throws UnauthorizedError when Better Auth examined the credential and refused it.
+     * @throws SessionUnavailableError when the session store could not be reached.
+     */
+    async resolveSession({ cookieHeader }: ResolveSessionParams): Promise<ResolvedSession> {
+        try {
+            return await this.instance.api.getSession({
+                headers: new Headers({ cookie: cookieHeader }),
+                returnHeaders: true,
+            });
+        } catch (error) {
+            throw toSessionFailure(error);
         }
     }
 

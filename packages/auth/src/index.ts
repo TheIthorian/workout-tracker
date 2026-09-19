@@ -12,7 +12,6 @@ export {
     type LoginParams,
     type LogoutParams,
 } from './auth.service.js';
-export { isCredentialRejection } from './api-error.js';
 export { LockoutService, SIGN_IN_EMAIL_PATH } from './lockout.service.js';
 export {
     extractMcpTokenFromPath,
@@ -21,6 +20,7 @@ export {
     McpTokenService,
     type McpTokenValidationResult,
 } from './mcp-token.js';
+export { toSessionFailure } from './session-failure.js';
 export {
     type SignUpParams,
     type UserProvisioningConfig,
