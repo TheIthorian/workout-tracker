@@ -32,9 +32,9 @@ const schema = Joi.object({
     // ships with a release instead of needing an operator (and a publicly reachable database).
     // Optional, defaults to true; the run is idempotent, so a boot that changes nothing is cheap.
     CATALOG_SEED_ON_STARTUP: Joi.boolean().default(true),
-    // Where that content lives. Optional: defaults to `content/exercises` beside the built app,
-    // which is where the Docker image puts it. Set it outside a container - it is resolved against
-    // the working directory when relative.
+    // Where that content lives. Optional: `content/exercises` is found automatically both in the
+    // image and in a checkout. Set it only to seed from somewhere else; relative paths resolve
+    // against the working directory.
     CATALOG_CONTENT_DIR: Joi.string().allow('').default(''),
     AUTH_SECRET: Joi.string().required(),
     AUTH_BASE_URL: Joi.string().uri().required(),

@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { Db } from '@app/db';
 import { createCatalogImageProcessor } from '@app/image';
@@ -14,9 +15,14 @@ import { APP_LOGGER, DB, STORAGE_SERVICE } from '../providers.js';
  */
 const IMAGE_PROCESSOR = createCatalogImageProcessor({ maxDimension: 1200, quality: 80 });
 
-// `dist/startup/seed-catalog.js` -> the app root, where the image's `COPY content` lands it.
-// Outside a container there is no `content/` beside `dist/`, so a dev sets CATALOG_CONTENT_DIR.
-const DEFAULT_CONTENT_DIR = resolve(__dirname, '..', '..', 'content', 'exercises');
+// From `dist/startup/seed-catalog.js`: the app root, where the image's `COPY content` lands it,
+// then the monorepo root, where a developer's checkout keeps the same directory. Both are tried
+// because the built layout is the same in either place and neither can be told apart from the
+// other at build time.
+const CONTENT_DIR_CANDIDATES = [
+    resolve(__dirname, '..', '..', 'content', 'exercises'),
+    resolve(__dirname, '..', '..', '..', '..', 'content', 'exercises'),
+];
 
 /**
  * Publishes `content/exercises` into the shared catalog, after the server is already listening.
@@ -37,7 +43,17 @@ export async function seedCatalogOnStartup({ app }: { app: NestFastifyApplicatio
         return;
     }
 
-    const contentDir = String(env['CATALOG_CONTENT_DIR'] ?? '') || DEFAULT_CONTENT_DIR;
+    const configured = String(env['CATALOG_CONTENT_DIR'] ?? '');
+    const contentDir = configured === '' ? resolveContentDir() : resolve(configured);
+
+    if (contentDir === undefined) {
+        logger.warn(
+            { candidates: CONTENT_DIR_CANDIDATES },
+            'No exercise catalog content found; set CATALOG_CONTENT_DIR to seed it',
+        );
+
+        return;
+    }
 
     logger.info({ contentDir }, 'Seeding the exercise catalog');
 
@@ -54,4 +70,9 @@ export async function seedCatalogOnStartup({ app }: { app: NestFastifyApplicatio
     );
 
     logger.info({ ...counts, archived: report.archived.length }, 'Exercise catalog seeded');
+}
+
+/** The first candidate that exists, or `undefined` when this deployment ships no catalog content. */
+function resolveContentDir(): string | undefined {
+    return CONTENT_DIR_CANDIDATES.find((candidate) => existsSync(candidate));
 }
