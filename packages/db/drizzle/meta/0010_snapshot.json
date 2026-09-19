@@ -1,2454 +1,2309 @@
 {
-  "id": "9bf38f80-7bbb-4c61-b0c0-d98f2ef85f12",
-  "prevId": "2953f7f4-413f-439c-bbc6-56b85938f2a8",
-  "version": "7",
-  "dialect": "postgresql",
-  "tables": {
-    "public.account": {
-      "name": "account",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "issuer": {
-          "name": "issuer",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "account_id": {
-          "name": "account_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "provider_id": {
-          "name": "provider_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "access_token": {
-          "name": "access_token",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "refresh_token": {
-          "name": "refresh_token",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "id_token": {
-          "name": "id_token",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "access_token_expires_at": {
-          "name": "access_token_expires_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "refresh_token_expires_at": {
-          "name": "refresh_token_expires_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "scope": {
-          "name": "scope",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "password": {
-          "name": "password",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "account_userId_idx": {
-          "name": "account_userId_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "account_issuer_accountId_uidx": {
-          "name": "account_issuer_accountId_uidx",
-          "columns": [
-            {
-              "expression": "issuer",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
+    "id": "9bf38f80-7bbb-4c61-b0c0-d98f2ef85f12",
+    "prevId": "2953f7f4-413f-439c-bbc6-56b85938f2a8",
+    "version": "7",
+    "dialect": "postgresql",
+    "tables": {
+        "public.account": {
+            "name": "account",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "text",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "issuer": {
+                    "name": "issuer",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "account_id": {
+                    "name": "account_id",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "provider_id": {
+                    "name": "provider_id",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "user_id": {
+                    "name": "user_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "access_token": {
+                    "name": "access_token",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "refresh_token": {
+                    "name": "refresh_token",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "id_token": {
+                    "name": "id_token",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "access_token_expires_at": {
+                    "name": "access_token_expires_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "refresh_token_expires_at": {
+                    "name": "refresh_token_expires_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "scope": {
+                    "name": "scope",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "password": {
+                    "name": "password",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true
+                }
             },
-            {
-              "expression": "account_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "account_user_id_user_id_fk": {
-          "name": "account_user_id_user_id_fk",
-          "tableFrom": "account",
-          "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.session": {
-      "name": "session",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "expires_at": {
-          "name": "expires_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "token": {
-          "name": "token",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "ip_address": {
-          "name": "ip_address",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "user_agent": {
-          "name": "user_agent",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "session_userId_idx": {
-          "name": "session_userId_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "session_user_id_user_id_fk": {
-          "name": "session_user_id_user_id_fk",
-          "tableFrom": "session",
-          "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "session_token_unique": {
-          "name": "session_token_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.user": {
-      "name": "user",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "email": {
-          "name": "email",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "email_verified": {
-          "name": "email_verified",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "image": {
-          "name": "image",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "user_email_unique": {
-          "name": "user_email_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.verification": {
-      "name": "verification",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "identifier": {
-          "name": "identifier",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "value": {
-          "name": "value",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "expires_at": {
-          "name": "expires_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "verification_identifier_idx": {
-          "name": "verification_identifier_idx",
-          "columns": [
-            {
-              "expression": "identifier",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.user_lockout": {
-      "name": "user_lockout",
-      "schema": "",
-      "columns": {
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "access_failed_count": {
-          "name": "access_failed_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "lockout_end": {
-          "name": "lockout_end",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "user_lockout_user_id_user_id_fk": {
-          "name": "user_lockout_user_id_user_id_fk",
-          "tableFrom": "user_lockout",
-          "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.workspace_users": {
-      "name": "workspace_users",
-      "schema": "",
-      "columns": {
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "role": {
-          "name": "role",
-          "type": "workspace_role",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'member'"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "workspace_users_user_id_idx": {
-          "name": "workspace_users_user_id_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "workspace_users_workspace_id_workspaces_id_fk": {
-          "name": "workspace_users_workspace_id_workspaces_id_fk",
-          "tableFrom": "workspace_users",
-          "tableTo": "workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "workspace_users_user_id_user_id_fk": {
-          "name": "workspace_users_user_id_user_id_fk",
-          "tableFrom": "workspace_users",
-          "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "workspace_users_pkey": {
-          "name": "workspace_users_pkey",
-          "columns": [
-            "workspace_id",
-            "user_id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.workspaces": {
-      "name": "workspaces",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "onboarding_stage": {
-          "name": "onboarding_stage",
-          "type": "onboarding_stage",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'equipment'"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.mcp_personal_access_tokens": {
-      "name": "mcp_personal_access_tokens",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "token_hash": {
-          "name": "token_hash",
-          "type": "bytea",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "revoked_at": {
-          "name": "revoked_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_used_at": {
-          "name": "last_used_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "mcp_personal_access_tokens_token_hash_uidx": {
-          "name": "mcp_personal_access_tokens_token_hash_uidx",
-          "columns": [
-            {
-              "expression": "token_hash",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "bytea_ops"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "mcp_personal_access_tokens_user_id_idx": {
-          "name": "mcp_personal_access_tokens_user_id_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "mcp_personal_access_tokens_workspace_id_idx": {
-          "name": "mcp_personal_access_tokens_workspace_id_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "mcp_personal_access_tokens_workspace_id_workspaces_id_fk": {
-          "name": "mcp_personal_access_tokens_workspace_id_workspaces_id_fk",
-          "tableFrom": "mcp_personal_access_tokens",
-          "tableTo": "workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "mcp_personal_access_tokens_user_id_user_id_fk": {
-          "name": "mcp_personal_access_tokens_user_id_user_id_fk",
-          "tableFrom": "mcp_personal_access_tokens",
-          "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.exercise_guide_images": {
-      "name": "exercise_guide_images",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "exercise_id": {
-          "name": "exercise_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "storage_key": {
-          "name": "storage_key",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "content_type": {
-          "name": "content_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "caption": {
-          "name": "caption",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "position": {
-          "name": "position",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "exercise_guide_images_workspace_id_idx": {
-          "name": "exercise_guide_images_workspace_id_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "exercise_guide_images_exercise_id_idx": {
-          "name": "exercise_guide_images_exercise_id_idx",
-          "columns": [
-            {
-              "expression": "exercise_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "exercise_guide_images_workspace_id_workspaces_id_fk": {
-          "name": "exercise_guide_images_workspace_id_workspaces_id_fk",
-          "tableFrom": "exercise_guide_images",
-          "tableTo": "workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "exercise_guide_images_exercise_id_exercises_id_fk": {
-          "name": "exercise_guide_images_exercise_id_exercises_id_fk",
-          "tableFrom": "exercise_guide_images",
-          "tableTo": "exercises",
-          "columnsFrom": [
-            "exercise_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.exercise_links": {
-      "name": "exercise_links",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "exercise_id": {
-          "name": "exercise_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "url": {
-          "name": "url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "label": {
-          "name": "label",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "position": {
-          "name": "position",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "exercise_links_workspace_id_idx": {
-          "name": "exercise_links_workspace_id_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "exercise_links_exercise_id_idx": {
-          "name": "exercise_links_exercise_id_idx",
-          "columns": [
-            {
-              "expression": "exercise_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "exercise_links_workspace_id_workspaces_id_fk": {
-          "name": "exercise_links_workspace_id_workspaces_id_fk",
-          "tableFrom": "exercise_links",
-          "tableTo": "workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "exercise_links_exercise_id_exercises_id_fk": {
-          "name": "exercise_links_exercise_id_exercises_id_fk",
-          "tableFrom": "exercise_links",
-          "tableTo": "exercises",
-          "columnsFrom": [
-            "exercise_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.exercise_preferences": {
-      "name": "exercise_preferences",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "exercise_id": {
-          "name": "exercise_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "rest_seconds": {
-          "name": "rest_seconds",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "exercise_preferences_workspace_id_idx": {
-          "name": "exercise_preferences_workspace_id_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "exercise_preferences_workspace_id_exercise_id_uidx": {
-          "name": "exercise_preferences_workspace_id_exercise_id_uidx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
+            "indexes": {
+                "account_userId_idx": {
+                    "name": "account_userId_idx",
+                    "columns": [
+                        {
+                            "expression": "user_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last",
+                            "opclass": "uuid_ops"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "account_issuer_accountId_uidx": {
+                    "name": "account_issuer_accountId_uidx",
+                    "columns": [
+                        {
+                            "expression": "issuer",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last",
+                            "opclass": "text_ops"
+                        },
+                        {
+                            "expression": "account_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last",
+                            "opclass": "text_ops"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
             },
-            {
-              "expression": "exercise_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "exercise_preferences_workspace_id_workspaces_id_fk": {
-          "name": "exercise_preferences_workspace_id_workspaces_id_fk",
-          "tableFrom": "exercise_preferences",
-          "tableTo": "workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "exercise_preferences_exercise_id_exercises_id_fk": {
-          "name": "exercise_preferences_exercise_id_exercises_id_fk",
-          "tableFrom": "exercise_preferences",
-          "tableTo": "exercises",
-          "columnsFrom": [
-            "exercise_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "exercise_preferences_rest_seconds_check": {
-          "name": "exercise_preferences_rest_seconds_check",
-          "value": "\"exercise_preferences\".\"rest_seconds\" >= 0"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.exercise_targets": {
-      "name": "exercise_targets",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "exercise_id": {
-          "name": "exercise_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "weight_kg": {
-          "name": "weight_kg",
-          "type": "numeric(7, 2)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "reps": {
-          "name": "reps",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "duration_seconds": {
-          "name": "duration_seconds",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "distance_m": {
-          "name": "distance_m",
-          "type": "numeric(9, 2)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "note": {
-          "name": "note",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "exercise_targets_workspace_id_idx": {
-          "name": "exercise_targets_workspace_id_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "exercise_targets_latest_idx": {
-          "name": "exercise_targets_latest_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
+            "foreignKeys": {
+                "account_user_id_user_id_fk": {
+                    "name": "account_user_id_user_id_fk",
+                    "tableFrom": "account",
+                    "tableTo": "user",
+                    "columnsFrom": ["user_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
             },
-            {
-              "expression": "exercise_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.session": {
+            "name": "session",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "text",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "expires_at": {
+                    "name": "expires_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "token": {
+                    "name": "token",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "ip_address": {
+                    "name": "ip_address",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "user_agent": {
+                    "name": "user_agent",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "user_id": {
+                    "name": "user_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                }
             },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "exercise_targets_workspace_id_workspaces_id_fk": {
-          "name": "exercise_targets_workspace_id_workspaces_id_fk",
-          "tableFrom": "exercise_targets",
-          "tableTo": "workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "exercise_targets_exercise_id_exercises_id_fk": {
-          "name": "exercise_targets_exercise_id_exercises_id_fk",
-          "tableFrom": "exercise_targets",
-          "tableTo": "exercises",
-          "columnsFrom": [
-            "exercise_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "exercise_targets_measurements_non_negative_check": {
-          "name": "exercise_targets_measurements_non_negative_check",
-          "value": "coalesce(\"exercise_targets\".\"weight_kg\", 0) >= 0 and coalesce(\"exercise_targets\".\"reps\", 0) >= 0 and coalesce(\"exercise_targets\".\"duration_seconds\", 0) >= 0 and coalesce(\"exercise_targets\".\"distance_m\", 0) >= 0"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.exercises": {
-      "name": "exercises",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "slug": {
-          "name": "slug",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_by_user_id": {
-          "name": "created_by_user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "tracking_type": {
-          "name": "tracking_type",
-          "type": "tracking_type",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "equipment": {
-          "name": "equipment",
-          "type": "equipment[]",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::equipment[]"
-        },
-        "notes": {
-          "name": "notes",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "primary_muscles": {
-          "name": "primary_muscles",
-          "type": "muscle_group[]",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::muscle_group[]"
-        },
-        "secondary_muscles": {
-          "name": "secondary_muscles",
-          "type": "muscle_group[]",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::muscle_group[]"
-        },
-        "guide_setup": {
-          "name": "guide_setup",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "guide_execution": {
-          "name": "guide_execution",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "guide_cues": {
-          "name": "guide_cues",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "guide_mistakes": {
-          "name": "guide_mistakes",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "archived_at": {
-          "name": "archived_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "exercises_workspace_id_idx": {
-          "name": "exercises_workspace_id_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "exercises_catalog_slug_uidx": {
-          "name": "exercises_catalog_slug_uidx",
-          "columns": [
-            {
-              "expression": "slug",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"exercises\".\"workspace_id\" is null",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "exercises_workspace_id_workspaces_id_fk": {
-          "name": "exercises_workspace_id_workspaces_id_fk",
-          "tableFrom": "exercises",
-          "tableTo": "workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "exercises_created_by_user_id_user_id_fk": {
-          "name": "exercises_created_by_user_id_user_id_fk",
-          "tableFrom": "exercises",
-          "tableTo": "user",
-          "columnsFrom": [
-            "created_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "exercises_catalog_slug_check": {
-          "name": "exercises_catalog_slug_check",
-          "value": "(\"exercises\".\"workspace_id\" is null) = (\"exercises\".\"slug\" is not null)"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.equipment_presets": {
-      "name": "equipment_presets",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "equipment": {
-          "name": "equipment",
-          "type": "equipment[]",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::equipment[]"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "equipment_presets_workspace_id_idx": {
-          "name": "equipment_presets_workspace_id_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "equipment_presets_workspace_id_name_uidx": {
-          "name": "equipment_presets_workspace_id_name_uidx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
+            "indexes": {
+                "session_userId_idx": {
+                    "name": "session_userId_idx",
+                    "columns": [
+                        {
+                            "expression": "user_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last",
+                            "opclass": "uuid_ops"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
             },
-            {
-              "expression": "name",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "equipment_presets_workspace_id_workspaces_id_fk": {
-          "name": "equipment_presets_workspace_id_workspaces_id_fk",
-          "tableFrom": "equipment_presets",
-          "tableTo": "workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.routine_exercises": {
-      "name": "routine_exercises",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "routine_id": {
-          "name": "routine_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "exercise_id": {
-          "name": "exercise_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "position": {
-          "name": "position",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "target_sets": {
-          "name": "target_sets",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "rest_seconds": {
-          "name": "rest_seconds",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "notes": {
-          "name": "notes",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "target_reps": {
-          "name": "target_reps",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "target_weight_kg": {
-          "name": "target_weight_kg",
-          "type": "numeric(7, 2)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "target_duration_seconds": {
-          "name": "target_duration_seconds",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "target_distance_m": {
-          "name": "target_distance_m",
-          "type": "numeric(9, 2)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "routine_exercises_workspace_id_idx": {
-          "name": "routine_exercises_workspace_id_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "routine_exercises_routine_id_idx": {
-          "name": "routine_exercises_routine_id_idx",
-          "columns": [
-            {
-              "expression": "routine_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "routine_exercises_workspace_id_workspaces_id_fk": {
-          "name": "routine_exercises_workspace_id_workspaces_id_fk",
-          "tableFrom": "routine_exercises",
-          "tableTo": "workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "routine_exercises_routine_id_routines_id_fk": {
-          "name": "routine_exercises_routine_id_routines_id_fk",
-          "tableFrom": "routine_exercises",
-          "tableTo": "routines",
-          "columnsFrom": [
-            "routine_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "routine_exercises_exercise_id_exercises_id_fk": {
-          "name": "routine_exercises_exercise_id_exercises_id_fk",
-          "tableFrom": "routine_exercises",
-          "tableTo": "exercises",
-          "columnsFrom": [
-            "exercise_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "routine_exercises_target_sets_check": {
-          "name": "routine_exercises_target_sets_check",
-          "value": "\"routine_exercises\".\"target_sets\" >= 1"
-        },
-        "routine_exercises_targets_non_negative_check": {
-          "name": "routine_exercises_targets_non_negative_check",
-          "value": "coalesce(\"routine_exercises\".\"rest_seconds\", 0) >= 0 and coalesce(\"routine_exercises\".\"target_reps\", 0) >= 0 and coalesce(\"routine_exercises\".\"target_weight_kg\", 0) >= 0 and coalesce(\"routine_exercises\".\"target_duration_seconds\", 0) >= 0 and coalesce(\"routine_exercises\".\"target_distance_m\", 0) >= 0"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.routines": {
-      "name": "routines",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_by_user_id": {
-          "name": "created_by_user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "archived_at": {
-          "name": "archived_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "routines_workspace_id_idx": {
-          "name": "routines_workspace_id_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "routines_workspace_id_workspaces_id_fk": {
-          "name": "routines_workspace_id_workspaces_id_fk",
-          "tableFrom": "routines",
-          "tableTo": "workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "routines_created_by_user_id_user_id_fk": {
-          "name": "routines_created_by_user_id_user_id_fk",
-          "tableFrom": "routines",
-          "tableTo": "user",
-          "columnsFrom": [
-            "created_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.session_exercises": {
-      "name": "session_exercises",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "session_id": {
-          "name": "session_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "exercise_id": {
-          "name": "exercise_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "tracking_type": {
-          "name": "tracking_type",
-          "type": "tracking_type",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "source": {
-          "name": "source",
-          "type": "session_exercise_source",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "position": {
-          "name": "position",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "target_sets": {
-          "name": "target_sets",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "rest_seconds": {
-          "name": "rest_seconds",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "notes": {
-          "name": "notes",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "skipped_at": {
-          "name": "skipped_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "target_reps": {
-          "name": "target_reps",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "target_weight_kg": {
-          "name": "target_weight_kg",
-          "type": "numeric(7, 2)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "target_duration_seconds": {
-          "name": "target_duration_seconds",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "target_distance_m": {
-          "name": "target_distance_m",
-          "type": "numeric(9, 2)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "session_exercises_workspace_id_idx": {
-          "name": "session_exercises_workspace_id_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "session_exercises_session_id_idx": {
-          "name": "session_exercises_session_id_idx",
-          "columns": [
-            {
-              "expression": "session_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "session_exercises_exercise_id_idx": {
-          "name": "session_exercises_exercise_id_idx",
-          "columns": [
-            {
-              "expression": "exercise_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "session_exercises_workspace_id_workspaces_id_fk": {
-          "name": "session_exercises_workspace_id_workspaces_id_fk",
-          "tableFrom": "session_exercises",
-          "tableTo": "workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "session_exercises_session_id_workout_sessions_id_fk": {
-          "name": "session_exercises_session_id_workout_sessions_id_fk",
-          "tableFrom": "session_exercises",
-          "tableTo": "workout_sessions",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "session_exercises_exercise_id_exercises_id_fk": {
-          "name": "session_exercises_exercise_id_exercises_id_fk",
-          "tableFrom": "session_exercises",
-          "tableTo": "exercises",
-          "columnsFrom": [
-            "exercise_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "session_exercises_target_sets_check": {
-          "name": "session_exercises_target_sets_check",
-          "value": "\"session_exercises\".\"target_sets\" >= 1"
-        },
-        "session_exercises_targets_non_negative_check": {
-          "name": "session_exercises_targets_non_negative_check",
-          "value": "coalesce(\"session_exercises\".\"rest_seconds\", 0) >= 0 and coalesce(\"session_exercises\".\"target_reps\", 0) >= 0 and coalesce(\"session_exercises\".\"target_weight_kg\", 0) >= 0 and coalesce(\"session_exercises\".\"target_duration_seconds\", 0) >= 0 and coalesce(\"session_exercises\".\"target_distance_m\", 0) >= 0"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.set_entries": {
-      "name": "set_entries",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "session_exercise_id": {
-          "name": "session_exercise_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "set_index": {
-          "name": "set_index",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "completed_at": {
-          "name": "completed_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "is_warmup": {
-          "name": "is_warmup",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "rpe": {
-          "name": "rpe",
-          "type": "numeric(3, 1)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "weight_kg": {
-          "name": "weight_kg",
-          "type": "numeric(7, 2)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "reps": {
-          "name": "reps",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "duration_seconds": {
-          "name": "duration_seconds",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "distance_m": {
-          "name": "distance_m",
-          "type": "numeric(9, 2)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "set_entries_workspace_id_idx": {
-          "name": "set_entries_workspace_id_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "set_entries_session_exercise_id_set_index_uidx": {
-          "name": "set_entries_session_exercise_id_set_index_uidx",
-          "columns": [
-            {
-              "expression": "session_exercise_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
+            "foreignKeys": {
+                "session_user_id_user_id_fk": {
+                    "name": "session_user_id_user_id_fk",
+                    "tableFrom": "session",
+                    "tableTo": "user",
+                    "columnsFrom": ["user_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
             },
-            {
-              "expression": "set_index",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "session_token_unique": {
+                    "name": "session_token_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["token"]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.user": {
+            "name": "user",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "name": {
+                    "name": "name",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "email": {
+                    "name": "email",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "email_verified": {
+                    "name": "email_verified",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": false
+                },
+                "image": {
+                    "name": "image",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "user_email_unique": {
+                    "name": "user_email_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["email"]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.verification": {
+            "name": "verification",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "text",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "identifier": {
+                    "name": "identifier",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "value": {
+                    "name": "value",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "expires_at": {
+                    "name": "expires_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "verification_identifier_idx": {
+                    "name": "verification_identifier_idx",
+                    "columns": [
+                        {
+                            "expression": "identifier",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last",
+                            "opclass": "text_ops"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.user_lockout": {
+            "name": "user_lockout",
+            "schema": "",
+            "columns": {
+                "user_id": {
+                    "name": "user_id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "access_failed_count": {
+                    "name": "access_failed_count",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": 0
+                },
+                "lockout_end": {
+                    "name": "lockout_end",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "user_lockout_user_id_user_id_fk": {
+                    "name": "user_lockout_user_id_user_id_fk",
+                    "tableFrom": "user_lockout",
+                    "tableTo": "user",
+                    "columnsFrom": ["user_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.workspace_users": {
+            "name": "workspace_users",
+            "schema": "",
+            "columns": {
+                "workspace_id": {
+                    "name": "workspace_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "user_id": {
+                    "name": "user_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "role": {
+                    "name": "role",
+                    "type": "workspace_role",
+                    "typeSchema": "public",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'member'"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "workspace_users_user_id_idx": {
+                    "name": "workspace_users_user_id_idx",
+                    "columns": [
+                        {
+                            "expression": "user_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last",
+                            "opclass": "uuid_ops"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "workspace_users_workspace_id_workspaces_id_fk": {
+                    "name": "workspace_users_workspace_id_workspaces_id_fk",
+                    "tableFrom": "workspace_users",
+                    "tableTo": "workspaces",
+                    "columnsFrom": ["workspace_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "workspace_users_user_id_user_id_fk": {
+                    "name": "workspace_users_user_id_user_id_fk",
+                    "tableFrom": "workspace_users",
+                    "tableTo": "user",
+                    "columnsFrom": ["user_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {
+                "workspace_users_pkey": {
+                    "name": "workspace_users_pkey",
+                    "columns": ["workspace_id", "user_id"]
+                }
+            },
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.workspaces": {
+            "name": "workspaces",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "name": {
+                    "name": "name",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "onboarding_stage": {
+                    "name": "onboarding_stage",
+                    "type": "onboarding_stage",
+                    "typeSchema": "public",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'equipment'"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.mcp_personal_access_tokens": {
+            "name": "mcp_personal_access_tokens",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "user_id": {
+                    "name": "user_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "token_hash": {
+                    "name": "token_hash",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "workspace_id": {
+                    "name": "workspace_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "name": {
+                    "name": "name",
+                    "type": "varchar(128)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "revoked_at": {
+                    "name": "revoked_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "last_used_at": {
+                    "name": "last_used_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "mcp_personal_access_tokens_token_hash_uidx": {
+                    "name": "mcp_personal_access_tokens_token_hash_uidx",
+                    "columns": [
+                        {
+                            "expression": "token_hash",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last",
+                            "opclass": "bytea_ops"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "mcp_personal_access_tokens_user_id_idx": {
+                    "name": "mcp_personal_access_tokens_user_id_idx",
+                    "columns": [
+                        {
+                            "expression": "user_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last",
+                            "opclass": "uuid_ops"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "mcp_personal_access_tokens_workspace_id_idx": {
+                    "name": "mcp_personal_access_tokens_workspace_id_idx",
+                    "columns": [
+                        {
+                            "expression": "workspace_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last",
+                            "opclass": "uuid_ops"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "mcp_personal_access_tokens_workspace_id_workspaces_id_fk": {
+                    "name": "mcp_personal_access_tokens_workspace_id_workspaces_id_fk",
+                    "tableFrom": "mcp_personal_access_tokens",
+                    "tableTo": "workspaces",
+                    "columnsFrom": ["workspace_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "mcp_personal_access_tokens_user_id_user_id_fk": {
+                    "name": "mcp_personal_access_tokens_user_id_user_id_fk",
+                    "tableFrom": "mcp_personal_access_tokens",
+                    "tableTo": "user",
+                    "columnsFrom": ["user_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.exercise_guide_images": {
+            "name": "exercise_guide_images",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "workspace_id": {
+                    "name": "workspace_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "exercise_id": {
+                    "name": "exercise_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "storage_key": {
+                    "name": "storage_key",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "content_type": {
+                    "name": "content_type",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "caption": {
+                    "name": "caption",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "position": {
+                    "name": "position",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "exercise_guide_images_workspace_id_idx": {
+                    "name": "exercise_guide_images_workspace_id_idx",
+                    "columns": [
+                        {
+                            "expression": "workspace_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last",
+                            "opclass": "uuid_ops"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "exercise_guide_images_exercise_id_idx": {
+                    "name": "exercise_guide_images_exercise_id_idx",
+                    "columns": [
+                        {
+                            "expression": "exercise_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last",
+                            "opclass": "uuid_ops"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "exercise_guide_images_workspace_id_workspaces_id_fk": {
+                    "name": "exercise_guide_images_workspace_id_workspaces_id_fk",
+                    "tableFrom": "exercise_guide_images",
+                    "tableTo": "workspaces",
+                    "columnsFrom": ["workspace_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "exercise_guide_images_exercise_id_exercises_id_fk": {
+                    "name": "exercise_guide_images_exercise_id_exercises_id_fk",
+                    "tableFrom": "exercise_guide_images",
+                    "tableTo": "exercises",
+                    "columnsFrom": ["exercise_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.exercise_links": {
+            "name": "exercise_links",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "workspace_id": {
+                    "name": "workspace_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "exercise_id": {
+                    "name": "exercise_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "url": {
+                    "name": "url",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "label": {
+                    "name": "label",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "position": {
+                    "name": "position",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "exercise_links_workspace_id_idx": {
+                    "name": "exercise_links_workspace_id_idx",
+                    "columns": [
+                        {
+                            "expression": "workspace_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last",
+                            "opclass": "uuid_ops"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "exercise_links_exercise_id_idx": {
+                    "name": "exercise_links_exercise_id_idx",
+                    "columns": [
+                        {
+                            "expression": "exercise_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last",
+                            "opclass": "uuid_ops"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "exercise_links_workspace_id_workspaces_id_fk": {
+                    "name": "exercise_links_workspace_id_workspaces_id_fk",
+                    "tableFrom": "exercise_links",
+                    "tableTo": "workspaces",
+                    "columnsFrom": ["workspace_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "exercise_links_exercise_id_exercises_id_fk": {
+                    "name": "exercise_links_exercise_id_exercises_id_fk",
+                    "tableFrom": "exercise_links",
+                    "tableTo": "exercises",
+                    "columnsFrom": ["exercise_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.exercise_preferences": {
+            "name": "exercise_preferences",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "workspace_id": {
+                    "name": "workspace_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "exercise_id": {
+                    "name": "exercise_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "rest_seconds": {
+                    "name": "rest_seconds",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "exercise_preferences_workspace_id_idx": {
+                    "name": "exercise_preferences_workspace_id_idx",
+                    "columns": [
+                        {
+                            "expression": "workspace_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last",
+                            "opclass": "uuid_ops"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "exercise_preferences_workspace_id_exercise_id_uidx": {
+                    "name": "exercise_preferences_workspace_id_exercise_id_uidx",
+                    "columns": [
+                        {
+                            "expression": "workspace_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "exercise_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "exercise_preferences_workspace_id_workspaces_id_fk": {
+                    "name": "exercise_preferences_workspace_id_workspaces_id_fk",
+                    "tableFrom": "exercise_preferences",
+                    "tableTo": "workspaces",
+                    "columnsFrom": ["workspace_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "exercise_preferences_exercise_id_exercises_id_fk": {
+                    "name": "exercise_preferences_exercise_id_exercises_id_fk",
+                    "tableFrom": "exercise_preferences",
+                    "tableTo": "exercises",
+                    "columnsFrom": ["exercise_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {
+                "exercise_preferences_rest_seconds_check": {
+                    "name": "exercise_preferences_rest_seconds_check",
+                    "value": "\"exercise_preferences\".\"rest_seconds\" >= 0"
+                }
+            },
+            "isRLSEnabled": false
+        },
+        "public.exercise_targets": {
+            "name": "exercise_targets",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "workspace_id": {
+                    "name": "workspace_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "exercise_id": {
+                    "name": "exercise_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "weight_kg": {
+                    "name": "weight_kg",
+                    "type": "numeric(7, 2)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "reps": {
+                    "name": "reps",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "duration_seconds": {
+                    "name": "duration_seconds",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "distance_m": {
+                    "name": "distance_m",
+                    "type": "numeric(9, 2)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "note": {
+                    "name": "note",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "exercise_targets_workspace_id_idx": {
+                    "name": "exercise_targets_workspace_id_idx",
+                    "columns": [
+                        {
+                            "expression": "workspace_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last",
+                            "opclass": "uuid_ops"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "exercise_targets_latest_idx": {
+                    "name": "exercise_targets_latest_idx",
+                    "columns": [
+                        {
+                            "expression": "workspace_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "exercise_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "created_at",
+                            "isExpression": false,
+                            "asc": false,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "exercise_targets_workspace_id_workspaces_id_fk": {
+                    "name": "exercise_targets_workspace_id_workspaces_id_fk",
+                    "tableFrom": "exercise_targets",
+                    "tableTo": "workspaces",
+                    "columnsFrom": ["workspace_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "exercise_targets_exercise_id_exercises_id_fk": {
+                    "name": "exercise_targets_exercise_id_exercises_id_fk",
+                    "tableFrom": "exercise_targets",
+                    "tableTo": "exercises",
+                    "columnsFrom": ["exercise_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {
+                "exercise_targets_measurements_non_negative_check": {
+                    "name": "exercise_targets_measurements_non_negative_check",
+                    "value": "coalesce(\"exercise_targets\".\"weight_kg\", 0) >= 0 and coalesce(\"exercise_targets\".\"reps\", 0) >= 0 and coalesce(\"exercise_targets\".\"duration_seconds\", 0) >= 0 and coalesce(\"exercise_targets\".\"distance_m\", 0) >= 0"
+                }
+            },
+            "isRLSEnabled": false
+        },
+        "public.exercises": {
+            "name": "exercises",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "workspace_id": {
+                    "name": "workspace_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "slug": {
+                    "name": "slug",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_by_user_id": {
+                    "name": "created_by_user_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "name": {
+                    "name": "name",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "tracking_type": {
+                    "name": "tracking_type",
+                    "type": "tracking_type",
+                    "typeSchema": "public",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "equipment": {
+                    "name": "equipment",
+                    "type": "equipment[]",
+                    "typeSchema": "public",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'{}'::equipment[]"
+                },
+                "notes": {
+                    "name": "notes",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "primary_muscles": {
+                    "name": "primary_muscles",
+                    "type": "muscle_group[]",
+                    "typeSchema": "public",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'{}'::muscle_group[]"
+                },
+                "secondary_muscles": {
+                    "name": "secondary_muscles",
+                    "type": "muscle_group[]",
+                    "typeSchema": "public",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'{}'::muscle_group[]"
+                },
+                "guide_setup": {
+                    "name": "guide_setup",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "guide_execution": {
+                    "name": "guide_execution",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "guide_cues": {
+                    "name": "guide_cues",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "guide_mistakes": {
+                    "name": "guide_mistakes",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "archived_at": {
+                    "name": "archived_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "exercises_workspace_id_idx": {
+                    "name": "exercises_workspace_id_idx",
+                    "columns": [
+                        {
+                            "expression": "workspace_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last",
+                            "opclass": "uuid_ops"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "exercises_catalog_slug_uidx": {
+                    "name": "exercises_catalog_slug_uidx",
+                    "columns": [
+                        {
+                            "expression": "slug",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "where": "\"exercises\".\"workspace_id\" is null",
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "exercises_workspace_id_workspaces_id_fk": {
+                    "name": "exercises_workspace_id_workspaces_id_fk",
+                    "tableFrom": "exercises",
+                    "tableTo": "workspaces",
+                    "columnsFrom": ["workspace_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "exercises_created_by_user_id_user_id_fk": {
+                    "name": "exercises_created_by_user_id_user_id_fk",
+                    "tableFrom": "exercises",
+                    "tableTo": "user",
+                    "columnsFrom": ["created_by_user_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {
+                "exercises_catalog_slug_check": {
+                    "name": "exercises_catalog_slug_check",
+                    "value": "(\"exercises\".\"workspace_id\" is null) = (\"exercises\".\"slug\" is not null)"
+                }
+            },
+            "isRLSEnabled": false
+        },
+        "public.equipment_presets": {
+            "name": "equipment_presets",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "workspace_id": {
+                    "name": "workspace_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "name": {
+                    "name": "name",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "equipment": {
+                    "name": "equipment",
+                    "type": "equipment[]",
+                    "typeSchema": "public",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'{}'::equipment[]"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "equipment_presets_workspace_id_idx": {
+                    "name": "equipment_presets_workspace_id_idx",
+                    "columns": [
+                        {
+                            "expression": "workspace_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last",
+                            "opclass": "uuid_ops"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "equipment_presets_workspace_id_name_uidx": {
+                    "name": "equipment_presets_workspace_id_name_uidx",
+                    "columns": [
+                        {
+                            "expression": "workspace_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "name",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "equipment_presets_workspace_id_workspaces_id_fk": {
+                    "name": "equipment_presets_workspace_id_workspaces_id_fk",
+                    "tableFrom": "equipment_presets",
+                    "tableTo": "workspaces",
+                    "columnsFrom": ["workspace_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.routine_exercises": {
+            "name": "routine_exercises",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "workspace_id": {
+                    "name": "workspace_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "routine_id": {
+                    "name": "routine_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "exercise_id": {
+                    "name": "exercise_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "position": {
+                    "name": "position",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "target_sets": {
+                    "name": "target_sets",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "rest_seconds": {
+                    "name": "rest_seconds",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "notes": {
+                    "name": "notes",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "target_reps": {
+                    "name": "target_reps",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "target_weight_kg": {
+                    "name": "target_weight_kg",
+                    "type": "numeric(7, 2)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "target_duration_seconds": {
+                    "name": "target_duration_seconds",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "target_distance_m": {
+                    "name": "target_distance_m",
+                    "type": "numeric(9, 2)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "routine_exercises_workspace_id_idx": {
+                    "name": "routine_exercises_workspace_id_idx",
+                    "columns": [
+                        {
+                            "expression": "workspace_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last",
+                            "opclass": "uuid_ops"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "routine_exercises_routine_id_idx": {
+                    "name": "routine_exercises_routine_id_idx",
+                    "columns": [
+                        {
+                            "expression": "routine_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last",
+                            "opclass": "uuid_ops"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "routine_exercises_workspace_id_workspaces_id_fk": {
+                    "name": "routine_exercises_workspace_id_workspaces_id_fk",
+                    "tableFrom": "routine_exercises",
+                    "tableTo": "workspaces",
+                    "columnsFrom": ["workspace_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "routine_exercises_routine_id_routines_id_fk": {
+                    "name": "routine_exercises_routine_id_routines_id_fk",
+                    "tableFrom": "routine_exercises",
+                    "tableTo": "routines",
+                    "columnsFrom": ["routine_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "routine_exercises_exercise_id_exercises_id_fk": {
+                    "name": "routine_exercises_exercise_id_exercises_id_fk",
+                    "tableFrom": "routine_exercises",
+                    "tableTo": "exercises",
+                    "columnsFrom": ["exercise_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "restrict",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {
+                "routine_exercises_target_sets_check": {
+                    "name": "routine_exercises_target_sets_check",
+                    "value": "\"routine_exercises\".\"target_sets\" >= 1"
+                },
+                "routine_exercises_targets_non_negative_check": {
+                    "name": "routine_exercises_targets_non_negative_check",
+                    "value": "coalesce(\"routine_exercises\".\"rest_seconds\", 0) >= 0 and coalesce(\"routine_exercises\".\"target_reps\", 0) >= 0 and coalesce(\"routine_exercises\".\"target_weight_kg\", 0) >= 0 and coalesce(\"routine_exercises\".\"target_duration_seconds\", 0) >= 0 and coalesce(\"routine_exercises\".\"target_distance_m\", 0) >= 0"
+                }
+            },
+            "isRLSEnabled": false
+        },
+        "public.routines": {
+            "name": "routines",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "workspace_id": {
+                    "name": "workspace_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_by_user_id": {
+                    "name": "created_by_user_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "name": {
+                    "name": "name",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "description": {
+                    "name": "description",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "archived_at": {
+                    "name": "archived_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "routines_workspace_id_idx": {
+                    "name": "routines_workspace_id_idx",
+                    "columns": [
+                        {
+                            "expression": "workspace_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last",
+                            "opclass": "uuid_ops"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "routines_workspace_id_workspaces_id_fk": {
+                    "name": "routines_workspace_id_workspaces_id_fk",
+                    "tableFrom": "routines",
+                    "tableTo": "workspaces",
+                    "columnsFrom": ["workspace_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "routines_created_by_user_id_user_id_fk": {
+                    "name": "routines_created_by_user_id_user_id_fk",
+                    "tableFrom": "routines",
+                    "tableTo": "user",
+                    "columnsFrom": ["created_by_user_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.session_exercises": {
+            "name": "session_exercises",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "workspace_id": {
+                    "name": "workspace_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "session_id": {
+                    "name": "session_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "exercise_id": {
+                    "name": "exercise_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "tracking_type": {
+                    "name": "tracking_type",
+                    "type": "tracking_type",
+                    "typeSchema": "public",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "source": {
+                    "name": "source",
+                    "type": "session_exercise_source",
+                    "typeSchema": "public",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "position": {
+                    "name": "position",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "target_sets": {
+                    "name": "target_sets",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "rest_seconds": {
+                    "name": "rest_seconds",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "notes": {
+                    "name": "notes",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "skipped_at": {
+                    "name": "skipped_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "target_reps": {
+                    "name": "target_reps",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "target_weight_kg": {
+                    "name": "target_weight_kg",
+                    "type": "numeric(7, 2)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "target_duration_seconds": {
+                    "name": "target_duration_seconds",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "target_distance_m": {
+                    "name": "target_distance_m",
+                    "type": "numeric(9, 2)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "session_exercises_workspace_id_idx": {
+                    "name": "session_exercises_workspace_id_idx",
+                    "columns": [
+                        {
+                            "expression": "workspace_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last",
+                            "opclass": "uuid_ops"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "session_exercises_session_id_idx": {
+                    "name": "session_exercises_session_id_idx",
+                    "columns": [
+                        {
+                            "expression": "session_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last",
+                            "opclass": "uuid_ops"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "session_exercises_exercise_id_idx": {
+                    "name": "session_exercises_exercise_id_idx",
+                    "columns": [
+                        {
+                            "expression": "exercise_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last",
+                            "opclass": "uuid_ops"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "session_exercises_workspace_id_workspaces_id_fk": {
+                    "name": "session_exercises_workspace_id_workspaces_id_fk",
+                    "tableFrom": "session_exercises",
+                    "tableTo": "workspaces",
+                    "columnsFrom": ["workspace_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "session_exercises_session_id_workout_sessions_id_fk": {
+                    "name": "session_exercises_session_id_workout_sessions_id_fk",
+                    "tableFrom": "session_exercises",
+                    "tableTo": "workout_sessions",
+                    "columnsFrom": ["session_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "session_exercises_exercise_id_exercises_id_fk": {
+                    "name": "session_exercises_exercise_id_exercises_id_fk",
+                    "tableFrom": "session_exercises",
+                    "tableTo": "exercises",
+                    "columnsFrom": ["exercise_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "restrict",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {
+                "session_exercises_target_sets_check": {
+                    "name": "session_exercises_target_sets_check",
+                    "value": "\"session_exercises\".\"target_sets\" >= 1"
+                },
+                "session_exercises_targets_non_negative_check": {
+                    "name": "session_exercises_targets_non_negative_check",
+                    "value": "coalesce(\"session_exercises\".\"rest_seconds\", 0) >= 0 and coalesce(\"session_exercises\".\"target_reps\", 0) >= 0 and coalesce(\"session_exercises\".\"target_weight_kg\", 0) >= 0 and coalesce(\"session_exercises\".\"target_duration_seconds\", 0) >= 0 and coalesce(\"session_exercises\".\"target_distance_m\", 0) >= 0"
+                }
+            },
+            "isRLSEnabled": false
+        },
+        "public.set_entries": {
+            "name": "set_entries",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "workspace_id": {
+                    "name": "workspace_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "session_exercise_id": {
+                    "name": "session_exercise_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "set_index": {
+                    "name": "set_index",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "completed_at": {
+                    "name": "completed_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "is_warmup": {
+                    "name": "is_warmup",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": false
+                },
+                "rpe": {
+                    "name": "rpe",
+                    "type": "numeric(3, 1)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "weight_kg": {
+                    "name": "weight_kg",
+                    "type": "numeric(7, 2)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "reps": {
+                    "name": "reps",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "duration_seconds": {
+                    "name": "duration_seconds",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "distance_m": {
+                    "name": "distance_m",
+                    "type": "numeric(9, 2)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "set_entries_workspace_id_idx": {
+                    "name": "set_entries_workspace_id_idx",
+                    "columns": [
+                        {
+                            "expression": "workspace_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last",
+                            "opclass": "uuid_ops"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "set_entries_session_exercise_id_set_index_uidx": {
+                    "name": "set_entries_session_exercise_id_set_index_uidx",
+                    "columns": [
+                        {
+                            "expression": "session_exercise_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "set_index",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "set_entries_workspace_id_workspaces_id_fk": {
+                    "name": "set_entries_workspace_id_workspaces_id_fk",
+                    "tableFrom": "set_entries",
+                    "tableTo": "workspaces",
+                    "columnsFrom": ["workspace_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "set_entries_session_exercise_id_session_exercises_id_fk": {
+                    "name": "set_entries_session_exercise_id_session_exercises_id_fk",
+                    "tableFrom": "set_entries",
+                    "tableTo": "session_exercises",
+                    "columnsFrom": ["session_exercise_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {
+                "set_entries_set_index_check": {
+                    "name": "set_entries_set_index_check",
+                    "value": "\"set_entries\".\"set_index\" >= 1"
+                },
+                "set_entries_rpe_check": {
+                    "name": "set_entries_rpe_check",
+                    "value": "\"set_entries\".\"rpe\" is null or (\"set_entries\".\"rpe\" >= 0 and \"set_entries\".\"rpe\" <= 10)"
+                },
+                "set_entries_measurements_non_negative_check": {
+                    "name": "set_entries_measurements_non_negative_check",
+                    "value": "coalesce(\"set_entries\".\"weight_kg\", 0) >= 0 and coalesce(\"set_entries\".\"reps\", 0) >= 0 and coalesce(\"set_entries\".\"duration_seconds\", 0) >= 0 and coalesce(\"set_entries\".\"distance_m\", 0) >= 0"
+                },
+                "set_entries_measurement_present_check": {
+                    "name": "set_entries_measurement_present_check",
+                    "value": "\"set_entries\".\"reps\" is not null or \"set_entries\".\"duration_seconds\" is not null"
+                }
+            },
+            "isRLSEnabled": false
+        },
+        "public.workout_sessions": {
+            "name": "workout_sessions",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "workspace_id": {
+                    "name": "workspace_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "user_id": {
+                    "name": "user_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "routine_id": {
+                    "name": "routine_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "name": {
+                    "name": "name",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "started_at": {
+                    "name": "started_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "completed_at": {
+                    "name": "completed_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "notes": {
+                    "name": "notes",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "workout_sessions_workspace_id_idx": {
+                    "name": "workout_sessions_workspace_id_idx",
+                    "columns": [
+                        {
+                            "expression": "workspace_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last",
+                            "opclass": "uuid_ops"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "workout_sessions_active_uidx": {
+                    "name": "workout_sessions_active_uidx",
+                    "columns": [
+                        {
+                            "expression": "workspace_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "where": "\"workout_sessions\".\"completed_at\" is null",
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "workout_sessions_workspace_id_workspaces_id_fk": {
+                    "name": "workout_sessions_workspace_id_workspaces_id_fk",
+                    "tableFrom": "workout_sessions",
+                    "tableTo": "workspaces",
+                    "columnsFrom": ["workspace_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "workout_sessions_user_id_user_id_fk": {
+                    "name": "workout_sessions_user_id_user_id_fk",
+                    "tableFrom": "workout_sessions",
+                    "tableTo": "user",
+                    "columnsFrom": ["user_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                },
+                "workout_sessions_routine_id_routines_id_fk": {
+                    "name": "workout_sessions_routine_id_routines_id_fk",
+                    "tableFrom": "workout_sessions",
+                    "tableTo": "routines",
+                    "columnsFrom": ["routine_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
         }
-      },
-      "foreignKeys": {
-        "set_entries_workspace_id_workspaces_id_fk": {
-          "name": "set_entries_workspace_id_workspaces_id_fk",
-          "tableFrom": "set_entries",
-          "tableTo": "workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+    },
+    "enums": {
+        "public.onboarding_stage": {
+            "name": "onboarding_stage",
+            "schema": "public",
+            "values": ["equipment", "complete"]
         },
-        "set_entries_session_exercise_id_session_exercises_id_fk": {
-          "name": "set_entries_session_exercise_id_session_exercises_id_fk",
-          "tableFrom": "set_entries",
-          "tableTo": "session_exercises",
-          "columnsFrom": [
-            "session_exercise_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+        "public.workspace_role": {
+            "name": "workspace_role",
+            "schema": "public",
+            "values": ["member", "admin", "owner"]
+        },
+        "public.equipment": {
+            "name": "equipment",
+            "schema": "public",
+            "values": [
+                "barbell",
+                "dumbbell",
+                "kettlebell",
+                "cable",
+                "machine",
+                "squat_rack",
+                "bench",
+                "pull_up_bar",
+                "resistance_band",
+                "treadmill",
+                "stationary_bike",
+                "rowing_machine"
+            ]
+        },
+        "public.muscle_group": {
+            "name": "muscle_group",
+            "schema": "public",
+            "values": [
+                "chest",
+                "front_delts",
+                "side_delts",
+                "rear_delts",
+                "biceps",
+                "triceps",
+                "forearms",
+                "abs",
+                "obliques",
+                "lats",
+                "upper_back",
+                "traps",
+                "lower_back",
+                "glutes",
+                "quads",
+                "hamstrings",
+                "calves",
+                "adductors",
+                "abductors"
+            ]
+        },
+        "public.tracking_type": {
+            "name": "tracking_type",
+            "schema": "public",
+            "values": ["weight_reps", "duration", "distance_time"]
+        },
+        "public.session_exercise_source": {
+            "name": "session_exercise_source",
+            "schema": "public",
+            "values": ["from_routine", "added_ad_hoc"]
         }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "set_entries_set_index_check": {
-          "name": "set_entries_set_index_check",
-          "value": "\"set_entries\".\"set_index\" >= 1"
-        },
-        "set_entries_rpe_check": {
-          "name": "set_entries_rpe_check",
-          "value": "\"set_entries\".\"rpe\" is null or (\"set_entries\".\"rpe\" >= 0 and \"set_entries\".\"rpe\" <= 10)"
-        },
-        "set_entries_measurements_non_negative_check": {
-          "name": "set_entries_measurements_non_negative_check",
-          "value": "coalesce(\"set_entries\".\"weight_kg\", 0) >= 0 and coalesce(\"set_entries\".\"reps\", 0) >= 0 and coalesce(\"set_entries\".\"duration_seconds\", 0) >= 0 and coalesce(\"set_entries\".\"distance_m\", 0) >= 0"
-        },
-        "set_entries_measurement_present_check": {
-          "name": "set_entries_measurement_present_check",
-          "value": "\"set_entries\".\"reps\" is not null or \"set_entries\".\"duration_seconds\" is not null"
-        }
-      },
-      "isRLSEnabled": false
     },
-    "public.workout_sessions": {
-      "name": "workout_sessions",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "routine_id": {
-          "name": "routine_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "started_at": {
-          "name": "started_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "completed_at": {
-          "name": "completed_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "notes": {
-          "name": "notes",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "workout_sessions_workspace_id_idx": {
-          "name": "workout_sessions_workspace_id_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "uuid_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "workout_sessions_active_uidx": {
-          "name": "workout_sessions_active_uidx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"workout_sessions\".\"completed_at\" is null",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "workout_sessions_workspace_id_workspaces_id_fk": {
-          "name": "workout_sessions_workspace_id_workspaces_id_fk",
-          "tableFrom": "workout_sessions",
-          "tableTo": "workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "workout_sessions_user_id_user_id_fk": {
-          "name": "workout_sessions_user_id_user_id_fk",
-          "tableFrom": "workout_sessions",
-          "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "workout_sessions_routine_id_routines_id_fk": {
-          "name": "workout_sessions_routine_id_routines_id_fk",
-          "tableFrom": "workout_sessions",
-          "tableTo": "routines",
-          "columnsFrom": [
-            "routine_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    }
-  },
-  "enums": {
-    "public.onboarding_stage": {
-      "name": "onboarding_stage",
-      "schema": "public",
-      "values": [
-        "equipment",
-        "complete"
-      ]
-    },
-    "public.workspace_role": {
-      "name": "workspace_role",
-      "schema": "public",
-      "values": [
-        "member",
-        "admin",
-        "owner"
-      ]
-    },
-    "public.equipment": {
-      "name": "equipment",
-      "schema": "public",
-      "values": [
-        "barbell",
-        "dumbbell",
-        "kettlebell",
-        "cable",
-        "machine",
-        "squat_rack",
-        "bench",
-        "pull_up_bar",
-        "resistance_band",
-        "treadmill",
-        "stationary_bike",
-        "rowing_machine"
-      ]
-    },
-    "public.muscle_group": {
-      "name": "muscle_group",
-      "schema": "public",
-      "values": [
-        "chest",
-        "front_delts",
-        "side_delts",
-        "rear_delts",
-        "biceps",
-        "triceps",
-        "forearms",
-        "abs",
-        "obliques",
-        "lats",
-        "upper_back",
-        "traps",
-        "lower_back",
-        "glutes",
-        "quads",
-        "hamstrings",
-        "calves",
-        "adductors",
-        "abductors"
-      ]
-    },
-    "public.tracking_type": {
-      "name": "tracking_type",
-      "schema": "public",
-      "values": [
-        "weight_reps",
-        "duration",
-        "distance_time"
-      ]
-    },
-    "public.session_exercise_source": {
-      "name": "session_exercise_source",
-      "schema": "public",
-      "values": [
-        "from_routine",
-        "added_ad_hoc"
-      ]
-    }
-  },
-  "schemas": {},
-  "sequences": {},
-  "roles": {},
-  "policies": {},
-  "views": {},
-  "_meta": {
-    "columns": {},
     "schemas": {},
-    "tables": {}
-  }
+    "sequences": {},
+    "roles": {},
+    "policies": {},
+    "views": {},
+    "_meta": {
+        "columns": {},
+        "schemas": {},
+        "tables": {}
+    }
 }
