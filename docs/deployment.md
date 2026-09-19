@@ -9,8 +9,8 @@ The production topology is:
 
 Railway infrastructure is defined in `.railway/railway.ts`. It points at the GitHub repository and
 preserves values entered in Railway. Railway's GitHub source deploys API and MCP automatically when
-the configured branch changes; `.github/workflows/railway.yml` reviews and applies infrastructure
-changes separately.
+the configured branch changes; infrastructure changes are applied by hand with the Railway CLI, see
+"Changing infrastructure" below.
 
 ## Before you start
 
@@ -39,8 +39,8 @@ In Railway, connect both `api` and `mcp` to `TheIthorian/workout-tracker`, branc
 the Dockerfile paths from `.railway/railway.ts`. Generate a public domain for `api` and, only if
 external MCP clients need it, for `mcp`.
 
-Create a production-environment project token and add it to GitHub repository secrets as
-`RAILWAY_TOKEN`. This is needed by `.github/workflows/railway.yml`; never commit it.
+No Railway token is stored in GitHub: infrastructure is applied from a trusted machine, so the
+credential never leaves it.
 
 ## 1b. Create the R2 image bucket
 
@@ -159,6 +159,22 @@ pnpm --filter @app/admin start seed-exercises
 
 Sources over 10 MB or 6000 px on a side are rejected and the seed stops before writing anything.
 
+## 4b. Changing infrastructure
+
+`.railway/railway.ts` is declarative, so anything removed or renamed in it is removed or renamed on
+Railway — a renamed volume plans as delete-then-create, which is the Postgres disk. Read the plan
+before applying, from a machine that is already logged in:
+
+```bash
+railway config plan          # read this: it is the diff against live infrastructure
+railway config apply         # previews again and asks before changing anything
+```
+
+This is a local step on purpose. Planning needs a Railway token and executes `.railway/railway.ts`,
+so running it in CI would mean handing a production credential to branch code on every pull request
+— a poor trade for a change made a few times a year. Apply after merging, so what is applied is what
+was reviewed.
+
 ## 5. Deploy the web app to Cloudflare Pages
 
 Create the Pages project once:
@@ -254,13 +270,7 @@ same checks pass. It deploys with the wrangler version pinned in the lockfile, s
 deploy run identical code, and it is serialised on a `deploy-web` concurrency group so two merges
 landing together cannot race. Nothing deploys from a pull request.
 
-`.github/workflows/railway.yml` handles infrastructure changes only:
-
-1. A pull request changing `.railway/**` receives a pinned Railway plan as a PR comment.
-2. When that PR merges, the exact reviewed plan is applied.
-
-Fork pull requests are skipped because they cannot receive production secrets. Direct edits to
-Railway infrastructure should go through a pull request; direct pushes have no reviewed plan.
+Infrastructure is deliberately _not_ in CI — see "Changing infrastructure" above.
 
 Code deployment is automatic from `main` for all three apps: Railway builds and deploys `api` and
 `mcp` from its GitHub source, and `deploy-web` publishes the SPA to Pages. Migrations and the

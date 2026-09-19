@@ -392,6 +392,15 @@ required variable should crash on startup, not run in a half-configured state. S
 (database credentials, the auth secret, LLM API keys, S3/MinIO credentials) belong in environment
 variables or a secrets manager, never committed to a config file.
 
+## Infrastructure
+
+Railway infrastructure lives in `.railway/railway.ts` and is applied by hand with the Railway CLI
+(`railway config plan`, then `railway config apply`), never from CI. Planning renders that file
+against the live project, so a CI job doing it would hand a production token to whatever code the
+pull request's branch carries. Do not add a workflow that holds `RAILWAY_TOKEN`, and keep the same
+bar for any other production credential: a GitHub Actions job gets one only when the thing it
+automates runs often enough to justify it. Deploys are the exception that already meets that bar.
+
 ## Git — Conventional Commits
 
 All commit messages must follow [Conventional Commits](https://www.conventionalcommits.org/):
