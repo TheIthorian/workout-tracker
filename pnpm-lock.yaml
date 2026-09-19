@@ -111,6 +111,9 @@ importers:
       '@app/errors':
         specifier: workspace:*
         version: link:../../packages/errors
+      '@app/image':
+        specifier: workspace:*
+        version: link:../../packages/image
       '@app/logger':
         specifier: workspace:*
         version: link:../../packages/logger

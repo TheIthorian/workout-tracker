@@ -41,7 +41,7 @@ packages/
   services/         # Business logic as plain classes, no framework
   auth/             # Better Auth wiring, sign-in lockout, MCP token issuing
   storage/          # S3/MinIO/R2 access
-  image/            # sharp-based catalog image processing; linked by apps/admin only, never the API
+  image/            # sharp-based catalog image processing; linked by apps/admin and the API's startup seed
   llm/              # OpenAI-compatible client wrapper
   nest-common/      # Zod validation pipe, exception filter, guards, interceptors
   api-contract/     # Zod schemas for every request and response — the keystone package
@@ -141,8 +141,8 @@ stop — that is exactly the pattern the helper exists to make impossible to get
 exercise catalog) is visible to every workspace. Read it with `scopedToWorkspaceOrGlobal`, which
 admits those rows alongside the caller's own. **Never use that helper on a write.** Every
 `update`/`delete` keeps `scopedToWorkspace`, so a catalog id through a workspace route finds no row
-and returns the same 404 as another tenant's row. Only the seed command (`apps/admin
-seed-exercises`) writes catalog rows.
+and returns the same 404 as another tenant's row. Only the seed writes catalog rows - `apps/api`'s startup seed and
+`apps/admin seed-exercises`, both through `runCatalogSeed`.
 
 **A caller who may not see a workspace is told it does not exist**, not that they are forbidden. A
 403 confirms the id names a real workspace, which is itself a leak. `EntityNotFoundError` is the
@@ -157,9 +157,19 @@ scoped by user and an unpinned token would otherwise reach every workspace its o
 
 **Drizzle authors the schema.** `packages/db/src/schema/` is the source of truth; run
 `pnpm --filter @app/db db:generate` after any change and commit the generated SQL in
-`packages/db/drizzle/`. Those migration files are what `db:migrate` applies to a deployment and what
-the test fixture applies to each throwaway test database, so a test database cannot drift from
-production.
+`packages/db/drizzle/`. Those migration files are what the test fixture applies to each throwaway
+test database and what `runMigrations` applies at `apps/api` boot, so a test database cannot drift
+from production.
+
+**Deployments migrate themselves.** `apps/api`'s `main.ts` calls `runMigrations` before it listens,
+under a Postgres advisory lock so concurrent replicas cannot race; a failed migration fails the boot
+and the previous healthy version keeps serving. `DB_MIGRATE_ON_STARTUP=false` opts a deployment out.
+Never ask someone to point a local `DATABASE_URL` at a deployed database to ship a schema change.
+
+**The API publishes the catalog on boot too**, after `listen` and unawaited: `content/exercises` is
+in the image and `seedCatalogOnStartup` runs the same `runCatalogSeed` the admin CLI does. Content,
+unlike schema, must never fail a deploy - the app serves correctly against an unseeded catalog, so
+that path logs and moves on. `CATALOG_SEED_ON_STARTUP=false` opts out.
 
 Read the generated SQL before applying it — especially any `DROP`. `drizzle-kit` will happily
 generate a destructive migration from an innocent-looking rename.
@@ -244,8 +254,9 @@ a contract error, not a convenience.
 A small CLI for one-off operational tasks. Keep it narrow — check that a new command actually
 belongs here rather than in the API before adding it.
 
-`seed-exercises` publishes `content/exercises/` into the shared catalog; it is the only writer of
-catalog rows.
+`seed-exercises` publishes `content/exercises/` into the shared catalog. It shares the run itself
+with `apps/api`'s startup seed (`runCatalogSeed` in `packages/services`), so the two cannot drift;
+between them they are the only writers of catalog rows.
 
 ### apps/web
 
@@ -380,6 +391,15 @@ validated by `packages/env`'s fail-fast loader — an app that boots with an inv
 required variable should crash on startup, not run in a half-configured state. Sensitive values
 (database credentials, the auth secret, LLM API keys, S3/MinIO credentials) belong in environment
 variables or a secrets manager, never committed to a config file.
+
+## Infrastructure
+
+Railway infrastructure lives in `.railway/railway.ts` and is applied by hand with the Railway CLI
+(`railway config plan`, then `railway config apply`), never from CI. Planning renders that file
+against the live project, so a CI job doing it would hand a production token to whatever code the
+pull request's branch carries. Do not add a workflow that holds `RAILWAY_TOKEN`, and keep the same
+bar for any other production credential: a GitHub Actions job gets one only when the thing it
+automates runs often enough to justify it. Deploys are the exception that already meets that bar.
 
 ## Git — Conventional Commits
 

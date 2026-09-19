@@ -9,8 +9,8 @@ The production topology is:
 
 Railway infrastructure is defined in `.railway/railway.ts`. It points at the GitHub repository and
 preserves values entered in Railway. Railway's GitHub source deploys API and MCP automatically when
-the configured branch changes; `.github/workflows/railway.yml` reviews and applies infrastructure
-changes separately.
+the configured branch changes; infrastructure changes are applied by hand with the Railway CLI, see
+"Changing infrastructure" below.
 
 ## Before you start
 
@@ -39,8 +39,8 @@ In Railway, connect both `api` and `mcp` to `TheIthorian/workout-tracker`, branc
 the Dockerfile paths from `.railway/railway.ts`. Generate a public domain for `api` and, only if
 external MCP clients need it, for `mcp`.
 
-Create a production-environment project token and add it to GitHub repository secrets as
-`RAILWAY_TOKEN`. This is needed by `.github/workflows/railway.yml`; never commit it.
+No Railway token is stored in GitHub: infrastructure is applied from a trusted machine, so the
+credential never leaves it.
 
 ## 1b. Create the R2 image bucket
 
@@ -109,27 +109,45 @@ Set these on `mcp`:
 Set `LOG_PRETTY=false` and `LOG_REDACT=true`. Railway supplies `PORT`. The API health check is
 `/api/health/ready`; MCP uses `/health`. Keep these paths unchanged.
 
-## 3. Apply database migrations
+## 3. Database migrations
 
-Run from a trusted machine after Postgres exists and before serving users:
+`apps/api` applies the committed `packages/db/drizzle` migrations on boot, before it listens, so a
+release ships its own schema and nobody needs a psql session or a production `DATABASE_URL` on a
+laptop. Concurrent replicas are serialised by a Postgres advisory lock, and a migration that fails
+fails the boot: the deploy's readiness probe never passes, Railway keeps the previous healthy
+version serving, and the bad release is rolled back rather than half-applied.
+
+The consequence to plan for is that a destructive or long-running migration blocks the new version
+from starting, so generate and _read_ the SQL locally before committing it:
+
+```bash
+pnpm --filter @app/db db:generate
+```
+
+Set `DB_MIGRATE_ON_STARTUP=false` on a deployment that would rather run migrations as its own step;
+the manual command is then:
 
 ```bash
 pnpm install --frozen-lockfile
 DATABASE_URL='<production DATABASE_URL>' pnpm --filter @app/db db:migrate
 ```
 
-There is intentionally no migration-on-boot: a failed migration must not prevent a previous healthy
-version from starting. Generate and review migrations locally before committing them:
+## 4. The exercise catalog
 
-```bash
-pnpm --filter @app/db db:generate
-```
+`apps/api` publishes `content/exercises` into the catalog itself, once the server is listening. The
+content ships inside the image, and the seed is idempotent, so a boot that changes nothing costs a
+directory read and a few queries over the private network — the database never needs a public
+endpoint. The run is deliberately _not_ awaited and never fails the boot: an unseeded or
+half-seeded catalog still serves correctly, so a slow bucket must not turn into a failed deploy.
+Watch the `api` deploy logs for `Exercise catalog seeded`, or for the error line if it did not.
 
-## 4. Publish the exercise catalog
+Catalog content changes therefore ship as a deploy: `content/**` is in the `api` service's
+`watchPatterns`, so merging new content to `main` rebuilds and reseeds.
 
-The catalog seed is idempotent and must be run manually after catalog content changes. It converts
-each source image to WebP (longest side 1200 px, quality 80) on the machine running the seed — the
-API never processes images — and uploads only objects that are not already in the bucket:
+`CATALOG_SEED_ON_STARTUP=false` turns it off. The same run is still available from a trusted
+machine, which needs a reachable database and converts each source image to WebP (longest side
+1200 px, quality 80) locally — the API does the identical conversion at boot, and uploads only
+objects the bucket does not already hold:
 
 ```bash
 pnpm --filter @app/admin build
@@ -140,6 +158,22 @@ pnpm --filter @app/admin start seed-exercises
 ```
 
 Sources over 10 MB or 6000 px on a side are rejected and the seed stops before writing anything.
+
+## 4b. Changing infrastructure
+
+`.railway/railway.ts` is declarative, so anything removed or renamed in it is removed or renamed on
+Railway — a renamed volume plans as delete-then-create, which is the Postgres disk. Read the plan
+before applying, from a machine that is already logged in:
+
+```bash
+railway config plan          # read this: it is the diff against live infrastructure
+railway config apply         # previews again and asks before changing anything
+```
+
+This is a local step on purpose. Planning needs a Railway token and executes `.railway/railway.ts`,
+so running it in CI would mean handing a production credential to branch code on every pull request
+— a poor trade for a change made a few times a year. Apply after merging, so what is applied is what
+was reviewed.
 
 ## 5. Deploy the web app to Cloudflare Pages
 
@@ -236,15 +270,9 @@ same checks pass. It deploys with the wrangler version pinned in the lockfile, s
 deploy run identical code, and it is serialised on a `deploy-web` concurrency group so two merges
 landing together cannot race. Nothing deploys from a pull request.
 
-`.github/workflows/railway.yml` handles infrastructure changes only:
-
-1. A pull request changing `.railway/**` receives a pinned Railway plan as a PR comment.
-2. When that PR merges, the exact reviewed plan is applied.
-
-Fork pull requests are skipped because they cannot receive production secrets. Direct edits to
-Railway infrastructure should go through a pull request; direct pushes have no reviewed plan.
+Infrastructure is deliberately _not_ in CI — see "Changing infrastructure" above.
 
 Code deployment is automatic from `main` for all three apps: Railway builds and deploys `api` and
-`mcp` from its GitHub source, and `deploy-web` publishes the SPA to Pages. Database migrations and
-catalog publishing remain manual because they change production data and should be run after
-reviewing the release.
+`mcp` from its GitHub source, and `deploy-web` publishes the SPA to Pages. Migrations and the
+catalog seed both ride the `api` deploy, so neither needs credentials outside Railway — the review
+that matters is the one on the pull request that introduces the migration SQL or the content.

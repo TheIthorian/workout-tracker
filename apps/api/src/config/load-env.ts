@@ -24,6 +24,18 @@ const schema = Joi.object({
     LOG_PRETTY: Joi.boolean().default(false),
     LOG_REDACT: Joi.boolean().default(true),
     DATABASE_URL: Joi.string().uri().required(),
+    // Applies the committed `packages/db/drizzle` migrations during boot, before the server
+    // listens. On by default so a deployment needs no separate release step and no operator with
+    // a psql session; set it to false where a platform runs migrations as its own job.
+    DB_MIGRATE_ON_STARTUP: Joi.boolean().default(true),
+    // Publishes content/exercises into the catalog once the server is listening, so catalog content
+    // ships with a release instead of needing an operator (and a publicly reachable database).
+    // Optional, defaults to true; the run is idempotent, so a boot that changes nothing is cheap.
+    CATALOG_SEED_ON_STARTUP: Joi.boolean().default(true),
+    // Where that content lives. Optional: `content/exercises` is found automatically both in the
+    // image and in a checkout. Set it only to seed from somewhere else; relative paths resolve
+    // against the working directory.
+    CATALOG_CONTENT_DIR: Joi.string().allow('').default(''),
     AUTH_SECRET: Joi.string().required(),
     AUTH_BASE_URL: Joi.string().uri().required(),
     AUTH_TRUSTED_ORIGINS: Joi.string().optional(),

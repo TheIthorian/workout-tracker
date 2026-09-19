@@ -34,7 +34,15 @@ export default defineRailway(() => {
         build: {
             builder: 'DOCKERFILE',
             dockerfilePath: 'apps/api/Dockerfile',
-            watchPatterns: ['apps/api/**', 'packages/**', 'pnpm-lock.yaml', '.railway/railway.ts'],
+            // `content/**` is in here because the API publishes the catalog on boot: a content
+            // change has to produce a new deploy or nothing seeds it.
+            watchPatterns: [
+                'apps/api/**',
+                'packages/**',
+                'content/**',
+                'pnpm-lock.yaml',
+                '.railway/railway.ts',
+            ],
         },
         deploy: {
             limitOverride: { containers: { cpu: 0.5, memoryBytes: 500_000_000 } },
@@ -52,8 +60,10 @@ export default defineRailway(() => {
             AUTH_SECURE_COOKIES: preserve(),
             AUTH_TRUSTED_ORIGINS: preserve(),
             CATALOG_IMAGE_BASE_URL: preserve(),
+            CATALOG_SEED_ON_STARTUP: preserve(),
             CORS_ORIGIN: preserve(),
             DATABASE_URL: preserve(),
+            DB_MIGRATE_ON_STARTUP: preserve(),
             LLM_API_KEY: preserve(),
             MCP_BASE_URL: preserve(),
             PROBLEM_TYPE_BASE: preserve(),
