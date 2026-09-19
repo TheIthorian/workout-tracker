@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react';
 import { Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,6 +43,7 @@ export function StepperField({
 }: StepperFieldProps): JSX.Element {
     const holdTimer = useRef<number | null>(null);
     const holdInterval = useRef<number | null>(null);
+    const repeated = useRef(false);
     const latest = useRef({ value, onChange });
     latest.current = { value, onChange };
     // Typing goes through a text draft so a half-typed "2." is not snapped back to 2 mid-keystroke.
@@ -71,19 +72,19 @@ export function StepperField({
         (direction: 1 | -1) =>
         (event: PointerEvent<HTMLButtonElement>): void => {
             if (disabled || event.button !== 0) return;
-            nudge(direction);
             stopHold();
+            repeated.current = false;
             holdTimer.current = window.setTimeout(() => {
+                repeated.current = true;
+                nudge(direction);
                 holdInterval.current = window.setInterval(() => nudge(direction), HOLD_INTERVAL_MS);
             }, HOLD_DELAY_MS);
         };
 
-    // A pointer press already stepped once; only a keyboard-originated click (detail 0) still needs to.
-    const keyboardNudge =
-        (direction: 1 | -1) =>
-        (event: MouseEvent<HTMLButtonElement>): void => {
-            if (event.detail === 0) nudge(direction);
-        };
+    // A press steps on release, like any other button; a hold that already repeated has stepped enough.
+    const releaseNudge = (direction: 1 | -1) => (): void => {
+        if (!repeated.current) nudge(direction);
+    };
 
     function stopHold(): void {
         if (holdTimer.current !== null) window.clearTimeout(holdTimer.current);
@@ -117,7 +118,7 @@ export function StepperField({
                     onPointerUp={stopHold}
                     onPointerLeave={stopHold}
                     onPointerCancel={stopHold}
-                    onClick={keyboardNudge(-1)}
+                    onClick={releaseNudge(-1)}
                     onContextMenu={(event) => event.preventDefault()}
                 >
                     <Minus className="h-5 w-5" aria-hidden />
@@ -154,7 +155,7 @@ export function StepperField({
                     onPointerUp={stopHold}
                     onPointerLeave={stopHold}
                     onPointerCancel={stopHold}
-                    onClick={keyboardNudge(1)}
+                    onClick={releaseNudge(1)}
                     onContextMenu={(event) => event.preventDefault()}
                 >
                     <Plus className="h-5 w-5" aria-hidden />
