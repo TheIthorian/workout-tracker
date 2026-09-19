@@ -1,5 +1,5 @@
 import { EQUIPMENT_ORDER, type Equipment } from './equipment';
-import { TrackingType } from './exercise';
+import type { TrackingType } from './exercise';
 
 /** A workout template, as listed. */
 export type Routine = {
@@ -55,29 +55,6 @@ export type SaveRoutineExerciseRequest = Partial<RoutineExerciseTargets> & { exe
 export type PatchRoutineExerciseRequest = Partial<RoutineExerciseTargets>;
 
 /**
- * One line summarising a slot's targets — "3 × 8 · 62.5 kg · rest 1:30" — for the list row.
- * Only the targets that fit the exercise's tracking type are shown; the server rejects the rest.
- */
-export function describeTargets(slot: RoutineExercise): string {
-    const parts: string[] = [];
-
-    const primary = primaryTarget(slot);
-    parts.push(primary === null ? `${slot.targetSets} sets` : `${slot.targetSets} × ${primary}`);
-
-    if (slot.exercise.trackingType === TrackingType.WeightReps && slot.targetWeightKg !== null) {
-        parts.push(`${formatNumber(slot.targetWeightKg)} kg`);
-    }
-
-    if (slot.exercise.trackingType === TrackingType.DistanceTime && slot.targetDurationSeconds !== null) {
-        parts.push(formatClock(slot.targetDurationSeconds));
-    }
-
-    if (slot.restSeconds !== null && slot.restSeconds > 0) parts.push(`rest ${formatClock(slot.restSeconds)}`);
-
-    return parts.join(' · ');
-}
-
-/**
  * An estimated duration as `~45 min`, or `~1h 05m` once it passes an hour. Null when there is
  * nothing worth showing, so an empty routine renders no estimate rather than `~0 min`.
  */
@@ -100,31 +77,4 @@ export function aggregateRoutineEquipment(slots: RoutineExercise[]): Equipment[]
     const needed = new Set(slots.flatMap((slot) => slot.exercise.equipment));
 
     return EQUIPMENT_ORDER.filter((item) => needed.has(item));
-}
-
-/** Seconds as `m:ss`. */
-export function formatClock(totalSeconds: number): string {
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-}
-
-/** Metres as `400 m` or `5 km`, trimming trailing zeros. */
-export function formatDistance(metres: number): string {
-    return metres >= 1000 ? `${formatNumber(metres / 1000)} km` : `${formatNumber(metres)} m`;
-}
-
-function primaryTarget(slot: RoutineExercise): string | null {
-    switch (slot.exercise.trackingType) {
-        case TrackingType.WeightReps:
-            return slot.targetReps === null ? null : String(slot.targetReps);
-        case TrackingType.Duration:
-            return slot.targetDurationSeconds === null ? null : formatClock(slot.targetDurationSeconds);
-        case TrackingType.DistanceTime:
-            return slot.targetDistanceM === null ? null : formatDistance(slot.targetDistanceM);
-    }
-}
-
-function formatNumber(value: number): string {
-    return Number.isInteger(value) ? String(value) : value.toFixed(2).replace(/\.?0+$/, '');
 }
