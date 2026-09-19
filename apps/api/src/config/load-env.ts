@@ -28,6 +28,14 @@ const schema = Joi.object({
     // listens. On by default so a deployment needs no separate release step and no operator with
     // a psql session; set it to false where a platform runs migrations as its own job.
     DB_MIGRATE_ON_STARTUP: Joi.boolean().default(true),
+    // Publishes content/exercises into the catalog once the server is listening, so catalog content
+    // ships with a release instead of needing an operator (and a publicly reachable database).
+    // Optional, defaults to true; the run is idempotent, so a boot that changes nothing is cheap.
+    CATALOG_SEED_ON_STARTUP: Joi.boolean().default(true),
+    // Where that content lives. Optional: defaults to `content/exercises` beside the built app,
+    // which is where the Docker image puts it. Set it outside a container - it is resolved against
+    // the working directory when relative.
+    CATALOG_CONTENT_DIR: Joi.string().allow('').default(''),
     AUTH_SECRET: Joi.string().required(),
     AUTH_BASE_URL: Joi.string().uri().required(),
     AUTH_TRUSTED_ORIGINS: Joi.string().optional(),

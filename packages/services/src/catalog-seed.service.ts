@@ -16,8 +16,8 @@ export enum SeedOutcome {
 
 /**
  * Turns a source image into the bytes that get published. Declared here rather than imported so
- * this package (and the API that depends on it) never pulls in an image codec: `@app/image`
- * satisfies the shape and only the admin CLI links it.
+ * this package never pulls in an image codec: `@app/image` satisfies the shape, and the two
+ * processes that seed - `apps/api`'s startup seed and `apps/admin` - each link it themselves.
  */
 export interface ImageProcessor {
     /** Names the settings in effect; folded into the storage key so a settings change republishes. */

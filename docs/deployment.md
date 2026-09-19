@@ -132,17 +132,22 @@ pnpm install --frozen-lockfile
 DATABASE_URL='<production DATABASE_URL>' pnpm --filter @app/db db:migrate
 ```
 
-## 4. Publish the exercise catalog
+## 4. The exercise catalog
 
-The `Seed exercises` GitHub Actions workflow (`.github/workflows/seed-exercises.yml`) runs the seed
-on every push to `main` that touches `content/exercises/**`, and on demand from the Actions tab. It
-reads `DATABASE_URL` and the `S3_*` credentials from the `production` environment's secrets
-(`S3_FORCE_PATH_STYLE` is a variable, `false` for R2), so publishing catalog content is a merge
-rather than an operator run.
+`apps/api` publishes `content/exercises` into the catalog itself, once the server is listening. The
+content ships inside the image, and the seed is idempotent, so a boot that changes nothing costs a
+directory read and a few queries over the private network — the database never needs a public
+endpoint. The run is deliberately _not_ awaited and never fails the boot: an unseeded or
+half-seeded catalog still serves correctly, so a slow bucket must not turn into a failed deploy.
+Watch the `api` deploy logs for `Exercise catalog seeded`, or for the error line if it did not.
 
-The seed is idempotent, so running it by hand against the same database is always safe. It converts
-each source image to WebP (longest side 1200 px, quality 80) on the machine running the seed — the
-API never processes images — and uploads only objects that are not already in the bucket:
+Catalog content changes therefore ship as a deploy: `content/**` is in the `api` service's
+`watchPatterns`, so merging new content to `main` rebuilds and reseeds.
+
+`CATALOG_SEED_ON_STARTUP=false` turns it off. The same run is still available from a trusted
+machine, which needs a reachable database and converts each source image to WebP (longest side
+1200 px, quality 80) locally — the API does the identical conversion at boot, and uploads only
+objects the bucket does not already hold:
 
 ```bash
 pnpm --filter @app/admin build
@@ -258,7 +263,6 @@ Fork pull requests are skipped because they cannot receive production secrets. D
 Railway infrastructure should go through a pull request; direct pushes have no reviewed plan.
 
 Code deployment is automatic from `main` for all three apps: Railway builds and deploys `api` and
-`mcp` from its GitHub source, and `deploy-web` publishes the SPA to Pages. Database migrations ride
-the `api` deploy itself, and `seed-exercises` publishes catalog content from `main` — both change
-production data, so the review that matters is the one on the pull request that introduces the
-migration SQL or the content.
+`mcp` from its GitHub source, and `deploy-web` publishes the SPA to Pages. Migrations and the
+catalog seed both ride the `api` deploy, so neither needs credentials outside Railway — the review
+that matters is the one on the pull request that introduces the migration SQL or the content.

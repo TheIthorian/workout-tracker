@@ -3,6 +3,7 @@ import { runMigrations } from '@app/db';
 import { setProblemTypeBase } from '@app/errors';
 import { createLogger } from '@app/logger';
 import { createApp } from './bootstrap.js';
+import { seedCatalogOnStartup } from './startup/seed-catalog.js';
 import { loadEnv, toLoggerConfig } from './config/load-env.js';
 
 async function bootstrap(): Promise<void> {
@@ -22,6 +23,16 @@ async function bootstrap(): Promise<void> {
 
     const app = await createApp();
     await app.listen(Number(env['PORT']), '::');
+
+    // After listen, unawaited: the catalog is content, not schema, and the app answers correctly
+    // without it. Blocking the readiness probe on an object-storage round trip would turn a slow
+    // bucket into a failed deploy.
+    void seedCatalogOnStartup({ app }).catch((error: unknown) => {
+        createLogger({ context: 'api-seed', config: toLoggerConfig(env) }).error(
+            { err: error },
+            'Exercise catalog seed failed; the API is serving whatever the catalog already held',
+        );
+    });
 }
 
 void bootstrap();

@@ -17,6 +17,7 @@
         "@app/db": "workspace:*",
         "@app/env": "workspace:*",
         "@app/errors": "workspace:*",
+        "@app/image": "workspace:*",
         "@app/logger": "workspace:*",
         "@app/nest-common": "workspace:*",
         "@app/services": "workspace:*",

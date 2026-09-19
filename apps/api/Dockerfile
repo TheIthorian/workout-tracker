@@ -37,6 +37,10 @@ ENV TZ=UTC
 USER node
 COPY --from=builder --chown=node:node /out .
 
+# The exercise catalog the startup seed publishes. `turbo prune` keeps only workspace packages, so
+# this comes from the build context directly.
+COPY --chown=node:node content ./content
+
 EXPOSE 3000
 
 # Liveness, not readiness. `/api/health/ready` touches the database and gates the DEPLOY
