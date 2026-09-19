@@ -5,15 +5,15 @@ import { Button } from '@/components/ui/button';
 import type { MuscleShades } from '@/components/muscles/BodyDiagram';
 import { MUSCLE_META, MuscleGroup, orderMuscles, type MuscleEngagementValue } from '@/models/muscle';
 
-// The body artwork is ~20 kB gzipped and sits below the fold, so it arrives on its own rather than
-// holding up the guide someone opened this page to read.
+// The body artwork is ~20 kB gzipped and this panel is not the one a page opens on, so it
+// arrives on its own rather than holding up the guide someone came here to read.
 const BodyDiagram = lazy(async () => ({ default: (await import('@/components/muscles/BodyDiagram')).BodyDiagram }));
 
 /**
- * What an exercise works: the body map and the same muscles written out under it.
+ * What an exercise works: the body map and the same muscles written out beside it.
  *
- * The map is shown outright rather than behind a control. It is the faster of the two to read
- * between sets, and a reader who wants it every time should not have to ask for it every time.
+ * The map is shown outright within its panel rather than behind a further control: choosing the
+ * tab is already the reader saying they want it.
  */
 export function MuscleTargets({
     muscles,
@@ -47,16 +47,14 @@ export function MuscleTargets({
     return (
         <section className={cn('rounded-2xl border border-border bg-card p-5', className)} aria-label="Muscles worked">
             <h2 className="font-heading text-lg">Muscles worked</h2>
-            {/* Stacked at every width: this card's own column is narrow on a desktop, so a
-                breakpoint on the viewport would put two columns inside 21rem and crush both. */}
-            <div className="mt-4 space-y-5">
-                <Suspense fallback={<div className="h-48" aria-hidden />}>
+            <div className="mt-5 grid items-start gap-7 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
+                <Suspense fallback={<div className="h-72" aria-hidden />}>
                     <BodyDiagram
                         shades={shadesFor({ main, also })}
                         labelForPart={(parts) => describePart({ parts, main, also })}
                     />
                 </Suspense>
-                <div className="space-y-4">
+                <div className="space-y-5">
                     <MuscleList label="Main" muscles={main} />
                     <MuscleList label="Also worked" muscles={also} variant="outline" />
                 </div>
@@ -90,7 +88,7 @@ function MuscleList({
     );
 }
 
-/** Main muscles are shaded fully and the rest faintly, matching the two lists under the map. */
+/** Main muscles are shaded fully and the rest faintly, matching the two lists beside the map. */
 function shadesFor({ main, also }: { main: MuscleGroup[]; also: MuscleGroup[] }): MuscleShades {
     const shades: MuscleShades = {};
 

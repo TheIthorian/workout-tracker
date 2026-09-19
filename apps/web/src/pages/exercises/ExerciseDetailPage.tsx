@@ -1,7 +1,7 @@
 import { DEFAULT_REST_SECONDS } from '@app/domain';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Archive, ArrowLeft, Pencil, RotateCcw, Timer } from 'lucide-react';
+import { Archive, ArrowLeft, BookOpen, Pencil, PersonStanding, RotateCcw, Timer } from 'lucide-react';
 import { formatDate } from '@/lib/date-format';
 import { toast } from '@/hooks/use-toast';
 import {
@@ -21,6 +21,7 @@ import { RestTimeSheet } from '@/components/exercises/RestTimeSheet';
 import { LoadingState } from '@/components/common/LoadingState';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useExercise, useExerciseHistory, useSetExercisePreferences, useUpdateExercise } from '@/hooks/use-exercises';
 import { TRACKING_TYPE_META } from '@/models/exercise';
 import { EQUIPMENT_META, EQUIPMENT_ORDER } from '@/models/equipment';
@@ -48,6 +49,7 @@ export default function ExerciseDetailPage(): JSX.Element {
     const [archiveOpen, setArchiveOpen] = useState(false);
     const updateExercise = useUpdateExercise({ workspaceId });
     const [isRestOpen, setRestOpen] = useState(false);
+    const [tab, setTab] = useState('guide');
 
     const { data: exercise, isLoading, isError, error, refetch } = useExercise({ workspaceId, exerciseId });
     const { data: history, isLoading: isHistoryLoading } = useExerciseHistory({ workspaceId, exerciseId });
@@ -79,6 +81,10 @@ export default function ExerciseDetailPage(): JSX.Element {
     }
 
     const { label, icon: Icon } = TRACKING_TYPE_META[exercise.trackingType];
+    // A tab strip of one is just a heading. Catalog exercises nobody here can tag, and that carry
+    // no tags, get the guide on its own instead.
+    const showMusclesTab =
+        !exercise.isCatalog || exercise.primaryMuscles.length > 0 || exercise.secondaryMuscles.length > 0;
     const restSeconds = exercise.restSeconds ?? DEFAULT_REST_SECONDS;
     const handleSaveRest = (seconds: number): void => {
         setPreferences.mutate(
@@ -157,13 +163,31 @@ export default function ExerciseDetailPage(): JSX.Element {
                         onDone={() => setEditing(false)}
                     />
                 </div>
+            ) : !showMusclesTab ? (
+                <div className="mt-8">
+                    <ExerciseGuide exercise={exercise} />
+                </div>
             ) : (
-                /* The guide takes the page's width and the muscles ride alongside it, rather than
-                   each taking a full-width band of its own — three badges do not need 1,000px. The
-                   aside is first in the markup so a phone, which has one column, still meets the
-                   muscles before scrolling the whole guide. */
-                <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_21rem]">
-                    <aside className="min-w-0 lg:sticky lg:top-8 lg:order-2">
+                // Held here rather than inside Tabs' own state so the chosen tab survives a trip
+                // through the editor and back.
+                <Tabs value={tab} onValueChange={setTab} className="mt-8">
+                    <TabsList
+                        aria-label="Exercise sections"
+                        className="h-auto w-full max-w-sm gap-1 rounded-xl border border-border/80 bg-muted/40 p-1.5"
+                    >
+                        <TabsTrigger value="guide" className="min-h-11 flex-1 gap-2 rounded-lg">
+                            <BookOpen className="h-4 w-4 shrink-0 opacity-70" aria-hidden />
+                            Guide
+                        </TabsTrigger>
+                        <TabsTrigger value="muscles" className="min-h-11 flex-1 gap-2 rounded-lg">
+                            <PersonStanding className="h-4 w-4 shrink-0 opacity-70" aria-hidden />
+                            Muscles
+                        </TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="guide" className="mt-6 focus-visible:outline-none">
+                        <ExerciseGuide exercise={exercise} />
+                    </TabsContent>
+                    <TabsContent value="muscles" className="mt-6 focus-visible:outline-none">
                         <MuscleTargets
                             muscles={{
                                 primaryMuscles: exercise.primaryMuscles,
@@ -171,11 +195,8 @@ export default function ExerciseDetailPage(): JSX.Element {
                             }}
                             onEdit={exercise.isCatalog ? undefined : () => setEditing(true)}
                         />
-                    </aside>
-                    <div className="min-w-0 lg:order-1">
-                        <ExerciseGuide exercise={exercise} />
-                    </div>
-                </div>
+                    </TabsContent>
+                </Tabs>
             )}
 
             {!exercise.isCatalog && (
