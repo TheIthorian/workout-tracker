@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Reorder, useDragControls } from 'framer-motion';
-import { GripVertical } from 'lucide-react';
+import { ArrowUpRight, GripVertical } from 'lucide-react';
 import { EquipmentChips } from '@/components/equipment/EquipmentChips';
 import { TrackingTypeIcon } from '@/components/exercises/TrackingTypeIcon';
 import { Badge } from '@/components/ui/badge';
@@ -106,6 +107,13 @@ function SlotRow({ slot, isSelected, onSelect, onDrop }: SlotRowProps): JSX.Elem
                     iconClassName="h-5 w-5"
                 />
             </button>
+            <Link
+                to={`/exercises/${slot.exercise.id}`}
+                aria-label={`View ${slot.exercise.name}`}
+                className="-mr-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
+                <ArrowUpRight className="h-5 w-5" aria-hidden />
+            </Link>
         </Reorder.Item>
     );
 }
