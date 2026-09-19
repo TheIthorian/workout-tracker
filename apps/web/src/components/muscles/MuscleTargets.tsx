@@ -1,9 +1,13 @@
-import { useState } from 'react';
+import { Suspense, lazy, useState } from 'react';
 import { ChevronDown, PersonStanding } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { readShowMuscleDiagram, writeShowMuscleDiagram } from '@/lib/muscle-diagram-preference';
 import { Badge } from '@/components/ui/badge';
-import { BodyDiagram, type MuscleShades } from '@/components/muscles/BodyDiagram';
+import type { MuscleShades } from '@/components/muscles/BodyDiagram';
+
+// The body artwork is ~20 kB gzipped and this diagram starts hidden, so it is fetched when the
+// reader first asks for it rather than with every exercise page.
+const BodyDiagram = lazy(async () => ({ default: (await import('@/components/muscles/BodyDiagram')).BodyDiagram }));
 import { MUSCLE_META, MuscleGroup, orderMuscles, type MuscleEngagementValue } from '@/models/muscle';
 
 /**
@@ -65,11 +69,13 @@ export function MuscleTargets({
                 </p>
             )}
             {showDiagram && (
-                <BodyDiagram
-                    className="mt-5"
-                    shades={shadesFor({ primary, secondary })}
-                    describeMuscle={(muscle) => describeEngagement({ muscle, primary, secondary })}
-                />
+                <Suspense fallback={<p className="mt-5 text-center text-sm text-muted-foreground">Drawing…</p>}>
+                    <BodyDiagram
+                        className="mt-5"
+                        shades={shadesFor({ primary, secondary })}
+                        describeMuscle={(muscle) => describeEngagement({ muscle, primary, secondary })}
+                    />
+                </Suspense>
             )}
         </section>
     );
