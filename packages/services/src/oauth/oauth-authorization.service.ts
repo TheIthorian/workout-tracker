@@ -163,6 +163,7 @@ export class OAuthAuthorizationService {
             policyUri: resolution.client.policyUri,
             redirectHosts: [new URL(request.redirectUri).host],
             scopes: [McpScope.Mcp],
+            verified: resolution.client.verified,
             previouslyApproved: grant !== undefined,
         };
     }

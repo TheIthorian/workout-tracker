@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { AlertTriangle, ArrowUpRight, Check, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, ArrowUpRight, BadgeCheck, Check, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FullPageSpinner } from '@/components/FullPageSpinner';
@@ -58,8 +58,20 @@ export default function OAuthConsentPage(): JSX.Element {
         <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-4 py-10">
             <Card>
                 <CardHeader className="space-y-3">
-                    <ShieldCheck className="h-8 w-8 text-primary" aria-hidden />
-                    <CardTitle className="text-2xl">Connect {request.clientName} to your training data?</CardTitle>
+                    {request.verified ? (
+                        <ShieldCheck className="h-8 w-8 text-primary" aria-hidden />
+                    ) : (
+                        <ShieldAlert className="h-8 w-8 text-amber-600 dark:text-amber-500" aria-hidden />
+                    )}
+                    <CardTitle className="flex flex-wrap items-center gap-x-2 gap-y-1 text-2xl">
+                        <span>Connect {request.clientName} to your training data?</span>
+                        {request.verified && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                                <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
+                                Verified
+                            </span>
+                        )}
+                    </CardTitle>
                     <CardDescription>
                         {request.previouslyApproved
                             ? 'You have connected this app before. Approving again issues it a fresh key.'
@@ -68,6 +80,22 @@ export default function OAuthConsentPage(): JSX.Element {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                    {!request.verified && (
+                        <div
+                            role="note"
+                            className="flex gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm"
+                        >
+                            <ShieldAlert
+                                className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-500"
+                                aria-hidden
+                            />
+                            <p>
+                                <span className="font-medium">This app has not been verified.</span> Anyone can publish
+                                an app under any name. Check the address below is one you recognise before connecting.
+                            </p>
+                        </div>
+                    )}
+
                     <section aria-labelledby="consent-grants" className="space-y-3">
                         <h2 id="consent-grants" className="text-sm font-medium">
                             It will be able to

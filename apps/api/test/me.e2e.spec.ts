@@ -236,9 +236,9 @@ describe('/api/v1/me/connected-apps', () => {
         });
 
         expect(response.statusCode).toBe(200);
-        const body = JSON.parse(response.body) as { clientId: string }[];
+        const body = JSON.parse(response.body) as { clientId: string; verified: boolean }[];
         expect(body).toHaveLength(1);
-        expect(body[0].clientId).toBe(TEST_OAUTH_CLIENT_ID);
+        expect(body[0]).toMatchObject({ clientId: TEST_OAUTH_CLIENT_ID, verified: true });
     });
 
     it('disconnecting revokes the grant and every token issued under it', async () => {

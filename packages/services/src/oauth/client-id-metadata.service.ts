@@ -1,4 +1,5 @@
 import { clientIdMetadataSchema, OAuthGrantType, OAuthResponseType, type ClientIdMetadata } from '@app/api-contract';
+import { createSafeFetch, type FetchLike } from './safe-fetch.js';
 
 /** A document larger than this is not a client's metadata, whatever else it is. */
 export const MAX_METADATA_BYTES = 64 * 1024;
@@ -10,9 +11,6 @@ export const MAX_METADATA_TTL_MS = 24 * 60 * 60 * 1000;
 /** How long the document fetch may take before the authorization request fails instead of hanging. */
 export const METADATA_FETCH_TIMEOUT_MS = 5_000;
 
-/** The subset of `fetch` this service uses, so a test supplies its own without a global stub. */
-export type FetchLike = (url: string | URL, init?: RequestInit) => Promise<Response>;
-
 export type ClientIdMetadataResult =
     | { ok: true; metadata: ClientIdMetadata; ttlMs: number }
     | { ok: false; reason: string };
@@ -20,15 +18,16 @@ export type ClientIdMetadataResult =
 /**
  * Fetches and validates a Client ID Metadata Document from the `client_id` URL itself.
  *
- * It performs no allowlist check of its own — {@link OAuthClientsService} rejects a host this
- * deployment has not accepted before anything here runs, which is also what keeps this fetch from
- * being an open server-side request forgery primitive.
+ * Any user can name a `client_id`, so this reaches a URL nobody has vetted. Everything that follows
+ * treats the response as hostile: {@link createSafeFetch} keeps the request on the public internet,
+ * the body is read against a hard byte cap rather than buffered whole, and nothing is believed
+ * until the schema and the `client_id` equality check have passed.
  */
 export class ClientIdMetadataService {
     private readonly fetch: FetchLike;
 
     constructor({ fetch: fetchImpl }: { fetch?: FetchLike } = {}) {
-        this.fetch = fetchImpl ?? globalThis.fetch;
+        this.fetch = fetchImpl ?? createSafeFetch();
     }
 
     /** Fetches the document at `clientId` and validates that it really describes that client. */
@@ -74,7 +73,7 @@ export class ClientIdMetadataService {
                 method: 'GET',
                 headers: { accept: 'application/json' },
                 // A redirect would make the document's `client_id` disagree with the URL it was
-                // requested from, and could move the fetch off the allowlisted host entirely.
+                // requested from, and would also escape the address check already made.
                 redirect: 'error',
                 signal: AbortSignal.timeout(METADATA_FETCH_TIMEOUT_MS),
             });
@@ -87,19 +86,55 @@ export class ClientIdMetadataService {
                 return { ok: false, reason: `unexpected content-type ${contentType || '(none)'}` };
             }
 
-            const body = Buffer.from(await response.arrayBuffer());
+            const declaredLength = Number(response.headers.get('content-length') ?? Number.NaN);
 
-            if (body.byteLength > MAX_METADATA_BYTES) return { ok: false, reason: 'document too large' };
+            if (Number.isFinite(declaredLength) && declaredLength > MAX_METADATA_BYTES) {
+                return { ok: false, reason: 'document too large' };
+            }
 
-            return {
-                ok: true,
-                json: JSON.parse(body.toString('utf8')),
-                cacheControl: response.headers.get('cache-control'),
-            };
+            const body = await readCapped(response);
+
+            if (body === null) return { ok: false, reason: 'document too large' };
+
+            return { ok: true, json: JSON.parse(body), cacheControl: response.headers.get('cache-control') };
         } catch (error) {
             return { ok: false, reason: error instanceof Error ? error.message : 'fetch failed' };
         }
     }
+}
+
+/**
+ * Reads the body as text, giving up as soon as it passes the cap. Null when it does.
+ *
+ * Streaming rather than `response.text()`: a `content-length` header is a claim, and a server that
+ * omits it or lies about it must not be able to make this process buffer an unbounded body.
+ */
+async function readCapped(response: Response): Promise<string | null> {
+    const reader = response.body?.getReader();
+
+    if (!reader) return '';
+
+    const decoder = new TextDecoder();
+    let read = 0;
+    let text = '';
+
+    try {
+        for (;;) {
+            const { done, value } = await reader.read();
+
+            if (done) break;
+
+            read += value.byteLength;
+
+            if (read > MAX_METADATA_BYTES) return null;
+
+            text += decoder.decode(value, { stream: true });
+        }
+    } finally {
+        await reader.cancel().catch((): void => {});
+    }
+
+    return text + decoder.decode();
 }
 
 /** A document that declares nothing is taken to want the defaults RFC 7591 §2 assigns it. */

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { parseISO } from 'date-fns';
-import { Check, Copy, Trash2 } from 'lucide-react';
+import { BadgeCheck, Check, Copy, ShieldAlert, Trash2 } from 'lucide-react';
 import { formatDate } from '@/lib/date-format';
 import {
     AlertDialog,
@@ -146,7 +146,20 @@ export function IntegrationsSettings(): JSX.Element {
                                         <li key={app.clientId} className="rounded-lg border p-3">
                                             <div className="flex items-start justify-between gap-2">
                                                 <div className="min-w-0">
-                                                    <p className="font-medium">{app.clientName}</p>
+                                                    <p className="flex flex-wrap items-center gap-x-2 font-medium">
+                                                        {app.clientName}
+                                                        {app.verified ? (
+                                                            <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
+                                                                <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
+                                                                Verified
+                                                            </span>
+                                                        ) : (
+                                                            <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-500">
+                                                                <ShieldAlert className="h-3.5 w-3.5" aria-hidden />
+                                                                Unverified
+                                                            </span>
+                                                        )}
+                                                    </p>
                                                     <p className="mt-1 text-xs text-muted-foreground">
                                                         Connected {formatTimestamp(app.connectedAt)}
                                                         {app.lastUsedAt

@@ -52,12 +52,16 @@ const schema = Joi.object({
     // MCP client, and this process serves no `/mcp` route to fall back on, so a missing value
     // cannot degrade into a merely-wrong-looking link.
     MCP_BASE_URL: Joi.string().uri().required(),
-    // Hosts allowed to serve a Client ID Metadata Document, comma-separated, compared exactly and
-    // case-insensitively. This is the whole admission policy for MCP clients: a client identifies
-    // itself by the https URL its metadata document is published at, and only a document served
-    // from a host named here is accepted. Required rather than defaulted - a deployment has to
-    // state whose clients it trusts, and an empty string is a valid, explicit "none yet".
-    MCP_OAUTH_ALLOWED_CLIENT_DOMAINS: Joi.string().allow('').required(),
+    // Client ID Metadata Document URLs this deployment vouches for, comma-separated. Whole URLs,
+    // or a directory prefix ending in `/`; never bare hosts, because a host serves documents
+    // written by whoever can publish there. This gates the badge on the consent screen, not who may
+    // connect - an unlisted client still authorizes, carrying an unverified warning. Required
+    // rather than defaulted so a deployment states its position; empty means "vouch for nobody".
+    MCP_OAUTH_VERIFIED_CLIENT_IDS: Joi.string().allow('').required(),
+    // Lets the metadata-document fetch reach a private network address. For local development
+    // against a client running on this machine, and never for a deployment: it is what stops a
+    // caller-supplied client_id reaching internal services or a cloud metadata endpoint.
+    MCP_OAUTH_ALLOW_PRIVATE_CLIENT_HOSTS: Joi.boolean().default(false),
     // Origin catalog image URLs are built from: `${CATALOG_IMAGE_BASE_URL}/${storage_key}`. In
     // production a CDN in front of the bucket; locally MinIO's anonymous-read `catalog/` prefix.
     // Required: a missing value produces image URLs that look right and 404.

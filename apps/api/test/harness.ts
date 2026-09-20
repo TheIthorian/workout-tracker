@@ -24,8 +24,8 @@ export const TEST_MCP_BASE_URL = 'https://mcp.test';
 /** The one client id every OAuth test uses; its host is the whole allowlist below. */
 export const TEST_OAUTH_CLIENT_ID = 'https://client.test/oauth-client';
 
-/** Hosts the test app accepts a Client ID Metadata Document from. */
-export const TEST_ALLOWED_CLIENT_DOMAINS = 'client.test';
+/** The one client id the test app vouches for. Everything else connects, marked unverified. */
+export const TEST_VERIFIED_CLIENT_IDS = TEST_OAUTH_CLIENT_ID;
 
 /** Origin the test app builds catalog image urls from. */
 export const TEST_CATALOG_IMAGE_BASE_URL = 'https://cdn.test';
@@ -93,7 +93,7 @@ export async function createTestApp({
     process.env['API_BASE_URL'] ??= TEST_API_BASE_URL;
     process.env['MCP_BASE_URL'] ??= TEST_MCP_BASE_URL;
     process.env['CATALOG_IMAGE_BASE_URL'] ??= TEST_CATALOG_IMAGE_BASE_URL;
-    process.env['MCP_OAUTH_ALLOWED_CLIENT_DOMAINS'] ??= TEST_ALLOWED_CLIENT_DOMAINS;
+    process.env['MCP_OAUTH_VERIFIED_CLIENT_IDS'] ??= TEST_VERIFIED_CLIENT_IDS;
     // Object storage is required configuration for this app, so the container refuses to boot
     // without it; no suite talks to storage, so placeholders are enough.
     process.env['S3_BUCKET'] ??= 'test-bucket';

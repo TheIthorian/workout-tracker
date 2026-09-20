@@ -237,9 +237,21 @@ database connection of its own, so it forwards the token it was given to `apps/a
 - **A client identifies itself with a Client ID Metadata Document, never a registered id.** The
   `client_id` is an https URL serving that document; there is no dynamic registration endpoint and
   no first-party client list, and none should be added.
-- **The document's host must appear in `MCP_OAUTH_ALLOWED_CLIENT_DOMAINS`**, compared exactly and
-  case-insensitively. That variable is the entire admission policy for MCP clients. Never relax the
-  comparison to a suffix or subdomain match: `evil-claude.ai` ends with `claude.ai`.
+- **Any client with a readable metadata document may connect.** `MCP_OAUTH_VERIFIED_CLIENT_IDS`
+  decides what the user is _told_, not who gets in: a client outside it reaches the consent screen
+  carrying an unverified warning. Never turn that list back into an admission gate.
+- **Verification matches whole `client_id` URLs, or a directory prefix ending in `/` — never a
+  host.** A host serves documents written by whoever can publish there, so
+  `https://claude.ai/public/artifacts/…` must not inherit `claude.ai`'s standing. Suffix matching on
+  hosts is doubly wrong: `evil-claude.ai` ends with `claude.ai`.
+- **The metadata fetch is an SSRF surface, because the URL comes from an unauthenticated caller.**
+  It goes through `createSafeFetch`, which resolves the host, refuses any non-public address
+  (loopback, private, CGNAT, link-local — cloud metadata lives at `169.254.169.254` — multicast and
+  reserved, including the v4 addresses tunnelled inside v6), and pins those addresses onto the
+  connection so a second lookup cannot rebind to another one. The body is read against a hard byte
+  cap while streaming, never buffered whole on the strength of a `content-length` header.
+  `MCP_OAUTH_ALLOW_PRIVATE_CLIENT_HOSTS` opens that gate for local development and must stay off in
+  a deployment.
 - **Access and refresh tokens are opaque and stored as sha256 hashes**, so a disconnected app stops
   working on one write. Do not replace them with JWTs.
 - **A failure that involves the client's own identity is rendered to the user, never redirected**

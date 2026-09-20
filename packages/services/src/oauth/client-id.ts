@@ -4,7 +4,7 @@
  * (draft-ietf-oauth-client-id-metadata-document §3).
  *
  * A bare origin is refused along with everything else: the document has to live somewhere the
- * client chose to publish it, not at the root of whatever host happens to be allowlisted.
+ * client chose to publish it, not at the root of whatever host serves it.
  */
 export function isClientIdMetadataDocumentUrl(clientId: string): boolean {
     if (!URL.canParse(clientId)) return false;
@@ -22,32 +22,42 @@ export function isClientIdMetadataDocumentUrl(clientId: string): boolean {
 }
 
 /**
- * Splits the configured allowlist into hostnames. Entries are compared exactly and
- * case-insensitively, so a subdomain has to be listed in its own right.
+ * Parses the configured verified-client list: whole `client_id` URLs, or path prefixes ending in
+ * `/`. Anything that is not a usable https URL with a path is dropped rather than silently
+ * matching nothing.
  */
-export function parseAllowedClientDomains(raw: string): string[] {
+export function parseVerifiedClientIds(raw: string): string[] {
     return raw
         .split(',')
-        .map((entry) => entry.trim().toLowerCase())
-        .filter((entry) => entry.length > 0);
+        .map((entry) => entry.trim())
+        .filter((entry) => entry.length > 0 && isClientIdMetadataDocumentUrl(entry.endsWith('/') ? `${entry}x` : entry))
+        .map((entry) => new URL(entry).href);
 }
 
 /**
- * Whether the host serving a client's metadata document is one this deployment has chosen to
- * accept.
+ * Whether this deployment vouches for the party publishing a metadata document.
  *
- * Exact host match, never a suffix match: `evil-claude.ai` ends with `claude.ai`, and a host that
- * merely ends with an allowlisted one is a different party. A deployment that wants a subdomain
- * lists the subdomain.
+ * Matching is on the whole URL, never the host alone. A host says nothing about who wrote the
+ * document it serves: `claude.ai` serves both Claude's own metadata document and every published
+ * Artifact, and trusting the host would vouch for anything any user put there. An entry ending in
+ * `/` matches by path prefix, so a vendor publishing one document per client lists the directory
+ * once; the trailing slash is required, otherwise `…/oauth` would also vouch for `…/oauthevil`.
+ *
+ * Both sides are compared as parsed URLs, so `..` segments and host casing cannot be used to dress
+ * one path up as another.
  */
-export function isAllowlistedClientDomain({
+export function isVerifiedClientId({
     clientId,
-    allowedDomains,
+    verifiedClientIds,
 }: {
     clientId: string;
-    allowedDomains: string[];
+    verifiedClientIds: string[];
 }): boolean {
     if (!URL.canParse(clientId)) return false;
 
-    return allowedDomains.includes(new URL(clientId).hostname.toLowerCase());
+    const candidate = new URL(clientId).href;
+
+    return verifiedClientIds.some((entry) =>
+        entry.endsWith('/') ? candidate.startsWith(entry) && candidate.length > entry.length : candidate === entry,
+    );
 }

@@ -5,6 +5,8 @@ export type ConnectedApp = {
     clientUri: string | null;
     logoUri: string | null;
     scopes: string[];
+    /** Whether this deployment vouches for the app. Unverified apps still work. */
+    verified: boolean;
     connectedAt: string;
     lastUsedAt: string | null;
 };
@@ -26,6 +28,8 @@ export type OAuthConsentRequest = {
     /** The hosts approving would send the browser to — the part a user can actually check. */
     redirectHosts: string[];
     scopes: string[];
+    /** False means nobody has vouched for this app — the screen warns rather than refuses. */
+    verified: boolean;
     previouslyApproved: boolean;
 };
 

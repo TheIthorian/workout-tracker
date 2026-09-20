@@ -4,8 +4,8 @@ import {
     MAX_METADATA_BYTES,
     MAX_METADATA_TTL_MS,
     MIN_METADATA_TTL_MS,
-    type FetchLike,
 } from './client-id-metadata.service.js';
+import type { FetchLike } from './safe-fetch.js';
 
 const CLIENT_ID = 'https://client.example/oauth-client';
 
@@ -98,6 +98,43 @@ describe('ClientIdMetadataService.fetchMetadata', () => {
         const result = await service(stubFetch(oversized)).fetchMetadata({ clientId: CLIENT_ID });
 
         expect(result.ok).toBe(false);
+    });
+
+    // A `content-length` header is a claim. A server that omits it must not be able to make this
+    // process buffer an endless body, so the cap is enforced while reading rather than after.
+    it('stops reading a body that never ends and declares no length', async () => {
+        let emitted = 0;
+
+        const endless: FetchLike = async () =>
+            new Response(
+                new ReadableStream<Uint8Array>({
+                    pull(controller) {
+                        emitted += 1;
+                        controller.enqueue(new Uint8Array(16 * 1024));
+                    },
+                }),
+                { headers: { 'content-type': 'application/json' } },
+            );
+
+        const result = await service(endless).fetchMetadata({ clientId: CLIENT_ID });
+
+        expect(result).toMatchObject({ ok: false, reason: 'document too large' });
+        // Bounded by the cap, not by the stream deciding to stop.
+        expect(emitted).toBeLessThanOrEqual(MAX_METADATA_BYTES / (16 * 1024) + 2);
+    });
+
+    it('refuses a document whose declared content-length already exceeds the cap', async () => {
+        const declaresTooMuch: FetchLike = async () =>
+            new Response('{}', {
+                headers: {
+                    'content-type': 'application/json',
+                    'content-length': String(MAX_METADATA_BYTES + 1),
+                },
+            });
+
+        const result = await service(declaresTooMuch).fetchMetadata({ clientId: CLIENT_ID });
+
+        expect(result).toMatchObject({ ok: false, reason: 'document too large' });
     });
 
     it('clamps the origin cache-control into this server bounds', async () => {

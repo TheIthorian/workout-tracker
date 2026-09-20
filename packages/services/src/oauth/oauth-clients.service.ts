@@ -1,7 +1,7 @@
 import { OAuthErrorCode, type ClientIdMetadata } from '@app/api-contract';
 import { schema, type Db } from '@app/db';
 import { eq } from 'drizzle-orm';
-import { isAllowlistedClientDomain, isClientIdMetadataDocumentUrl } from './client-id.js';
+import { isClientIdMetadataDocumentUrl, isVerifiedClientId } from './client-id.js';
 import type { ClientIdMetadataService } from './client-id-metadata.service.js';
 
 const { oauthClients } = schema;
@@ -15,6 +15,8 @@ export type ResolvedOAuthClient = {
     tosUri: string | null;
     policyUri: string | null;
     redirectUris: string[];
+    /** Whether this deployment vouches for the client. Never a gate; the consent screen says so. */
+    verified: boolean;
 };
 
 export type ClientResolution =
@@ -24,29 +26,33 @@ export type ClientResolution =
 /**
  * Resolves a `client_id` to the client it names.
  *
- * Two gates, in this order and for different reasons: the id has to be a Client ID Metadata
- * Document URL, because this server issues no client ids and runs no registration endpoint; and its
- * host has to be on the deployment's allowlist, because publishing a document is a claim anyone can
- * make and the allowlist is where an operator says whose claims count. Only then is anything
- * fetched, which is also what keeps the fetch from being a server-side request forgery primitive.
+ * One gate: the id has to be a Client ID Metadata Document URL, because this server issues no
+ * client ids and runs no registration endpoint. Any such client may then authorize — publishing a
+ * document is a claim anyone can make, and refusing every unknown one would make this server
+ * usable only by clients an operator had heard of.
+ *
+ * What the verified list changes is what the user is told, not who gets in: a client outside it
+ * reaches the consent screen carrying an unverified warning that names where approving would send
+ * them. It is evaluated per read rather than stored, so editing the list takes effect without
+ * waiting for cached documents to expire.
  */
 export class OAuthClientsService {
     private readonly db: Db;
     private readonly metadata: ClientIdMetadataService;
-    private readonly allowedDomains: string[];
+    private readonly verifiedClientIds: string[];
 
     constructor({
         db,
         metadata,
-        allowedDomains,
+        verifiedClientIds,
     }: {
         db: Db;
         metadata: ClientIdMetadataService;
-        allowedDomains: string[];
+        verifiedClientIds: string[];
     }) {
         this.db = db;
         this.metadata = metadata;
-        this.allowedDomains = allowedDomains;
+        this.verifiedClientIds = verifiedClientIds;
     }
 
     /**
@@ -64,22 +70,14 @@ export class OAuthClientsService {
             };
         }
 
-        if (!isAllowlistedClientDomain({ clientId, allowedDomains: this.allowedDomains })) {
-            return {
-                ok: false,
-                code: OAuthErrorCode.UnsupportedClient,
-                description: 'This server does not accept clients from that domain.',
-            };
-        }
-
         const cached = await this.findCached({ clientId });
 
-        if (cached && !isExpired(cached.metadataExpiresAt)) return { ok: true, client: toResolved(cached) };
+        if (cached && !isExpired(cached.metadataExpiresAt)) return { ok: true, client: this.present(cached) };
 
         const fetched = await this.metadata.fetchMetadata({ clientId });
 
         if (!fetched.ok) {
-            if (cached) return { ok: true, client: toResolved(cached) };
+            if (cached) return { ok: true, client: this.present(cached) };
 
             return {
                 ok: false,
@@ -88,10 +86,14 @@ export class OAuthClientsService {
             };
         }
 
-        return {
-            ok: true,
-            client: toResolved(await this.cache({ clientId, metadata: fetched.metadata, ttlMs: fetched.ttlMs })),
-        };
+        const cachedNow = await this.cache({ clientId, metadata: fetched.metadata, ttlMs: fetched.ttlMs });
+
+        return { ok: true, client: this.present(cachedNow) };
+    }
+
+    /** Whether this deployment vouches for a client, without fetching or resolving anything. */
+    isVerified({ clientId }: { clientId: string }): boolean {
+        return isVerifiedClientId({ clientId, verifiedClientIds: this.verifiedClientIds });
     }
 
     /** The cached row for a client, without fetching anything. Null when the client is unknown. */
@@ -131,6 +133,10 @@ export class OAuthClientsService {
 
         return row;
     }
+
+    private present(row: CachedClient): ResolvedOAuthClient {
+        return { ...toResolved(row), verified: this.isVerified({ clientId: row.clientId }) };
+    }
 }
 
 /** The cached client row, as both `resolve` and the Connected Apps screen read it. */
@@ -143,7 +149,7 @@ export type CachedClient = typeof oauthClients.$inferSelect;
  * loaded by the browser on the consent screen, so an arbitrary URI there would let a client point
  * the user's browser at a third party at exactly the moment they are being asked to trust it.
  */
-function toResolved(row: CachedClient): ResolvedOAuthClient {
+function toResolved(row: CachedClient): Omit<ResolvedOAuthClient, 'verified'> {
     return {
         clientId: row.clientId,
         clientName: row.clientName ?? new URL(row.clientId).hostname,

@@ -3,7 +3,7 @@ import { ShieldX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-/** The OAuth error code that means the client itself is not one this deployment accepts. */
+/** The OAuth error code that means the client did not identify itself in a way this server reads. */
 const UNSUPPORTED_CLIENT = 'unsupported_client';
 
 /**
@@ -28,7 +28,7 @@ export default function OAuthErrorPage(): JSX.Element {
                     </CardTitle>
                     <CardDescription>
                         {error === UNSUPPORTED_CLIENT
-                            ? 'Only approved MCP clients can connect to your training data, and this one is not on the list.'
+                            ? 'An app has to identify itself with a public metadata document, and this one did not.'
                             : 'The app sent a request this server could not accept.'}
                     </CardDescription>
                 </CardHeader>

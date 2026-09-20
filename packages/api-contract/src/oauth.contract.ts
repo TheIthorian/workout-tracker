@@ -144,6 +144,11 @@ export const oauthConsentRequestResponseSchema = z.object({
     policyUri: z.string().nullable(),
     redirectHosts: z.array(z.string()),
     scopes: z.array(z.enum(McpScope)),
+    /**
+     * Whether this deployment vouches for the client. False is not a refusal — the client still
+     * authorizes — it is what the consent screen warns about.
+     */
+    verified: z.boolean(),
     /** True when this user already approved this client, so the screen can say "reconnect". */
     previouslyApproved: z.boolean(),
 });
@@ -169,6 +174,7 @@ export const connectedAppResponseSchema = z.object({
     clientUri: z.string().nullable(),
     logoUri: z.string().nullable(),
     scopes: z.array(z.string()),
+    verified: z.boolean(),
     connectedAt: z.string(),
     lastUsedAt: z.string().nullable(),
 });

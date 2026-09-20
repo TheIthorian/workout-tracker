@@ -2,6 +2,7 @@ import type { ConnectedAppResponse } from '@app/api-contract';
 import { schema, withTransaction, type Db } from '@app/db';
 import { EntityNotFoundError } from '@app/errors';
 import { and, desc, eq, isNull } from 'drizzle-orm';
+import { isVerifiedClientId } from './client-id.js';
 
 const { oauthAccessTokens, oauthClients, oauthGrants, oauthRefreshTokens } = schema;
 
@@ -12,9 +13,11 @@ const { oauthAccessTokens, oauthClients, oauthGrants, oauthRefreshTokens } = sch
  */
 export class ConnectedAppsService {
     private readonly db: Db;
+    private readonly verifiedClientIds: string[];
 
-    constructor({ db }: { db: Db }) {
+    constructor({ db, verifiedClientIds }: { db: Db; verifiedClientIds: string[] }) {
         this.db = db;
+        this.verifiedClientIds = verifiedClientIds;
     }
 
     /** Every app the user has connected and not disconnected, most recently approved first. */
@@ -39,6 +42,7 @@ export class ConnectedAppsService {
             clientName: row.clientName ?? hostOf(row.clientId),
             clientUri: row.clientUri,
             logoUri: row.logoUri,
+            verified: isVerifiedClientId({ clientId: row.clientId, verifiedClientIds: this.verifiedClientIds }),
         }));
     }
 

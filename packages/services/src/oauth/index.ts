@@ -1,4 +1,4 @@
-export { isAllowlistedClientDomain, isClientIdMetadataDocumentUrl, parseAllowedClientDomains } from './client-id.js';
+export { isClientIdMetadataDocumentUrl, isVerifiedClientId, parseVerifiedClientIds } from './client-id.js';
 export {
     ClientIdMetadataService,
     MAX_METADATA_BYTES,
@@ -6,8 +6,9 @@ export {
     METADATA_FETCH_TIMEOUT_MS,
     MIN_METADATA_TTL_MS,
     type ClientIdMetadataResult,
-    type FetchLike,
 } from './client-id-metadata.service.js';
+export { isPublicUnicastAddress } from './ip-address.js';
+export { BlockedAddressError, createSafeFetch, type FetchLike } from './safe-fetch.js';
 export { ConnectedAppsService } from './connected-apps.service.js';
 export {
     AUTHORIZATION_CODE_TTL_MS,

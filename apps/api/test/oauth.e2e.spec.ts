@@ -6,7 +6,7 @@ import { OAUTH_CLIENTS_SERVICE } from '../src/oauth/oauth.providers.js';
 import {
     createTestApp,
     signIn,
-    TEST_ALLOWED_CLIENT_DOMAINS,
+    TEST_VERIFIED_CLIENT_IDS,
     TEST_API_BASE_URL,
     TEST_OAUTH_CLIENT_ID,
     TEST_WEB_APP_BASE_URL,
@@ -14,22 +14,33 @@ import {
 } from './harness.js';
 
 const REDIRECT_URI = 'https://client.test/callback';
-const UNLISTED_CLIENT_ID = 'https://elsewhere.test/oauth-client';
+const UNVERIFIED_CLIENT_ID = 'https://elsewhere.test/oauth-client';
+const UNVERIFIED_REDIRECT_URI = 'https://elsewhere.test/callback';
 const VERIFIER = 'a-code-verifier-with-enough-entropy-to-be-real';
 const CHALLENGE = createHash('sha256').update(VERIFIER).digest('base64url');
 
-const METADATA_DOCUMENT = {
-    client_id: TEST_OAUTH_CLIENT_ID,
-    client_name: 'Test Client',
-    client_uri: 'https://client.test',
-    redirect_uris: [REDIRECT_URI],
+const DOCUMENTS: Record<string, unknown> = {
+    [TEST_OAUTH_CLIENT_ID]: {
+        client_id: TEST_OAUTH_CLIENT_ID,
+        client_name: 'Test Client',
+        client_uri: 'https://client.test',
+        redirect_uris: [REDIRECT_URI],
+    },
+    [UNVERIFIED_CLIENT_ID]: {
+        client_id: UNVERIFIED_CLIENT_ID,
+        client_name: 'Somebody Else',
+        redirect_uris: [UNVERIFIED_REDIRECT_URI],
+    },
 };
 
-/** Serves the one metadata document this suite's client publishes, without touching the network. */
-const stubFetch: FetchLike = async (url) =>
-    String(url) === TEST_OAUTH_CLIENT_ID
-        ? new Response(JSON.stringify(METADATA_DOCUMENT), { headers: { 'content-type': 'application/json' } })
+/** Serves the metadata documents this suite's clients publish, without touching the network. */
+const stubFetch: FetchLike = async (url) => {
+    const document = DOCUMENTS[String(url)];
+
+    return document
+        ? new Response(JSON.stringify(document), { headers: { 'content-type': 'application/json' } })
         : new Response('not found', { status: 404 });
+};
 
 describe('OAuth authorization server', () => {
     let database: Awaited<ReturnType<typeof startTestDatabase>>;
@@ -52,7 +63,7 @@ describe('OAuth authorization server', () => {
                     useValue: new OAuthClientsService({
                         db,
                         metadata: new ClientIdMetadataService({ fetch: stubFetch }),
-                        allowedDomains: TEST_ALLOWED_CLIENT_DOMAINS.split(','),
+                        verifiedClientIds: TEST_VERIFIED_CLIENT_IDS.split(','),
                     }),
                 },
             ],
@@ -143,10 +154,20 @@ describe('OAuth authorization server', () => {
             expect(location.searchParams.get('request_id')).toBeTruthy();
         });
 
-        // A client this server does not accept must not receive an error redirect: the redirect_uri
-        // it supplied has been proven by nothing, so honouring it would be an open redirect.
-        it('sends an unlisted client to the error page, never back to its redirect_uri', async () => {
-            const location = await startAuthorization({ client_id: UNLISTED_CLIENT_ID });
+        // The list decides presentation, not admission: an unlisted client reaches consent too.
+        it('sends a client outside the verified list to the consent screen all the same', async () => {
+            const location = await startAuthorization({
+                client_id: UNVERIFIED_CLIENT_ID,
+                redirect_uri: UNVERIFIED_REDIRECT_URI,
+            });
+
+            expect(location.origin + location.pathname).toBe(`${TEST_WEB_APP_BASE_URL}/oauth/consent`);
+        });
+
+        // A `client_id` that is not a metadata document URL names nothing this server can fetch, so
+        // there is no proven redirect_uri to send the failure to.
+        it('sends a client_id that is not a metadata document URL to the error page', async () => {
+            const location = await startAuthorization({ client_id: 'some-registered-id' });
 
             expect(location.origin + location.pathname).toBe(`${TEST_WEB_APP_BASE_URL}/oauth/error`);
             expect(location.searchParams.get('error')).toBe('unsupported_client');
@@ -205,6 +226,26 @@ describe('OAuth authorization server', () => {
                 clientName: 'Test Client',
                 redirectHosts: ['client.test'],
                 scopes: ['mcp'],
+                verified: true,
+            });
+        });
+
+        it('tells the screen when the client is not one this deployment vouches for', async () => {
+            const consent = await startAuthorization({
+                client_id: UNVERIFIED_CLIENT_ID,
+                redirect_uri: UNVERIFIED_REDIRECT_URI,
+            });
+
+            const response = await app.inject({
+                method: 'GET',
+                url: `/api/v1/oauth/consent/${consent.searchParams.get('request_id')}`,
+                headers: { cookie },
+            });
+
+            expect(JSON.parse(response.body)).toMatchObject({
+                clientId: UNVERIFIED_CLIENT_ID,
+                redirectHosts: ['elsewhere.test'],
+                verified: false,
             });
         });
 

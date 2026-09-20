@@ -3,13 +3,14 @@ import { schema, type Db } from '@app/db';
 import { startTestDatabase } from '@app/db/testing';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { ClientIdMetadataService, type FetchLike } from './client-id-metadata.service.js';
+import { ClientIdMetadataService } from './client-id-metadata.service.js';
+import type { FetchLike } from './safe-fetch.js';
 import { OAuthClientsService } from './oauth-clients.service.js';
 
 const { oauthClients } = schema;
 
 const CLIENT_ID = 'https://client.test/oauth-client';
-const ALLOWED_DOMAINS = ['client.test'];
+const VERIFIED_CLIENT_IDS = [CLIENT_ID];
 
 const DOCUMENT = {
     client_id: CLIENT_ID,
@@ -35,7 +36,7 @@ function serviceWith(fetchImpl: FetchLike): OAuthClientsService {
     return new OAuthClientsService({
         db,
         metadata: new ClientIdMetadataService({ fetch: fetchImpl }),
-        allowedDomains: ALLOWED_DOMAINS,
+        verifiedClientIds: VERIFIED_CLIENT_IDS,
     });
 }
 
@@ -57,23 +58,40 @@ const failingFetch: FetchLike = async () => {
 };
 
 describe('OAuthClientsService.resolve', () => {
-    it('resolves an allowlisted client from its metadata document', async () => {
+    it('resolves a client from its metadata document and marks a listed one verified', async () => {
         const result = await serviceWith(servingDocument().fetch).resolve({ clientId: CLIENT_ID });
 
         expect(result).toMatchObject({
             ok: true,
-            client: { clientId: CLIENT_ID, clientName: 'Test Client', redirectUris: ['https://client.test/callback'] },
+            client: {
+                clientId: CLIENT_ID,
+                clientName: 'Test Client',
+                redirectUris: ['https://client.test/callback'],
+                verified: true,
+            },
         });
     });
 
-    // The gate the whole design rests on: an unlisted host is refused before anything is fetched.
-    it('refuses a client from a host that is not allowlisted, without fetching', async () => {
-        const stub = servingDocument();
+    // The change of policy this list went through: an unlisted client still connects, it is only
+    // presented differently.
+    it('resolves a client that is not on the verified list, marked unverified', async () => {
+        const clientId = 'https://elsewhere.test/oauth-client';
+        const stub = servingDocument({ ...DOCUMENT, client_id: clientId });
 
-        const result = await serviceWith(stub.fetch).resolve({ clientId: 'https://elsewhere.test/oauth-client' });
+        const result = await serviceWith(stub.fetch).resolve({ clientId });
 
-        expect(result).toMatchObject({ ok: false, code: OAuthErrorCode.UnsupportedClient });
-        expect(stub.calls()).toBe(0);
+        expect(result).toMatchObject({ ok: true, client: { clientId, verified: false } });
+        expect(stub.calls()).toBe(1);
+    });
+
+    // Same host, different path: claude.ai serves both its own document and its users' artifacts.
+    it('does not vouch for another path on a verified client host', async () => {
+        const clientId = 'https://client.test/public/artifacts/6ddbef52';
+        const stub = servingDocument({ ...DOCUMENT, client_id: clientId });
+
+        const result = await serviceWith(stub.fetch).resolve({ clientId });
+
+        expect(result).toMatchObject({ ok: true, client: { verified: false } });
     });
 
     it('refuses a client_id that is not a metadata document URL, without fetching', async () => {
@@ -85,7 +103,7 @@ describe('OAuthClientsService.resolve', () => {
         expect(stub.calls()).toBe(0);
     });
 
-    it('refuses an allowlisted client whose document cannot be read and was never cached', async () => {
+    it('refuses a client whose document cannot be read and was never cached', async () => {
         const result = await serviceWith(failingFetch).resolve({ clientId: 'https://client.test/unknown-client' });
 
         expect(result).toMatchObject({ ok: false, code: OAuthErrorCode.InvalidClient });
@@ -130,6 +148,21 @@ describe('OAuthClientsService.resolve', () => {
         const result = await serviceWith(stub.fetch).resolve({ clientId });
 
         expect(result).toMatchObject({ ok: true, client: { logoUri: null } });
+    });
+
+    it('re-evaluates verification per read rather than storing it', async () => {
+        const clientId = 'https://client.test/relisted-client';
+        const stub = servingDocument({ ...DOCUMENT, client_id: clientId });
+
+        const before = await serviceWith(stub.fetch).resolve({ clientId });
+        const after = await new OAuthClientsService({
+            db,
+            metadata: new ClientIdMetadataService({ fetch: stub.fetch }),
+            verifiedClientIds: [clientId],
+        }).resolve({ clientId });
+
+        expect(before).toMatchObject({ ok: true, client: { verified: false } });
+        expect(after).toMatchObject({ ok: true, client: { verified: true } });
     });
 
     it('falls back to the host as a display name when the document names none', async () => {
