@@ -174,6 +174,15 @@ that path logs and moves on. `CATALOG_SEED_ON_STARTUP=false` opts out.
 Read the generated SQL before applying it — especially any `DROP`. `drizzle-kit` will happily
 generate a destructive migration from an innocent-looking rename.
 
+**Timestamps are UTC instants, rendered locally by the client.** Application timestamp columns
+use `timestamptz` from `packages/db/src/schema/timestamptz.ts`, never `timestamp(...)` with
+`withTimezone`/`mode` spelled out by hand: the custom type converts Postgres' own rendering
+(`2026-09-19 23:50:21.6+00`) to ISO 8601 on read, so the wire format does not depend on the
+database session's `TimeZone` and every browser can parse it. Servers stamp instants
+(`new Date().toISOString()`) and never a local wall-clock time; `apps/web` formats with local
+`Date` getters so a workout reads in the user's own zone. Better Auth's naive `timestamp` columns
+are the deliberate exception - see Auth above.
+
 Naming is **snake_case** throughout, matching Postgres convention.
 
 `packages/db` is the only package allowed to import `drizzle-orm` directly outside of schema files.

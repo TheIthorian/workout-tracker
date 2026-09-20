@@ -1,4 +1,5 @@
-import { foreignKey, integer, pgTable, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { foreignKey, integer, pgTable, uuid } from 'drizzle-orm/pg-core';
+import { timestamptz } from './timestamptz.js';
 import { user } from './auth.js';
 
 /**
@@ -19,7 +20,7 @@ export const userLockout = pgTable(
     {
         userId: uuid('user_id').primaryKey().notNull(),
         accessFailedCount: integer('access_failed_count').default(0).notNull(),
-        lockoutEnd: timestamp('lockout_end', { withTimezone: true, mode: 'string' }),
+        lockoutEnd: timestamptz('lockout_end'),
     },
     (table) => [
         foreignKey({

@@ -1,6 +1,7 @@
 import { OnboardingStage } from '@app/domain';
 import { sql } from 'drizzle-orm';
-import { foreignKey, index, pgEnum, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { foreignKey, index, pgEnum, pgTable, primaryKey, text, uuid } from 'drizzle-orm/pg-core';
+import { timestamptz } from './timestamptz.js';
 import { user } from './auth.js';
 
 /**
@@ -17,10 +18,10 @@ export const workspaces = pgTable('workspaces', {
     id: uuid('id').primaryKey().defaultRandom().notNull(),
     name: text('name').notNull(),
     onboardingStage: onboardingStageEnum('onboarding_stage').default(OnboardingStage.Equipment).notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+    createdAt: timestamptz('created_at')
         .default(sql`now()`)
         .notNull(),
-    updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' })
+    updatedAt: timestamptz('updated_at')
         .default(sql`now()`)
         .notNull(),
 });
@@ -35,7 +36,7 @@ export const workspaceUsers = pgTable(
         workspaceId: uuid('workspace_id').notNull(),
         userId: uuid('user_id').notNull(),
         role: workspaceRole('role').default('member').notNull(),
-        createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+        createdAt: timestamptz('created_at')
             .default(sql`now()`)
             .notNull(),
     },

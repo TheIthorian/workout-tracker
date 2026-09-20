@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
-import { check, foreignKey, index, integer, numeric, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { check, foreignKey, index, integer, numeric, pgTable, text, uuid } from 'drizzle-orm/pg-core';
+import { timestamptz } from './timestamptz.js';
 import { user } from './auth.js';
 import { exercises } from './exercises.js';
 import { workspaces } from './workspaces.js';
@@ -17,11 +18,11 @@ export const routines = pgTable(
         createdByUserId: uuid('created_by_user_id'),
         name: text('name').notNull(),
         description: text('description'),
-        archivedAt: timestamp('archived_at', { withTimezone: true, mode: 'string' }),
-        createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+        archivedAt: timestamptz('archived_at'),
+        createdAt: timestamptz('created_at')
             .default(sql`now()`)
             .notNull(),
-        updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' })
+        updatedAt: timestamptz('updated_at')
             .default(sql`now()`)
             .notNull(),
     },
@@ -64,10 +65,10 @@ export const routineExercises = pgTable(
         targetWeightKg: numeric('target_weight_kg', { precision: 7, scale: 2, mode: 'number' }),
         targetDurationSeconds: integer('target_duration_seconds'),
         targetDistanceM: numeric('target_distance_m', { precision: 9, scale: 2, mode: 'number' }),
-        createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+        createdAt: timestamptz('created_at')
             .default(sql`now()`)
             .notNull(),
-        updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' })
+        updatedAt: timestamptz('updated_at')
             .default(sql`now()`)
             .notNull(),
     },

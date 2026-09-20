@@ -9,10 +9,10 @@ import {
     pgEnum,
     pgTable,
     text,
-    timestamp,
     uniqueIndex,
     uuid,
 } from 'drizzle-orm/pg-core';
+import { timestamptz } from './timestamptz.js';
 import { user } from './auth.js';
 import { workspaces } from './workspaces.js';
 
@@ -95,11 +95,11 @@ export const exercises = pgTable(
         guideExecution: text('guide_execution'),
         guideCues: text('guide_cues'),
         guideMistakes: text('guide_mistakes'),
-        archivedAt: timestamp('archived_at', { withTimezone: true, mode: 'string' }),
-        createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+        archivedAt: timestamptz('archived_at'),
+        createdAt: timestamptz('created_at')
             .default(sql`now()`)
             .notNull(),
-        updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' })
+        updatedAt: timestamptz('updated_at')
             .default(sql`now()`)
             .notNull(),
     },
@@ -137,7 +137,7 @@ export const exerciseGuideImages = pgTable(
         contentType: text('content_type').notNull(),
         caption: text('caption'),
         position: integer('position').notNull(),
-        createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+        createdAt: timestamptz('created_at')
             .default(sql`now()`)
             .notNull(),
     },
@@ -176,7 +176,7 @@ export const exerciseLinks = pgTable(
         url: text('url').notNull(),
         label: text('label'),
         position: integer('position').notNull(),
-        createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+        createdAt: timestamptz('created_at')
             .default(sql`now()`)
             .notNull(),
     },
@@ -207,10 +207,10 @@ export const exercisePreferences = pgTable(
         workspaceId: uuid('workspace_id').notNull(),
         exerciseId: uuid('exercise_id').notNull(),
         restSeconds: integer('rest_seconds').notNull(),
-        createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+        createdAt: timestamptz('created_at')
             .default(sql`now()`)
             .notNull(),
-        updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' })
+        updatedAt: timestamptz('updated_at')
             .default(sql`now()`)
             .notNull(),
     },
@@ -253,7 +253,7 @@ export const exerciseTargets = pgTable(
         durationSeconds: integer('duration_seconds'),
         distanceM: numeric('distance_m', { precision: 9, scale: 2, mode: 'number' }),
         note: text('note'),
-        createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+        createdAt: timestamptz('created_at')
             .default(sql`now()`)
             .notNull(),
     },

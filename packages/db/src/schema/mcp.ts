@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
-import { customType, foreignKey, index, pgTable, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
+import { customType, foreignKey, index, pgTable, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
+import { timestamptz } from './timestamptz.js';
 import { user } from './auth.js';
 import { workspaces } from './workspaces.js';
 
@@ -24,12 +25,12 @@ export const mcpPersonalAccessTokens = pgTable(
         tokenHash: bytea('token_hash').notNull(),
         workspaceId: uuid('workspace_id').notNull(),
         name: varchar('name', { length: 128 }),
-        revokedAt: timestamp('revoked_at', { withTimezone: true, mode: 'string' }),
-        lastUsedAt: timestamp('last_used_at', { withTimezone: true, mode: 'string' }),
-        createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+        revokedAt: timestamptz('revoked_at'),
+        lastUsedAt: timestamptz('last_used_at'),
+        createdAt: timestamptz('created_at')
             .default(sql`now()`)
             .notNull(),
-        updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' })
+        updatedAt: timestamptz('updated_at')
             .default(sql`now()`)
             .notNull(),
     },
