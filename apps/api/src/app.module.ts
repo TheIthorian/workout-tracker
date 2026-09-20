@@ -6,6 +6,7 @@ import { ExercisesModule } from './exercises/exercises.module.js';
 import { HealthController } from './health/health.controller.js';
 import { InfrastructureModule } from './infrastructure.module.js';
 import { MeModule } from './me/me.module.js';
+import { OAuthModule } from './oauth/oauth.module.js';
 import { OnboardingModule } from './onboarding/onboarding.module.js';
 import { RoutinesModule } from './routines/routines.module.js';
 import { SessionsModule } from './sessions/sessions.module.js';
@@ -28,6 +29,7 @@ import { WorkspacesModule } from './workspaces/workspaces.module.js';
     imports: [
         InfrastructureModule,
         AuthModule,
+        OAuthModule,
         MeModule,
         WorkspacesModule,
         EquipmentPresetsModule,

@@ -249,3 +249,48 @@ export class SessionUnavailableError extends AppError {
         );
     }
 }
+
+/**
+ * The OAuth 2.0 error codes this project emits, as `error` in a token-endpoint body or an `error=`
+ * redirect parameter. `UnsupportedClient` is not in RFC 6749 — it names this server's own rule that
+ * a client must publish a Client ID Metadata Document on an allowlisted domain, which no registered
+ * code describes.
+ */
+export enum OAuthErrorCode {
+    InvalidRequest = 'invalid_request',
+    InvalidClient = 'invalid_client',
+    InvalidGrant = 'invalid_grant',
+    UnauthorizedClient = 'unauthorized_client',
+    UnsupportedGrantType = 'unsupported_grant_type',
+    UnsupportedResponseType = 'unsupported_response_type',
+    InvalidScope = 'invalid_scope',
+    AccessDenied = 'access_denied',
+    ServerError = 'server_error',
+    UnsupportedClient = 'unsupported_client',
+}
+
+/**
+ * Thrown when an OAuth request fails in a way the protocol itself defines an answer for.
+ *
+ * It carries a problem body like every other error here, so an unguarded path still renders RFC
+ * 7807, but the OAuth endpoints are served through a filter that reads {@link oauthError} instead:
+ * RFC 6749 §5.2 fixes the shape of a token-endpoint failure, and a client parsing that shape cannot
+ * read a problem document.
+ */
+export class OAuthProtocolError extends AppError {
+    constructor(
+        public readonly oauthError: OAuthErrorCode,
+        public readonly errorDescription: string,
+        status = 400,
+    ) {
+        super(
+            errorDescription,
+            buildProblem({
+                errorName: 'OAuthProtocolError',
+                title: oauthError,
+                status,
+                detail: errorDescription,
+            }),
+        );
+    }
+}

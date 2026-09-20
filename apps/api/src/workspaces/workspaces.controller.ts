@@ -1,5 +1,5 @@
 import { guidSchema, type WorkspaceListItem, type WorkspaceResponse } from '@app/api-contract';
-import { CurrentUser, SessionOrMcpPatGuard, ValidatedParam, type CurrentUserContext } from '@app/nest-common';
+import { CurrentUser, SessionOrMcpBearerGuard, ValidatedParam, type CurrentUserContext } from '@app/nest-common';
 import type { WorkspacesService } from '@app/services';
 import { Controller, Get, Inject, UseGuards } from '@nestjs/common';
 import { WORKSPACES_SERVICE } from './workspaces.providers.js';
@@ -21,14 +21,14 @@ export class WorkspacesController {
 
     /** Every workspace the caller belongs to. */
     @Get()
-    @UseGuards(SessionOrMcpPatGuard)
+    @UseGuards(SessionOrMcpBearerGuard)
     async listWorkspaces(@CurrentUser() currentUser: CurrentUserContext): Promise<WorkspaceListItem[]> {
         return this.workspaces.listForUser(currentUser.userId);
     }
 
     /** One workspace with its member list. */
     @Get(':workspaceId')
-    @UseGuards(SessionOrMcpPatGuard)
+    @UseGuards(SessionOrMcpBearerGuard)
     async getWorkspace(
         @CurrentUser() currentUser: CurrentUserContext,
         @ValidatedParam({ name: 'workspaceId', schema: guidSchema }) workspaceId: string,

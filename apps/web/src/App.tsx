@@ -27,6 +27,8 @@ const HistoryPage = lazy(() => import('./pages/HistoryPage'));
 const SessionDetailPage = lazy(() => import('./pages/sessions/SessionDetailPage'));
 const NotFoundError = lazy(() => import('./pages/NotFoundError'));
 const ForbiddenError = lazy(() => import('./pages/ForbiddenError'));
+const OAuthConsentPage = lazy(() => import('./pages/oauth/OAuthConsentPage'));
+const OAuthErrorPage = lazy(() => import('./pages/oauth/OAuthErrorPage'));
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -79,6 +81,15 @@ const router = createBrowserRouter(
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/403" element={<ForbiddenError />} />
+            <Route path="/oauth/error" element={<OAuthErrorPage />} />
+            <Route
+                path="/oauth/consent"
+                element={
+                    <ProtectedRoute>
+                        <OAuthConsentPage />
+                    </ProtectedRoute>
+                }
+            />
             <Route
                 path="/welcome"
                 element={

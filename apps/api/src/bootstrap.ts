@@ -3,6 +3,7 @@ import cookie from '@fastify/cookie';
 import multipart from '@fastify/multipart';
 import { createLogger, type Logger } from '@app/logger';
 import { AppErrorFilter, PinoNestLogger, RequestContextMiddleware, registerRequestLogging } from '@app/nest-common';
+import { RequestMethod } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { AppModule } from './app.module.js';
@@ -65,7 +66,12 @@ export async function configureApp(app: NestFastifyApplication, { logger }: { lo
     registerRequestContextHook(app);
     registerRequestLogging({ app: app.getHttpAdapter().getInstance(), logger });
 
-    app.setGlobalPrefix('api');
+    // RFC 8414 §3 derives the metadata document's location from the issuer identifier, which is
+    // this deployment's origin - a client looks for it at `/.well-known/...` and nowhere else, so
+    // that one route cannot sit behind the application's prefix.
+    app.setGlobalPrefix('api', {
+        exclude: [{ path: '.well-known/oauth-authorization-server', method: RequestMethod.GET }],
+    });
     app.useGlobalFilters(new AppErrorFilter(logger));
 
     const corsOrigin = String(env['CORS_ORIGIN']);

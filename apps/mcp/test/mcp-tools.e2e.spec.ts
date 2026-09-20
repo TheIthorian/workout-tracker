@@ -9,6 +9,7 @@ import {
     seedRoutine,
     seedUser,
     seedWorkspace,
+    TEST_MCP_BASE_URL,
     TEST_WEB_APP_BASE_URL,
     toolResultBody,
     type TestApp,
@@ -37,8 +38,8 @@ describe('MCP tools', () => {
         await app?.close();
     });
 
-    it('sends server instructions describing token-scoped user data', () => {
-        expect(client.getInstructions()).toContain('The MCP URL token determines which user data');
+    it('sends server instructions describing account-scoped user data', () => {
+        expect(client.getInstructions()).toContain('The authorized account determines which user data');
     });
 
     it('calls get_current_user through the real transport and gets the real user back', async () => {
@@ -53,15 +54,35 @@ describe('MCP tools', () => {
         expect(result.isError).toBe(true);
     });
 
-    it('rejects a request whose path token does not validate, before any tool runs', async () => {
+    it('rejects a bearer token that does not validate, before any tool runs, and says where to authorize', async () => {
         const response = await app.inject({
             method: 'POST',
-            url: '/mcp/not-a-real-token',
+            url: '/mcp',
+            headers: {
+                'content-type': 'application/json',
+                accept: 'application/json, text/event-stream',
+                authorization: 'Bearer not-a-real-token',
+            },
+            payload: { jsonrpc: '2.0', id: 1, method: 'tools/list' },
+        });
+
+        expect(response.statusCode).toBe(401);
+        expect(response.headers['www-authenticate']).toContain(
+            `resource_metadata="${TEST_MCP_BASE_URL}/.well-known/oauth-protected-resource/mcp"`,
+        );
+    });
+
+    // A client with no credential at all has to be told where to get one, not merely refused.
+    it('challenges a request with no Authorization header', async () => {
+        const response = await app.inject({
+            method: 'POST',
+            url: '/mcp',
             headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' },
             payload: { jsonrpc: '2.0', id: 1, method: 'tools/list' },
         });
 
         expect(response.statusCode).toBe(401);
+        expect(response.headers['www-authenticate']).toContain('resource_metadata=');
     });
 
     describe('exercise tools', () => {

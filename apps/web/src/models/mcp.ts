@@ -1,16 +1,32 @@
-export type McpAccessTokenCreated = {
-    id: string;
-    workspaceId: string;
-    /** The plaintext token, returned exactly once at creation and unrecoverable afterwards. */
-    token: string;
+/** An MCP client the signed-in user has connected through the OAuth flow. */
+export type ConnectedApp = {
+    clientId: string;
+    clientName: string;
+    clientUri: string | null;
+    logoUri: string | null;
+    scopes: string[];
+    connectedAt: string;
+    lastUsedAt: string | null;
+};
+
+/** The URL a user pastes into an MCP client to start the flow. Carries no credential. */
+export type McpConnection = {
     mcpUrl: string;
 };
 
-export type McpAccessTokenListItem = {
-    id: string;
-    workspaceId: string;
-    name: string | null;
-    createdAt: string;
-    lastUsedAt: string | null;
-    revokedAt: string | null;
+/** What the consent screen renders about a pending authorization request. */
+export type OAuthConsentRequest = {
+    requestId: string;
+    clientId: string;
+    clientName: string;
+    clientUri: string | null;
+    logoUri: string | null;
+    tosUri: string | null;
+    policyUri: string | null;
+    /** The hosts approving would send the browser to — the part a user can actually check. */
+    redirectHosts: string[];
+    scopes: string[];
+    previouslyApproved: boolean;
 };
+
+export type OAuthConsentDecision = 'approve' | 'deny';

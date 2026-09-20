@@ -39,7 +39,7 @@ packages/
   domain/           # Pure logic, no I/O
   catalog/          # Exercise content file format and loader (reads the filesystem, nothing else)
   services/         # Business logic as plain classes, no framework
-  auth/             # Better Auth wiring, sign-in lockout, MCP token issuing
+  auth/             # Better Auth wiring, sign-in lockout, MCP access-token hashing and validation
   storage/          # S3/MinIO/R2 access
   image/            # sharp-based catalog image processing; linked by apps/admin and the API's startup seed
   llm/              # OpenAI-compatible client wrapper
@@ -54,7 +54,7 @@ single source of truth for the wire format: the API validates against it and cli
 it. Adding an endpoint starts with a schema in `api-contract`, not a controller method.
 
 `api-client` is NOT built on `api-contract` — it is a small, generically-typed `fetch` wrapper that
-holds an MCP personal access token and forwards it as `Authorization: Bearer`, built for `apps/mcp`.
+holds an MCP OAuth access token and forwards it as `Authorization: Bearer`, built for `apps/mcp`.
 `apps/web`'s browser client is a separate, cookie-session-based implementation
 (`apps/web/src/lib/http-client.ts`), not this package — if a future SPA client is derived from
 `api-contract`, it needs its own name; this one is taken.
@@ -149,9 +149,10 @@ and returns the same 404 as another tenant's row. Only the seed writes catalog r
 right answer for a non-member and for a row in another workspace. `ForbiddenActionError` is only for
 a caller who is already a member and merely too junior — they already know the workspace exists.
 
-MCP personal access tokens are **pinned to one workspace**. `McpPatAuthGuard` compares the
-`workspaceId` path segment against the token's own and rejects a mismatch, because membership is
-scoped by user and an unpinned token would otherwise reach every workspace its owner belongs to.
+MCP OAuth grants are **pinned to one workspace**, and so is every token issued under one.
+`McpBearerAuthGuard` compares the `workspaceId` path segment against the token's own and rejects a
+mismatch, because membership is scoped by user and an unpinned token would otherwise reach every
+workspace its owner belongs to.
 
 ## Database
 
@@ -226,10 +227,23 @@ no offset recorded, so it is only correct if every writer and reader agrees on o
 that boots this package (`apps/api`, `apps/admin`, and any future process touching these tables)
 must run with `TZ=UTC` in its Docker image and deployment config.
 
-MCP personal-access-token auth is separate: a hashed-token table plus a Nest guard
-(`McpPatAuthGuard`, `packages/nest-common`). `apps/mcp` holds no database connection of its own, so
-it forwards the token it was given to `apps/api` as `Authorization: Bearer` on every call rather
-than validating it locally.
+**MCP auth is OAuth 2.1, not personal access tokens.** `apps/api` is the authorization server
+(`apps/api/src/oauth`, and read its README before changing anything there); `apps/mcp` is the
+protected resource. A Nest guard (`McpBearerAuthGuard`, `packages/nest-common`) validates the
+presented access token against `oauth_access_tokens` and the grant behind it. `apps/mcp` holds no
+database connection of its own, so it forwards the token it was given to `apps/api` as
+`Authorization: Bearer` on every call rather than validating it locally.
+
+- **A client identifies itself with a Client ID Metadata Document, never a registered id.** The
+  `client_id` is an https URL serving that document; there is no dynamic registration endpoint and
+  no first-party client list, and none should be added.
+- **The document's host must appear in `MCP_OAUTH_ALLOWED_CLIENT_DOMAINS`**, compared exactly and
+  case-insensitively. That variable is the entire admission policy for MCP clients. Never relax the
+  comparison to a suffix or subdomain match: `evil-claude.ai` ends with `claude.ai`.
+- **Access and refresh tokens are opaque and stored as sha256 hashes**, so a disconnected app stops
+  working on one write. Do not replace them with JWTs.
+- **A failure that involves the client's own identity is rendered to the user, never redirected**
+  back to the `redirect_uri` — an unproven URI plus an error redirect is an open redirect.
 
 ## Architecture
 
@@ -244,11 +258,16 @@ route has no guard, or if an MCP token can reach a route not on its allowlist. T
 `APP_GUARD`, so a route added with no `@UseGuards()` is completely unauthenticated. Do not add a
 route to that allowlist just to make the test pass.
 
+`src/oauth` is the OAuth 2.1 authorization server — see its README. Its `.well-known` document is
+the one route excluded from the `api` global prefix (`bootstrap.ts`), because RFC 8414 derives that
+document's location from the issuer origin; `route-guard-coverage.e2e.spec.ts` mirrors that
+exclusion so its allowlists describe the URLs actually served.
+
 ### apps/mcp
 
 MCP tools as their own deployable process, and **a thin HTTP client of `apps/api`, not a second
 process that touches the database.** Every tool calls `apps/api` over REST through
-`@app/api-client`'s `ApiClient`, forwarding the caller's personal access token. It holds no database
+`@app/api-client`'s `ApiClient`, forwarding the caller's OAuth access token. It holds no database
 pool, no object storage client and no LLM client — `@app/db` and `@app/services` are
 `devDependencies` only, used by its test harness, never by the running process. Its required
 configuration is `PORT`, `NODE_ENV`, the `LOG_*` keys, `WEB_APP_BASE_URL`, `API_BASE_URL`,
@@ -257,6 +276,11 @@ credential.
 
 The workspace comes from the token, never from a tool argument. Exposing it as an argument would be
 a contract error, not a convenience.
+
+It is also an OAuth 2.1 protected resource: it serves RFC 9728 metadata at
+`/.well-known/oauth-protected-resource`, and answers an absent or refused bearer token with a 401
+carrying `WWW-Authenticate: Bearer ... resource_metadata="..."`. A 401 without that header leaves a
+client with nowhere to go.
 
 ### apps/admin
 
@@ -303,7 +327,7 @@ Drizzle schema, the Postgres client, a transaction helper, and the workspace-sco
 ### packages/nest-common
 
 Cross-cutting Nest pieces: the Zod validation pipe, the exception filter that turns `@app/errors`
-instances into RFC 7807 responses, guards (session, MCP PAT, and the either-one guard), and
+instances into RFC 7807 responses, guards (session, MCP bearer token, and the either-one guard), and
 interceptors. `apps/api`, `apps/mcp`, and `apps/admin` all depend on this rather than each
 reimplementing request validation or error mapping.
 

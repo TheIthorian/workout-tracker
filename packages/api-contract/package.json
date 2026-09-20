@@ -19,6 +19,7 @@
     },
     "dependencies": {
         "@app/domain": "workspace:*",
+        "@app/errors": "workspace:*",
         "zod": "4.4.3"
     },
     "devDependencies": {

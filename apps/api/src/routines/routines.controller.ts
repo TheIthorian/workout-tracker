@@ -16,7 +16,7 @@ import {
     CurrentUser,
     RESOURCE_URL_GENERATOR,
     ResourceUrlGenerator,
-    SessionOrMcpPatGuard,
+    SessionOrMcpBearerGuard,
     ValidatedBody,
     ValidatedParam,
     ValidatedQuery,
@@ -28,11 +28,11 @@ import { ROUTINES_SERVICE } from './routines.providers.js';
 
 /**
  * Routines: the workspace's workout templates. Every route here is one an MCP tool calls, so the
- * class-level guard admits a personal access token; the session-only slot routes live in
+ * class-level guard admits an MCP access token; the session-only slot routes live in
  * `RoutineExercisesController`.
  */
 @Controller('v1/workspaces/:workspaceId/routines')
-@UseGuards(SessionOrMcpPatGuard)
+@UseGuards(SessionOrMcpBearerGuard)
 export class RoutinesController {
     constructor(
         @Inject(ROUTINES_SERVICE) private readonly routines: RoutinesService,

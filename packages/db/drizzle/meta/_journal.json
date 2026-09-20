@@ -78,6 +78,20 @@
             "when": 1789851419419,
             "tag": "0010_clumsy_redwing",
             "breakpoints": true
+        },
+        {
+            "idx": 11,
+            "version": "7",
+            "when": 1789893234093,
+            "tag": "0011_drop_mcp_personal_access_tokens",
+            "breakpoints": true
+        },
+        {
+            "idx": 12,
+            "version": "7",
+            "when": 1789893239037,
+            "tag": "0012_add_oauth_tables",
+            "breakpoints": true
         }
     ]
 }

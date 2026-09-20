@@ -1,0 +1,1 @@
+DROP TABLE "mcp_personal_access_tokens" CASCADE;

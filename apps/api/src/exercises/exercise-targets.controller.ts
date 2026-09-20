@@ -7,7 +7,7 @@ import {
 } from '@app/api-contract';
 import {
     CurrentUser,
-    SessionOrMcpPatGuard,
+    SessionOrMcpBearerGuard,
     ValidatedBody,
     ValidatedParam,
     type CurrentUserContext,
@@ -20,11 +20,11 @@ import { EXERCISE_TARGETS_SERVICE } from './exercises.providers.js';
  * What to aim for next time on an exercise: the target the user or their coaching agent set, and
  * the suggestion built from it and the exercise's own history.
  *
- * Every route here carries `SessionOrMcpPatGuard` because setting a target is exactly what an agent
+ * Every route here carries `SessionOrMcpBearerGuard` because setting a target is exactly what an agent
  * is for — the app and the coach write to the same place, and the app reads back whatever is there.
  */
 @Controller('v1/workspaces/:workspaceId/exercises')
-@UseGuards(SessionOrMcpPatGuard)
+@UseGuards(SessionOrMcpBearerGuard)
 export class ExerciseTargetsController {
     constructor(@Inject(EXERCISE_TARGETS_SERVICE) private readonly targets: ExerciseTargetsService) {}
 

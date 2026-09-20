@@ -9,6 +9,6 @@ export * from './muscle-volume.contract.js';
 export * from './onboarding.contract.js';
 export * from './routine.contract.js';
 export * from './session.contract.js';
-export * from './mcp-token.contract.js';
+export * from './oauth.contract.js';
 export * from './mcp-tool.contract.js';
 export * from './resource-paths.js';

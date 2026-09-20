@@ -11,8 +11,8 @@ export const analyticsEvents = {
     userLoggedIn: 'user_logged_in',
     userLoggedOut: 'user_logged_out',
     userRegistered: 'user_registered',
-    mcpAccessTokenCreated: 'mcp_access_token_created',
-    mcpAccessTokenRevoked: 'mcp_access_token_revoked',
+    mcpAppConnected: 'mcp_app_connected',
+    mcpAppDisconnected: 'mcp_app_disconnected',
 } as const;
 
 type AnalyticsEventName = (typeof analyticsEvents)[keyof typeof analyticsEvents];

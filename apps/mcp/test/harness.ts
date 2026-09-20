@@ -1,11 +1,11 @@
 import { randomUUID } from 'node:crypto';
-import { UserProvisioningService } from '@app/auth';
+import { generateOpaqueToken, hashOpaqueToken, UserProvisioningService } from '@app/auth';
 import { schema, type Db } from '@app/db';
 import { startTestDatabase } from '@app/db/testing';
 import { TrackingType } from '@app/domain';
 import {
+    ACCESS_TOKEN_TTL_SECONDS,
     ExercisesService,
-    McpAccessTokensService,
     RoutinesService,
     WorkspaceMembershipService,
     WorkspaceRole,
@@ -25,7 +25,7 @@ import { APP_LOGGER } from '../src/providers.js';
 // both apps live in this one pnpm workspace, so the relative path always resolves.
 import { createTestApp as createApiTestApp } from '../../api/test/harness.js';
 
-const { workspaces, workspaceUsers } = schema;
+const { oauthAccessTokens, oauthGrants, workspaces, workspaceUsers } = schema;
 
 /** Test auth config. Never used to sign anything real - only Postgres and a throwaway process share it. */
 const TEST_AUTH_CONFIG = {
@@ -40,8 +40,11 @@ export const TEST_WEB_APP_BASE_URL = 'https://app.test';
 /** The REST API origin every `resourceUrl` in a test result is built from. */
 export const TEST_API_BASE_URL = 'https://api.test';
 
-/** This server's own origin. Nothing here builds an `mcpUrl`; the setting is required all the same. */
+/** This server's own origin, and the one every protected-resource metadata assertion pins. */
 export const TEST_MCP_BASE_URL = 'https://mcp.test';
+
+/** The client id every seeded grant is attributed to. */
+export const TEST_OAUTH_CLIENT_ID = 'https://client.test/oauth-client';
 
 export type TestApp = {
     inject: NestFastifyApplication['inject'];
@@ -129,16 +132,33 @@ export async function seedWorkspace(
 }
 
 /**
- * Issues a real personal access token through `McpAccessTokensService`, so a test authenticates the
- * same way a client does - against a stored sha256 hash - rather than against a row hand-inserted
- * with a shape the service might not produce.
+ * Issues an OAuth access token the way the token endpoint does - a grant row plus a token row
+ * holding only the sha256 hash - so a test authenticates against exactly what `apps/api` reads.
  */
 export async function seedMcpToken(
     db: Db,
     { userId, workspaceId }: { userId: string; workspaceId: string },
 ): Promise<string> {
-    const service = new McpAccessTokensService({ db, membership: new WorkspaceMembershipService({ db }) });
-    const { token } = await service.createToken({ userId, workspaceId, name: 'test' });
+    const token = generateOpaqueToken();
+
+    const [grant] = await db
+        .insert(oauthGrants)
+        .values({ userId, clientId: TEST_OAUTH_CLIENT_ID, workspaceId, scopes: ['mcp'] })
+        .onConflictDoUpdate({
+            target: [oauthGrants.userId, oauthGrants.clientId],
+            set: { workspaceId, scopes: ['mcp'], revokedAt: null },
+        })
+        .returning({ id: oauthGrants.id });
+
+    await db.insert(oauthAccessTokens).values({
+        tokenHash: hashOpaqueToken(token),
+        grantId: grant.id,
+        clientId: TEST_OAUTH_CLIENT_ID,
+        userId,
+        workspaceId,
+        scopes: ['mcp'],
+        expiresAt: new Date(Date.now() + ACCESS_TOKEN_TTL_SECONDS * 1000).toISOString(),
+    });
 
     return token;
 }
@@ -174,11 +194,15 @@ export async function seedRoutine(
     return service.create({ userId, workspaceId, name });
 }
 
-/** An MCP client connected through the real HTTP transport to `/mcp/{token}`. */
+/** An MCP client connected through the real HTTP transport, presenting a bearer token. */
 export async function connectedClient(app: TestApp, { token }: { token: string }): Promise<Client> {
     const client = new Client({ name: 'mcp-e2e-test', version: '0.0.1' });
 
-    await client.connect(new StreamableHTTPClientTransport(new URL(`${app.baseUrl}/mcp/${token}`)));
+    await client.connect(
+        new StreamableHTTPClientTransport(new URL(`${app.baseUrl}/mcp`), {
+            requestInit: { headers: { authorization: `Bearer ${token}` } },
+        }),
+    );
 
     return client;
 }

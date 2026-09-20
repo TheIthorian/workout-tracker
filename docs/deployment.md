@@ -83,6 +83,7 @@ Set these on `api`:
 | `WEB_APP_BASE_URL`                         | Pages/custom web origin                                |
 | `API_BASE_URL`                             | Public API origin                                      |
 | `MCP_BASE_URL`                             | Public MCP origin                                      |
+| `MCP_OAUTH_ALLOWED_CLIENT_DOMAINS`         | Comma-separated hosts MCP clients may publish from     |
 | `PROBLEM_TYPE_BASE`                        | Stable URI base, e.g. `https://api.example.com/errors` |
 | `S3_ENDPOINT`                              | `https://<account id>.r2.cloudflarestorage.com`        |
 | `S3_REGION`                                | `auto` (R2 accepts nothing else)                       |
@@ -256,8 +257,17 @@ curl -fsS https://<mcp>/health
 curl -I https://<web>/
 ```
 
-Then sign up through the web app, create a workspace, and create an MCP personal access token from
-Settings. The returned `mcpUrl` is the URL an MCP client connects to.
+Discovery should answer before anything else does:
+
+```bash
+curl -fsS https://<api>/.well-known/oauth-authorization-server
+curl -fsS https://<mcp>/.well-known/oauth-protected-resource
+```
+
+Then sign up through the web app and copy the server URL from Settings → Integrations into an MCP
+client. The client will send you back to the web app to sign in and approve the connection. A client
+whose `client_id` host is not listed in `MCP_OAUTH_ALLOWED_CLIENT_DOMAINS` is refused at that point,
+so check that variable first if a connection stops at the "this app cannot connect" page.
 
 ## CI/CD
 

@@ -26,10 +26,10 @@ export async function createApp(): Promise<NestFastifyApplication> {
  * Registers the hooks and filter the running app needs. Shared with `test/harness.ts` so a test
  * boots the same app a deployment does.
  *
- * No global prefix, unlike `apps/api`: the MCP endpoint's URL is `/mcp/{token}`, and that path is
- * baked into every access token already issued (`McpAccessTokenCreatedResponse.mcpUrl`), so
- * prefixing it would silently break every existing client. No compression either - the transport
- * writes an SSE stream, which must not be buffered by a compressor.
+ * No global prefix, unlike `apps/api`: the MCP endpoint is `/mcp` and its RFC 9728 metadata sits at
+ * `/.well-known/...`, whose location a client derives from the origin rather than from wherever
+ * this app mounts its routes. No compression either - the transport writes an SSE stream, which
+ * must not be buffered by a compressor.
  */
 export async function configureApp(app: NestFastifyApplication, { logger }: { logger: Logger }): Promise<void> {
     registerRequestContextHook(app);

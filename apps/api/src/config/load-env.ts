@@ -47,11 +47,17 @@ const schema = Joi.object({
     // identical links.
     WEB_APP_BASE_URL: Joi.string().uri().required(),
     API_BASE_URL: Joi.string().uri().required(),
-    // Origin of `apps/mcp`, the separate process serving `/mcp/{token}`. Required for the same
-    // reason as the pair above, and more urgently: it is the origin of the `mcpUrl` handed back
-    // when a personal access token is created, and this process serves no `/mcp` route to fall back
-    // on, so a missing value cannot degrade into a merely-wrong-looking link.
+    // Origin of `apps/mcp`, the separate process serving `/mcp`. Required for the same reason as
+    // the pair above, and more urgently: it is the origin of the `mcpUrl` a user pastes into their
+    // MCP client, and this process serves no `/mcp` route to fall back on, so a missing value
+    // cannot degrade into a merely-wrong-looking link.
     MCP_BASE_URL: Joi.string().uri().required(),
+    // Hosts allowed to serve a Client ID Metadata Document, comma-separated, compared exactly and
+    // case-insensitively. This is the whole admission policy for MCP clients: a client identifies
+    // itself by the https URL its metadata document is published at, and only a document served
+    // from a host named here is accepted. Required rather than defaulted - a deployment has to
+    // state whose clients it trusts, and an empty string is a valid, explicit "none yet".
+    MCP_OAUTH_ALLOWED_CLIENT_DOMAINS: Joi.string().allow('').required(),
     // Origin catalog image URLs are built from: `${CATALOG_IMAGE_BASE_URL}/${storage_key}`. In
     // production a CDN in front of the bucket; locally MinIO's anonymous-read `catalog/` prefix.
     // Required: a missing value produces image URLs that look right and 404.

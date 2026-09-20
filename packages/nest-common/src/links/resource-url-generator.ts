@@ -26,7 +26,7 @@ const API_PREFIX = '/api/v1';
 
 /**
  * Builds absolute urls for anything this system exposes: a page in the web app, the API's own route
- * for the same thing, and the MCP endpoint a personal access token is used against. It knows
+ * for the same thing, and the MCP endpoint an access token is used against. It knows
  * nothing about any particular resource - a caller supplies the path, and this turns it into an
  * absolute url against the right origin.
  *
@@ -39,8 +39,8 @@ const API_PREFIX = '/api/v1';
  * request-derived origin does not survive the split into separate processes - the request reaching
  * `apps/mcp` is addressed to the MCP host, not to the API its links point at - and it also follows
  * whatever a proxy puts in `X-Forwarded-Host`. The MCP origin is the sharpest case:
- * `POST /v1/me/mcp-access-tokens` is served by `apps/api`, so a url built from that request's own
- * host addresses the API, which serves no `/mcp/{token}` route at all.
+ * `GET /v1/me/mcp-connection` is served by `apps/api`, so a url built from that request's own host
+ * addresses the API, which serves no `/mcp` route at all.
  *
  * Paths are passed in rather than looked up, because Nest has no named-route registry.
  */
@@ -75,9 +75,25 @@ export class ResourceUrlGenerator {
     }
 
     /**
+     * Absolute url on this API's own origin, outside the `/api/v1` prefix. The OAuth issuer
+     * identifier and the `.well-known` documents live here, because RFC 8414 derives their location
+     * from the origin rather than from wherever the application mounts its routes.
+     *
+     * @param path root-relative path, e.g. `/.well-known/oauth-authorization-server`.
+     */
+    apiOriginUrl({ path }: { path: string }): string {
+        return `${this.apiBaseUrl}${withLeadingSlash(path)}`;
+    }
+
+    /** The API's own origin, with no path. This is the OAuth issuer identifier. */
+    get issuer(): string {
+        return this.apiBaseUrl;
+    }
+
+    /**
      * Absolute url for a route on the MCP server, which is `apps/mcp` rather than this process.
      *
-     * @param path route path on that server, e.g. `/mcp/{token}`.
+     * @param path route path on that server, e.g. `/mcp`.
      */
     mcpUrl({ path }: { path: string }): string {
         return `${this.mcpBaseUrl}${withLeadingSlash(path)}`;

@@ -13,13 +13,7 @@ export {
     type LogoutParams,
 } from './auth.service.js';
 export { LockoutService, SIGN_IN_EMAIL_PATH } from './lockout.service.js';
-export {
-    extractMcpTokenFromPath,
-    generateMcpToken,
-    hashMcpToken,
-    McpTokenService,
-    type McpTokenValidationResult,
-} from './mcp-token.js';
+export { generateOpaqueToken, hashOpaqueToken, McpTokenService, type McpTokenValidationResult } from './oauth-token.js';
 export { toSessionFailure } from './session-failure.js';
 export {
     type SignUpParams,

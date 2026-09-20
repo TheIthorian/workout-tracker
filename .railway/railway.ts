@@ -66,6 +66,7 @@ export default defineRailway(() => {
             DB_MIGRATE_ON_STARTUP: preserve(),
             LLM_API_KEY: preserve(),
             MCP_BASE_URL: preserve(),
+            MCP_OAUTH_ALLOWED_CLIENT_DOMAINS: preserve(),
             PROBLEM_TYPE_BASE: preserve(),
             S3_ACCESS_KEY_ID: preserve(),
             S3_BUCKET: preserve(),

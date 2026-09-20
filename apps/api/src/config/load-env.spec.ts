@@ -10,6 +10,7 @@ const BASE_ENV = {
     API_BASE_URL: 'http://localhost:3000',
     MCP_BASE_URL: 'http://localhost:3100',
     CATALOG_IMAGE_BASE_URL: 'http://localhost:9000/wt-app',
+    MCP_OAUTH_ALLOWED_CLIENT_DOMAINS: 'claude.ai',
     S3_BUCKET: 'wt-app',
     S3_ACCESS_KEY_ID: 'minioadmin',
     S3_SECRET_ACCESS_KEY: 'minioadmin',
@@ -33,6 +34,7 @@ const MANAGED_KEYS = [
     'API_BASE_URL',
     'MCP_BASE_URL',
     'CATALOG_IMAGE_BASE_URL',
+    'MCP_OAUTH_ALLOWED_CLIENT_DOMAINS',
 ];
 
 describe('loadEnv', () => {
@@ -51,6 +53,7 @@ describe('loadEnv', () => {
         'API_BASE_URL',
         'MCP_BASE_URL',
         'CATALOG_IMAGE_BASE_URL',
+        'MCP_OAUTH_ALLOWED_CLIENT_DOMAINS',
         'S3_BUCKET',
         'S3_ACCESS_KEY_ID',
         'S3_SECRET_ACCESS_KEY',

@@ -1,12 +1,19 @@
-import { patchUserRequestSchema, type PatchUserRequest, type UserResponse } from '@app/api-contract';
+import {
+    patchUserRequestSchema,
+    type McpConnectionResponse,
+    type PatchUserRequest,
+    type UserResponse,
+} from '@app/api-contract';
 import type { AuthService } from '@app/auth';
 import type { UsersService } from '@app/services';
 import {
     CurrentUser,
-    McpPatAuthGuard,
+    McpBearerAuthGuard,
     McpSession,
+    RESOURCE_URL_GENERATOR,
+    ResourceUrlGenerator,
     SessionAuthGuard,
-    SessionOrMcpPatGuard,
+    SessionOrMcpBearerGuard,
     ValidatedBody,
     type CurrentUserContext,
     type McpContext,
@@ -21,7 +28,7 @@ import { USERS_SERVICE } from './me.providers.js';
  *
  * No class-level guard, deliberately: Nest ANDs a class-level guard with any method-level one
  * rather than letting the method loosen it, so a class default of `SessionAuthGuard` would make
- * `getMe` below unreachable by a token even with `@UseGuards(SessionOrMcpPatGuard)` added - that
+ * `getMe` below unreachable by a token even with `@UseGuards(SessionOrMcpBearerGuard)` added - that
  * guard would still run and pass, but so would the inherited `SessionAuthGuard`, and a token-only
  * request has no session to satisfy it. Every route below states its own guard explicitly instead.
  */
@@ -30,33 +37,43 @@ export class MeController {
     constructor(
         @Inject(USERS_SERVICE) private readonly usersService: UsersService,
         @Inject(AUTH_SERVICE) private readonly authService: AuthService,
+        @Inject(RESOURCE_URL_GENERATOR) private readonly urls: ResourceUrlGenerator,
     ) {}
 
     /**
-     * Resolves the MCP personal access token presented on this request to the identity and
-     * workspace it is scoped to. `apps/mcp` calls this once when a connection opens: it rejects an
-     * invalid token before the MCP transport is created, and supplies the workspace id every tool
-     * path needs.
+     * Resolves the OAuth access token presented on this request to the identity and workspace it is
+     * scoped to. `apps/mcp` calls this on every dispatch: it rejects an invalid token before the
+     * MCP transport is created, and supplies the workspace id every tool path needs.
      *
-     * Guarded by `McpPatAuthGuard` alone: a browser session has no token to resolve. This is the
-     * one route on the controller that must be reachable by a PAT and ONLY a PAT.
+     * Guarded by `McpBearerAuthGuard` alone: a browser session has no token to resolve. This is the
+     * one route on the controller that must be reachable by a token and ONLY a token.
      *
      * Declared ahead of any future `:param` route on this controller — a literal segment must
      * always be registered before a route that could capture it.
      */
     @Get('mcp-session')
-    @UseGuards(McpPatAuthGuard)
+    @UseGuards(McpBearerAuthGuard)
     async mcpSession(@McpSession() session: McpContext): Promise<{ userId: string; workspaceId: string }> {
         return { userId: session.userId, workspaceId: session.workspaceId };
     }
 
     /**
+     * The URL a user pastes into an MCP client to start the OAuth flow. Built from the configured
+     * MCP origin, not from this request: MCP is served by `apps/mcp`, a separate deployment, and a
+     * url derived from the host this request arrived on names an API with no `/mcp` route.
+     */
+    @Get('mcp-connection')
+    @UseGuards(SessionAuthGuard)
+    mcpConnection(): McpConnectionResponse {
+        return { mcpUrl: this.urls.mcpUrl({ path: '/mcp' }) };
+    }
+
+    /**
      * Returns the current user's profile and every workspace they belong to. `apps/mcp`'s
-     * `get_current_user` tool reaches this with a personal access token instead of a browser
-     * session.
+     * `get_current_user` tool reaches this with an OAuth access token instead of a browser session.
      */
     @Get()
-    @UseGuards(SessionOrMcpPatGuard)
+    @UseGuards(SessionOrMcpBearerGuard)
     async getMe(@CurrentUser() currentUser: CurrentUserContext): Promise<UserResponse> {
         return this.usersService.getUser(currentUser.userId);
     }

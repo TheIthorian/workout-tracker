@@ -14,7 +14,7 @@ import {
     CurrentUser,
     RESOURCE_URL_GENERATOR,
     ResourceUrlGenerator,
-    SessionOrMcpPatGuard,
+    SessionOrMcpBearerGuard,
     ValidatedBody,
     ValidatedParam,
     ValidatedQuery,
@@ -27,7 +27,7 @@ import { EXERCISES_SERVICE } from './exercises.providers.js';
 
 /** The exercise library a workspace sees: the shared catalog and its own custom exercises. */
 @Controller('v1/workspaces/:workspaceId/exercises')
-@UseGuards(SessionOrMcpPatGuard)
+@UseGuards(SessionOrMcpBearerGuard)
 export class ExercisesController {
     constructor(
         @Inject(EXERCISES_SERVICE) private readonly exercises: ExercisesService,

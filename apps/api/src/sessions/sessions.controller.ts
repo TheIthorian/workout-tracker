@@ -17,7 +17,7 @@ import {
     CurrentUser,
     RESOURCE_URL_GENERATOR,
     ResourceUrlGenerator,
-    SessionOrMcpPatGuard,
+    SessionOrMcpBearerGuard,
     ValidatedBody,
     ValidatedParam,
     ValidatedQuery,
@@ -29,7 +29,7 @@ import { WORKOUT_SESSIONS_SERVICE } from './sessions.providers.js';
 
 /** MCP-reachable workout session routes. */
 @Controller('v1/workspaces/:workspaceId/sessions')
-@UseGuards(SessionOrMcpPatGuard)
+@UseGuards(SessionOrMcpBearerGuard)
 export class SessionsController {
     constructor(
         @Inject(WORKOUT_SESSIONS_SERVICE) private readonly sessions: WorkoutSessionsService,
