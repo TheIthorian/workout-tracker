@@ -46,6 +46,19 @@ What this module adds on top is the response budget: a five-second timeout, a `c
 `application/json`, and a 64 KiB cap enforced **while streaming**, because `content-length` is a
 claim and a server that omits it must not be able to make this process buffer an endless body.
 
+## Discovery is world-readable
+
+`GET /.well-known/oauth-authorization-server`, `POST /oauth/token` and `POST /oauth/revoke` answer
+with `Access-Control-Allow-Origin: *` regardless of `CORS_ORIGIN`, and so does everything
+`apps/mcp` serves. A browser-based MCP client reads discovery from its own origin; one that cannot
+read it concludes discovery failed and falls back to guessing `POST /register`, which this server
+does not serve. `apps/mcp` also exposes `WWW-Authenticate`, or the challenge naming its
+protected-resource document is invisible to such a client.
+
+Safe because those routes are credential-free: none reads a cookie, so a wildcard hands a hostile
+page nothing it could not have fetched from its own server. The consent endpoints are
+cookie-authenticated and stay on the SPA-only policy.
+
 ## Where a failure goes
 
 `redirect_uri` is where an error response would be sent, so until the client is resolved **and** the

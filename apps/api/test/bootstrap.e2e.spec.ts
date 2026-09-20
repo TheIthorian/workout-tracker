@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createTestApp, signIn, type TestApp } from './harness.js';
+import { createTestApp, signIn, TEST_WEB_APP_BASE_URL, type TestApp } from './harness.js';
 
 /**
  * Exercises the plugin/CORS registration that lives in `configureApp` (`src/bootstrap.ts`) -
@@ -64,7 +64,25 @@ describe('app boot configuration (configureApp)', () => {
         expect(exerciseList.data.length).toBeGreaterThanOrEqual(15);
     });
 
-    it('answers a CORS preflight request with the configured origin policy', async () => {
+    it('answers a CORS preflight from the configured web origin, cookies allowed', async () => {
+        const response = await app.inject({
+            method: 'OPTIONS',
+            url: '/api/v1/workspaces',
+            headers: {
+                origin: TEST_WEB_APP_BASE_URL,
+                'access-control-request-method': 'GET',
+            },
+        });
+
+        expect(response.statusCode).toBe(204);
+        expect(response.headers['access-control-allow-origin']).toBe(TEST_WEB_APP_BASE_URL);
+        expect(response.headers['access-control-allow-methods']).toContain('GET');
+        // The session cookie only travels cross-origin when this is set, and it is only safe to set
+        // it because the origin above is a named one rather than a wildcard.
+        expect(response.headers['access-control-allow-credentials']).toBe('true');
+    });
+
+    it('refuses a CORS preflight from any other origin on a session-authenticated route', async () => {
         const response = await app.inject({
             method: 'OPTIONS',
             url: '/api/v1/workspaces',
@@ -74,14 +92,6 @@ describe('app boot configuration (configureApp)', () => {
             },
         });
 
-        expect(response.statusCode).toBe(204);
-        // CORS_ORIGIN defaults to '*' (see load-env.ts) when unset, as it is in this test process,
-        // which bootstrap.ts turns into `origin: true` - the underlying cors middleware then
-        // reflects the requesting origin back rather than emitting a literal wildcard.
-        expect(response.headers['access-control-allow-origin']).toBe('https://example.com');
-        expect(response.headers['access-control-allow-methods']).toContain('GET');
-        // credentials is false whenever CORS_ORIGIN is '*' (see bootstrap.ts), so no
-        // access-control-allow-credentials header should be present.
-        expect(response.headers['access-control-allow-credentials']).toBeUndefined();
+        expect(response.headers['access-control-allow-origin']).toBeUndefined();
     });
 });

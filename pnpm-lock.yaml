@@ -232,6 +232,9 @@ importers:
       '@app/nest-common':
         specifier: workspace:*
         version: link:../../packages/nest-common
+      '@fastify/cors':
+        specifier: 11.3.0
+        version: 11.3.0
       '@modelcontextprotocol/sdk':
         specifier: 1.30.0
         version: 1.30.0(zod@4.4.3)

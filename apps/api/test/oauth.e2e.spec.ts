@@ -144,6 +144,40 @@ describe('OAuth authorization server', () => {
 
             expect(JSON.parse(response.body)).not.toHaveProperty('registration_endpoint');
         });
+
+        // Discovery has to be world-readable: a browser-based client that cannot read it falls back
+        // to guessing a registration endpoint, which this server does not have.
+        it.each(['/.well-known/oauth-authorization-server', '/api/v1/oauth/token', '/api/v1/oauth/revoke'])(
+            'lets any origin read %s',
+            async (url) => {
+                const response = await app.inject({
+                    method: 'OPTIONS',
+                    url,
+                    headers: {
+                        origin: 'https://claude.ai',
+                        'access-control-request-method': 'POST',
+                        'access-control-request-headers': 'content-type',
+                    },
+                });
+
+                expect(response.headers['access-control-allow-origin']).toBe('*');
+            },
+        );
+
+        // The credential-carrying routes keep the narrow policy; a wildcard there would be a hole.
+        it('does not widen a cookie-authenticated route to any origin', async () => {
+            const response = await app.inject({
+                method: 'OPTIONS',
+                url: `/api/v1/oauth/consent/${randomUUID()}`,
+                headers: {
+                    origin: 'https://claude.ai',
+                    'access-control-request-method': 'POST',
+                    'access-control-request-headers': 'content-type',
+                },
+            });
+
+            expect(response.headers['access-control-allow-origin']).toBeUndefined();
+        });
     });
 
     describe('GET /oauth/authorize', () => {

@@ -1,3 +1,4 @@
+import cors from '@fastify/cors';
 import { createLogger, type Logger } from '@app/logger';
 import { AppErrorFilter, PinoNestLogger, RequestContextMiddleware, registerRequestLogging } from '@app/nest-common';
 import { NestFactory } from '@nestjs/core';
@@ -32,6 +33,16 @@ export async function createApp(): Promise<NestFastifyApplication> {
  * must not be buffered by a compressor.
  */
 export async function configureApp(app: NestFastifyApplication, { logger }: { logger: Logger }): Promise<void> {
+    // Every route here is credential-free in the browser's sense - there is no cookie, and the
+    // access token is a header a page must already hold to send - so a wildcard origin gives a
+    // hostile page nothing. Without it a browser-based MCP client cannot read the protected-resource
+    // document, and cannot read the `WWW-Authenticate` challenge that tells it where to authorize.
+    await app.register(cors, {
+        origin: '*',
+        credentials: false,
+        exposedHeaders: ['WWW-Authenticate', 'Mcp-Session-Id'],
+    });
+
     registerRequestContextHook(app);
     registerRequestLogging({ app: app.getHttpAdapter().getInstance(), logger });
 

@@ -28,4 +28,33 @@ describe('OAuth protected resource metadata', () => {
             });
         },
     );
+
+    // A browser-based client reads this from its own origin, and reads the challenge that points at
+    // it off a 401 - both need CORS, and `WWW-Authenticate` needs to be explicitly exposed.
+    it('lets any origin read the document', async () => {
+        const response = await app.inject({
+            method: 'GET',
+            url: '/.well-known/oauth-protected-resource',
+            headers: { origin: 'https://claude.ai' },
+        });
+
+        expect(response.headers['access-control-allow-origin']).toBe('*');
+    });
+
+    it('exposes the WWW-Authenticate challenge to a cross-origin caller', async () => {
+        const response = await app.inject({
+            method: 'POST',
+            url: '/mcp',
+            headers: {
+                origin: 'https://claude.ai',
+                'content-type': 'application/json',
+                accept: 'application/json, text/event-stream',
+            },
+            payload: { jsonrpc: '2.0', id: 1, method: 'tools/list' },
+        });
+
+        expect(response.statusCode).toBe(401);
+        expect(response.headers['access-control-allow-origin']).toBe('*');
+        expect(String(response.headers['access-control-expose-headers'])).toContain('WWW-Authenticate');
+    });
 });

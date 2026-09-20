@@ -253,6 +253,10 @@ database connection of its own, so it forwards the token it was given to `apps/a
   working on one write. Do not replace them with JWTs.
 - **A failure that involves the client's own identity is rendered to the user, never redirected**
   back to the `redirect_uri` — an unproven URI plus an error redirect is an open redirect.
+- **Discovery and the token endpoints answer `Access-Control-Allow-Origin: *`**, whatever
+  `CORS_ORIGIN` says, because a browser-based client reads them from its own origin — and one that
+  cannot read discovery falls back to guessing `POST /register`. They are credential-free, which is
+  what makes the wildcard safe; never extend it to a cookie-authenticated route.
 
 ## Architecture
 
