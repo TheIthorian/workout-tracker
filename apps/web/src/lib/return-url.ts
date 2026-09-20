@@ -6,7 +6,7 @@
  * it is a local path matching the allowlist below. Absolute, protocol-relative and encoded escapes
  * are rejected to rule out open redirects.
  */
-const allowedPathRoots = ['/routines', '/exercises', '/sessions'] as const;
+const allowedPathRoots = ['/routines', '/exercises', '/sessions', '/oauth'] as const;
 const allowedExactPaths = ['/', '/today', '/history', '/settings'] as const;
 // eslint-disable-next-line no-control-regex
 const controlCharacters = /[\u0000-\u001f\u007f]/;

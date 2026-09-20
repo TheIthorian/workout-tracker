@@ -1,11 +1,11 @@
 import { Global, Module } from '@nestjs/common';
 import {
     MCP_TOKEN_SERVICE,
-    McpPatAuthGuard,
+    McpBearerAuthGuard,
     RESOURCE_URL_GENERATOR,
     SESSION_AUTH_SERVICE,
     SessionAuthGuard,
-    SessionOrMcpPatGuard,
+    SessionOrMcpBearerGuard,
 } from '@app/nest-common';
 import {
     APP_LOGGER,
@@ -25,9 +25,9 @@ import {
  * guards themselves - to every feature module. `@Global()` plus `exports` makes these reachable
  * from every route-slice module without each one re-declaring or re-importing them.
  *
- * `SessionAuthGuard`, `McpPatAuthGuard` and `SessionOrMcpPatGuard` are exported here (rather than
+ * `SessionAuthGuard`, `McpBearerAuthGuard` and `SessionOrMcpBearerGuard` are exported here (rather than
  * left to Nest's per-controller `@UseGuards` auto-discovery) so every controller that references
- * them - directly or, for `SessionOrMcpPatGuard`, as a constructor dependency - resolves the same
+ * them - directly or, for `SessionOrMcpBearerGuard`, as a constructor dependency - resolves the same
  * instances from this one global container.
  *
  * Split out from `AppModule` so that module stays pure composition (imports only) while this one
@@ -50,8 +50,8 @@ import {
         STORAGE_SERVICE,
         CATALOG_IMAGE_BASE_URL,
         SessionAuthGuard,
-        McpPatAuthGuard,
-        SessionOrMcpPatGuard,
+        McpBearerAuthGuard,
+        SessionOrMcpBearerGuard,
     ],
 })
 export class InfrastructureModule {}

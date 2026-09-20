@@ -22,6 +22,14 @@ const GUARDS_METADATA = '__guards__';
 /** Every route in this app is served under this prefix (`app.setGlobalPrefix('api')`, bootstrap.ts). */
 const GLOBAL_PREFIX = 'api';
 
+/**
+ * Controller-relative paths `bootstrap.ts` excludes from that prefix. Kept in step by hand with the
+ * `exclude` list there, and asserted against below: a route mounted at the origin has to be
+ * reported at the path it is really served from, or this suite's allowlists would describe URLs
+ * that do not exist.
+ */
+const PREFIX_EXCLUDED_PATHS = new Set(['.well-known/oauth-authorization-server']);
+
 type RouteEntry = {
     method: string;
     path: string;
@@ -78,11 +86,42 @@ const PUBLIC_ROUTES: PublicRoute[] = [
         path: '/api/v1/auth/signup',
         reason: 'The sign-up flow itself (auth.controller.ts).',
     },
+    {
+        method: 'GET',
+        path: '/.well-known/oauth-authorization-server',
+        reason:
+            'RFC 8414 discovery. A client reads this before it has any credential at all, and its ' +
+            'location is derived from the issuer origin rather than from where this app mounts ' +
+            'routes - hence also outside the global prefix (well-known.controller.ts).',
+    },
+    {
+        method: 'GET',
+        path: '/api/v1/oauth/authorize',
+        reason:
+            'The OAuth authorization endpoint. A browser arrives here with no session as often as ' +
+            'with one; it redirects to the consent screen, which IS session-guarded, and issues ' +
+            'nothing by itself (oauth.controller.ts:authorize).',
+    },
+    {
+        method: 'POST',
+        path: '/api/v1/oauth/token',
+        reason:
+            'The OAuth token endpoint. The caller authenticates with the authorization code or ' +
+            'refresh token in the body plus its PKCE verifier, which is the whole point - there is ' +
+            'no session or bearer token to present yet (oauth.controller.ts:token).',
+    },
+    {
+        method: 'POST',
+        path: '/api/v1/oauth/revoke',
+        reason:
+            'RFC 7009 revocation. The presented token is the credential, and the route answers 200 ' +
+            'either way so it cannot be used to guess one (oauth.controller.ts:revoke).',
+    },
 ];
 
 /**
  * The exact routes `apps/mcp`'s tools call, and the ONLY routes that may carry
- * `SessionOrMcpPatGuard`. Adding a route to this list is a deliberate decision that a leaked MCP
+ * `SessionOrMcpBearerGuard`. Adding a route to this list is a deliberate decision that a leaked MCP
  * token can now reach it; it should never grow because a controller change happened to leave a
  * broader guard on by accident.
  */
@@ -136,25 +175,24 @@ const MCP_TOKEN_ROUTES: { method: string; path: string }[] = [
 ];
 
 /**
- * Routes that must be reachable by an MCP personal access token ALONE - no session fallback - and
- * so carry `McpPatAuthGuard` bare rather than `SessionOrMcpPatGuard`. A second, separate list from
+ * Routes that must be reachable by an MCP access token ALONE - no session fallback - and so carry
+ * `McpBearerAuthGuard` bare rather than `SessionOrMcpBearerGuard`. A second, separate list from
  * `MCP_TOKEN_ROUTES` because the guard class, and the reachability story, differ: `mcp-session` is
  * how `apps/mcp` resolves a token to a workspace before it has anything session-shaped to fall
  * back to. Same discipline as `MCP_TOKEN_ROUTES` applies - an entry here is a deliberate decision,
  * not something a route should gain by accident.
  */
-const PAT_ONLY_ROUTES: { method: string; path: string }[] = [{ method: 'GET', path: '/api/v1/me/mcp-session' }];
+const TOKEN_ONLY_ROUTES: { method: string; path: string }[] = [{ method: 'GET', path: '/api/v1/me/mcp-session' }];
 
 /**
  * Pins two review findings in place: (1) every route in `apps/api` is reachable only by something
  * that authenticates it - a route added later with no `@UseGuards()` at all is completely
- * unauthenticated, since this app has no `APP_GUARD` catching an unguarded route by default; (2) a
- * personal access token reaches exactly the routes `apps/mcp`'s tools call and nowhere else - via
- * either `SessionOrMcpPatGuard` (`MCP_TOKEN_ROUTES`) or bare `McpPatAuthGuard` (`PAT_ONLY_ROUTES`) -
- * so a PAT cannot silently gain a new route the way it did before the Critical findings this suite
- * cannot silently gain a new route. The property being checked is "PAT-reachable", not "carries
- * this one guard class": a bare `@UseGuards(McpPatAuthGuard)` grants a token exactly as much access
- * as `SessionOrMcpPatGuard` does and must be tracked the same way.
+ * unauthenticated, since this app has no `APP_GUARD` catching an unguarded route by default; (2) an
+ * MCP access token reaches exactly the routes `apps/mcp`'s tools call and nowhere else - via either
+ * `SessionOrMcpBearerGuard` (`MCP_TOKEN_ROUTES`) or bare `McpBearerAuthGuard` (`TOKEN_ONLY_ROUTES`)
+ * - so a token cannot silently gain a new route. The property being checked is "token-reachable",
+ * not "carries this one guard class": a bare `@UseGuards(McpBearerAuthGuard)` grants a token
+ * exactly as much access as `SessionOrMcpBearerGuard` does and must be tracked the same way.
  *
  * Walks the REAL, running `ModulesContainer` rather than importing controller files by hand: it
  * asks the same object Nest's own router built the live route table from, so a controller that is
@@ -196,7 +234,7 @@ describe('route guard coverage', () => {
                 `allowlist in test/route-guard-coverage.e2e.spec.ts:\n${details}\n\n` +
                 'This app has no APP_GUARD, so an unguarded route is completely unauthenticated - anyone can ' +
                 'call it. Fix this by either:\n' +
-                '  1. Adding @UseGuards(SessionAuthGuard) (session-only) or @UseGuards(SessionOrMcpPatGuard) ' +
+                '  1. Adding @UseGuards(SessionAuthGuard) (session-only) or @UseGuards(SessionOrMcpBearerGuard) ' +
                 '(session or MCP token) to the handler, matching what the route is meant to require; or\n' +
                 '  2. If the route is genuinely meant to be anonymous, add it to PUBLIC_ROUTES in this file ' +
                 'with a comment naming why - do not add it just to make this test pass.',
@@ -212,29 +250,29 @@ describe('route guard coverage', () => {
         expect(stale.map(routeKey)).toEqual([]);
     });
 
-    it('gives PAT-reachable access to exactly the MCP tool-to-route map plus the PAT-only allowlist, and only the expected guard on each', () => {
+    it('gives token-reachable access to exactly the MCP tool-to-route map plus the token-only allowlist, and only the expected guard on each', () => {
         const byKey = new Map(routes.map((route) => [routeKey(route), route]));
         const mappedKeys = new Set(MCP_TOKEN_ROUTES.map(routeKey));
-        const patOnlyKeys = new Set(PAT_ONLY_ROUTES.map(routeKey));
+        const tokenOnlyKeys = new Set(TOKEN_ONLY_ROUTES.map(routeKey));
         const problems: string[] = [];
 
-        checkExactGuard(MCP_TOKEN_ROUTES, 'SessionOrMcpPatGuard', byKey, problems);
-        checkExactGuard(PAT_ONLY_ROUTES, 'McpPatAuthGuard', byKey, problems);
+        checkExactGuard(MCP_TOKEN_ROUTES, 'SessionOrMcpBearerGuard', byKey, problems);
+        checkExactGuard(TOKEN_ONLY_ROUTES, 'McpBearerAuthGuard', byKey, problems);
 
         for (const route of routes) {
             const key = routeKey(route);
-            if (mappedKeys.has(key) || patOnlyKeys.has(key)) continue;
+            if (mappedKeys.has(key) || tokenOnlyKeys.has(key)) continue;
 
-            // "PAT-reachable" - either guard class grants a token access, so either one showing up
-            // on an unlisted route is the same over-grant, not just SessionOrMcpPatGuard's.
+            // "token-reachable" - either guard class grants a token access, so either one showing up
+            // on an unlisted route is the same over-grant, not just SessionOrMcpBearerGuard's.
             const patGuard = route.guardNames.find(
-                (name) => name === 'SessionOrMcpPatGuard' || name === 'McpPatAuthGuard',
+                (name) => name === 'SessionOrMcpBearerGuard' || name === 'McpBearerAuthGuard',
             );
             if (patGuard === undefined) continue;
 
             problems.push(
                 `${key}: carries ${patGuard} (${route.controllerName}.${route.handlerName}) but is not on the ` +
-                    'MCP_TOKEN_ROUTES or PAT_ONLY_ROUTES map in this file - an MCP token can reach a route no ' +
+                    'MCP_TOKEN_ROUTES or TOKEN_ONLY_ROUTES map in this file - an MCP token can reach a route no ' +
                     'tool needs, the exact over-grant a previous review caught on this same feature. Either ' +
                     'narrow the route back to @UseGuards(SessionAuthGuard), or add it to the appropriate ' +
                     'allowlist if a tool now genuinely needs it.',
@@ -243,7 +281,7 @@ describe('route guard coverage', () => {
 
         if (problems.length === 0) return;
 
-        throw new Error(`PAT-reachable route coverage mismatch:\n${problems.map((p) => `  - ${p}`).join('\n')}`);
+        throw new Error(`token-reachable route coverage mismatch:\n${problems.map((p) => `  - ${p}`).join('\n')}`);
     });
 });
 
@@ -322,7 +360,7 @@ function collectRoutes(modulesContainer: ModulesContainer): RouteEntry[] {
 
                 routes.push({
                     method: requestMethodName(Reflect.getMetadata(METHOD_METADATA, handler)),
-                    path: joined.length > 0 ? `/${GLOBAL_PREFIX}/${joined}` : `/${GLOBAL_PREFIX}`,
+                    path: routePath(joined),
                     controllerName: controllerClass.name,
                     handlerName: propertyName,
                     guardNames: [...classGuards, ...guardNamesOf(handler)],
@@ -332,6 +370,13 @@ function collectRoutes(modulesContainer: ModulesContainer): RouteEntry[] {
     }
 
     return routes;
+}
+
+/** The URL a joined controller/handler path is actually served at, prefix exclusions included. */
+function routePath(joined: string): string {
+    if (PREFIX_EXCLUDED_PATHS.has(joined)) return `/${joined}`;
+
+    return joined.length > 0 ? `/${GLOBAL_PREFIX}/${joined}` : `/${GLOBAL_PREFIX}`;
 }
 
 /** Normalizes a `@Controller()`/`@Get()`-style path argument (string, string[], or absent) to non-empty segments. */

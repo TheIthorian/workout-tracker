@@ -2,7 +2,7 @@ export * from './timestamptz.js';
 export * from './auth.js';
 export * from './lockout.js';
 export * from './workspaces.js';
-export * from './mcp.js';
+export * from './oauth.js';
 export * from './exercises.js';
 export * from './equipment-presets.js';
 export * from './routines.js';

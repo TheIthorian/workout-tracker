@@ -36,6 +36,9 @@
             "path": "../../packages/services"
         },
         {
+            "path": "../../packages/ssrf"
+        },
+        {
             "path": "../../packages/storage"
         }
     ]

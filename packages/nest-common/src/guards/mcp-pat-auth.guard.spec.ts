@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { EntityNotFoundError, TooManyRequestsError, UnauthorizedError } from '@app/errors';
-import { McpPatAuthGuard } from './mcp-pat-auth.guard.js';
+import { McpBearerAuthGuard } from './mcp-bearer-auth.guard.js';
 
 const validated = { userId: 'user-1', workspaceId: 'ws-1' };
 const tokens = { validateMcpToken: async (token: string) => (token === 'good' ? validated : null) };
@@ -10,16 +10,16 @@ function contextFor({ authorization, params = {} }: { authorization?: string; pa
     return { switchToHttp: () => ({ getRequest: () => request }), request };
 }
 
-describe('McpPatAuthGuard', () => {
+describe('McpBearerAuthGuard', () => {
     it('rejects a request with no bearer token', async () => {
-        const guard = new McpPatAuthGuard(tokens as never);
+        const guard = new McpBearerAuthGuard(tokens as never);
         const context = contextFor();
 
         await expect(guard.canActivate(context as never)).rejects.toThrow(UnauthorizedError);
     });
 
     it('attaches currentUser and mcpContext for a valid token', async () => {
-        const guard = new McpPatAuthGuard(tokens as never);
+        const guard = new McpBearerAuthGuard(tokens as never);
         const context = contextFor({ authorization: 'Bearer good' });
 
         await expect(guard.canActivate(context as never)).resolves.toBe(true);
@@ -29,28 +29,28 @@ describe('McpPatAuthGuard', () => {
 
     // The whole reason this guard exists rather than reusing SessionAuthGuard.
     it('refuses a workspace the token was not issued for, as a 404', async () => {
-        const guard = new McpPatAuthGuard(tokens as never);
+        const guard = new McpBearerAuthGuard(tokens as never);
         const context = contextFor({ authorization: 'Bearer good', params: { workspaceId: 'ws-2' } });
 
         await expect(guard.canActivate(context as never)).rejects.toThrow(EntityNotFoundError);
     });
 
     it('allows the workspace the token was issued for', async () => {
-        const guard = new McpPatAuthGuard(tokens as never);
+        const guard = new McpBearerAuthGuard(tokens as never);
         const context = contextFor({ authorization: 'Bearer good', params: { workspaceId: 'ws-1' } });
 
         await expect(guard.canActivate(context as never)).resolves.toBe(true);
     });
 
     it('allows a route with no workspaceId param', async () => {
-        const guard = new McpPatAuthGuard(tokens as never);
+        const guard = new McpBearerAuthGuard(tokens as never);
         const context = contextFor({ authorization: 'Bearer good' });
 
         await expect(guard.canActivate(context as never)).resolves.toBe(true);
     });
 
     it('rejects an unknown or revoked token', async () => {
-        const guard = new McpPatAuthGuard(tokens as never);
+        const guard = new McpBearerAuthGuard(tokens as never);
         const context = contextFor({ authorization: 'Bearer bad' });
 
         await expect(guard.canActivate(context as never)).rejects.toThrow(UnauthorizedError);
@@ -60,7 +60,7 @@ describe('McpPatAuthGuard', () => {
     // failure path, matching SessionAuthGuard's own contract.
     it('throws UnauthorizedError, not the original error, when validation rejects', async () => {
         const validateMcpToken = vi.fn().mockRejectedValue(new Error('database unreachable'));
-        const guard = new McpPatAuthGuard({ validateMcpToken } as never);
+        const guard = new McpBearerAuthGuard({ validateMcpToken } as never);
         const context = contextFor({ authorization: 'Bearer good' });
 
         await expect(guard.canActivate(context as never)).rejects.toBeInstanceOf(UnauthorizedError);
@@ -71,7 +71,7 @@ describe('McpPatAuthGuard', () => {
     it('passes a thrown AppError through unflattened rather than downgrading it to 401', async () => {
         const lockoutError = new TooManyRequestsError('Too many attempts', 'Try again in 15 minutes');
         const validateMcpToken = vi.fn().mockRejectedValue(lockoutError);
-        const guard = new McpPatAuthGuard({ validateMcpToken } as never);
+        const guard = new McpBearerAuthGuard({ validateMcpToken } as never);
         const context = contextFor({ authorization: 'Bearer good' });
 
         await expect(guard.canActivate(context as never)).rejects.toBe(lockoutError);

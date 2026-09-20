@@ -9,7 +9,7 @@ import {
 import {
     CurrentUser,
     SessionAuthGuard,
-    SessionOrMcpPatGuard,
+    SessionOrMcpBearerGuard,
     ValidatedBody,
     ValidatedParam,
     type CurrentUserContext,
@@ -22,9 +22,9 @@ import { EXERCISE_GUIDE_SERVICE } from './exercises.providers.js';
  * An exercise guide's external links.
  *
  * No class-level guard, matching `WorkspacesController`'s precedent: `createLink` is the one route
- * `AddExerciseLink` actually calls, so it alone carries `SessionOrMcpPatGuard`. There is no
+ * `AddExerciseLink` actually calls, so it alone carries `SessionOrMcpBearerGuard`. There is no
  * `UpdateExerciseLink`/`RemoveExerciseLink` tool, so `patchLink` and `deleteLink` stay
- * session-only - a route gets PAT reachability only when a tool genuinely needs it, per
+ * session-only - a route gets token reachability only when a tool genuinely needs it, per
  * `route-guard-coverage.e2e.spec.ts`.
  */
 @Controller('v1/workspaces/:workspaceId/exercises')
@@ -34,7 +34,7 @@ export class ExerciseGuideController {
     /** Appends an external link to the exercise's guide. Reachable by an MCP token: `AddExerciseLink`. */
     @Post(':exerciseId/links')
     @HttpCode(200)
-    @UseGuards(SessionOrMcpPatGuard)
+    @UseGuards(SessionOrMcpBearerGuard)
     async createLink(
         @CurrentUser() currentUser: CurrentUserContext,
         @ValidatedParam({ name: 'workspaceId', schema: guidSchema }) workspaceId: string,

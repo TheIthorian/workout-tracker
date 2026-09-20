@@ -1,3 +1,4 @@
+import cors from '@fastify/cors';
 import { createLogger, type Logger } from '@app/logger';
 import { AppErrorFilter, PinoNestLogger, RequestContextMiddleware, registerRequestLogging } from '@app/nest-common';
 import { NestFactory } from '@nestjs/core';
@@ -26,12 +27,22 @@ export async function createApp(): Promise<NestFastifyApplication> {
  * Registers the hooks and filter the running app needs. Shared with `test/harness.ts` so a test
  * boots the same app a deployment does.
  *
- * No global prefix, unlike `apps/api`: the MCP endpoint's URL is `/mcp/{token}`, and that path is
- * baked into every access token already issued (`McpAccessTokenCreatedResponse.mcpUrl`), so
- * prefixing it would silently break every existing client. No compression either - the transport
- * writes an SSE stream, which must not be buffered by a compressor.
+ * No global prefix, unlike `apps/api`: the MCP endpoint is `/mcp` and its RFC 9728 metadata sits at
+ * `/.well-known/...`, whose location a client derives from the origin rather than from wherever
+ * this app mounts its routes. No compression either - the transport writes an SSE stream, which
+ * must not be buffered by a compressor.
  */
 export async function configureApp(app: NestFastifyApplication, { logger }: { logger: Logger }): Promise<void> {
+    // Every route here is credential-free in the browser's sense - there is no cookie, and the
+    // access token is a header a page must already hold to send - so a wildcard origin gives a
+    // hostile page nothing. Without it a browser-based MCP client cannot read the protected-resource
+    // document, and cannot read the `WWW-Authenticate` challenge that tells it where to authorize.
+    await app.register(cors, {
+        origin: '*',
+        credentials: false,
+        exposedHeaders: ['WWW-Authenticate', 'Mcp-Session-Id'],
+    });
+
     registerRequestContextHook(app);
     registerRequestLogging({ app: app.getHttpAdapter().getInstance(), logger });
 

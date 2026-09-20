@@ -2,9 +2,9 @@ import { randomUUID } from 'node:crypto';
 import { schema } from '@app/db';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createTestApp, signIn, TEST_MCP_BASE_URL, type TestApp } from './harness.js';
+import { createTestApp, signIn, TEST_MCP_BASE_URL, TEST_OAUTH_CLIENT_ID, type TestApp } from './harness.js';
 
-const { mcpPersonalAccessTokens, workspaceUsers } = schema;
+const { oauthAccessTokens, oauthGrants, workspaceUsers } = schema;
 
 /** Signs a brand-new user up (which also creates their own owned default workspace) and signs them in. */
 async function signUpAndSignIn(
@@ -148,7 +148,7 @@ describe('/api/v1/me', () => {
     });
 });
 
-describe('/api/v1/me/mcp-access-tokens', () => {
+describe('/api/v1/me/mcp-connection', () => {
     let app: TestApp;
 
     beforeAll(async () => {
@@ -159,246 +159,117 @@ describe('/api/v1/me/mcp-access-tokens', () => {
         await app.close();
     });
 
-    describe('POST /api/v1/me/mcp-access-tokens', () => {
-        it('returns 401 when signed out', async () => {
-            const response = await app.inject({
-                method: 'POST',
-                url: '/api/v1/me/mcp-access-tokens',
-                payload: { workspaceId: randomUUID() },
-            });
+    it('returns 401 when signed out', async () => {
+        const response = await app.inject({ method: 'GET', url: '/api/v1/me/mcp-connection' });
 
-            expect(response.statusCode).toBe(401);
-        });
-
-        it('returns 404 when the caller is not a member of the workspace', async () => {
-            const userA = await signUpAndSignIn(app, { displayName: 'User A' });
-            const userB = await signUpAndSignIn(app, { displayName: 'User B' });
-            const meResponseB = await app.inject({
-                method: 'GET',
-                url: '/api/v1/me',
-                headers: { cookie: userB.cookie },
-            });
-            const workspaceIdB = (JSON.parse(meResponseB.body) as { workspaces: { workspaceId: string }[] })
-                .workspaces[0]?.workspaceId as string;
-
-            const response = await app.inject({
-                method: 'POST',
-                url: '/api/v1/me/mcp-access-tokens',
-                headers: { cookie: userA.cookie },
-                payload: { workspaceId: workspaceIdB },
-            });
-
-            expect(response.statusCode).toBe(404);
-            const body = JSON.parse(response.body) as { title: string };
-            expect(body.title).toBe('Workspace not found');
-        });
-
-        it('creates a token, storing only its hash, and returns the plaintext exactly once', async () => {
-            const { userId, cookie } = await signUpAndSignIn(app, { displayName: 'Alice' });
-            const meResponse = await app.inject({ method: 'GET', url: '/api/v1/me', headers: { cookie } });
-            const workspaceId = (JSON.parse(meResponse.body) as { workspaces: { workspaceId: string }[] }).workspaces[0]
-                ?.workspaceId as string;
-
-            const response = await app.inject({
-                method: 'POST',
-                url: '/api/v1/me/mcp-access-tokens',
-                headers: { cookie },
-                payload: { workspaceId, name: 'my token' },
-            });
-
-            expect(response.statusCode).toBe(200);
-            const body = JSON.parse(response.body) as {
-                id: string;
-                workspaceId: string;
-                token: string;
-                mcpUrl: string;
-            };
-            expect(body.workspaceId).toBe(workspaceId);
-            expect(body.token.length).toBeGreaterThan(32);
-            expect(body.mcpUrl).toBe(`${TEST_MCP_BASE_URL}/mcp/${body.token}`);
-
-            const [row] = await app.db
-                .select()
-                .from(mcpPersonalAccessTokens)
-                .where(eq(mcpPersonalAccessTokens.id, body.id));
-            expect(row).toBeDefined();
-            expect(row?.userId).toBe(userId);
-            expect(Buffer.isBuffer(row?.tokenHash)).toBe(true);
-        });
+        expect(response.statusCode).toBe(401);
     });
 
-    describe('GET /api/v1/me/mcp-access-tokens', () => {
-        it('returns 401 when signed out', async () => {
-            const response = await app.inject({ method: 'GET', url: '/api/v1/me/mcp-access-tokens' });
+    // The url has to name `apps/mcp`, not this API: it is the one thing a user copies, and this
+    // process serves no `/mcp` route to fall back on.
+    it('returns the MCP origin, not this API origin, and carries no credential', async () => {
+        const { cookie } = await signUpAndSignIn(app, { displayName: 'Ada' });
 
-            expect(response.statusCode).toBe(401);
-        });
+        const response = await app.inject({ method: 'GET', url: '/api/v1/me/mcp-connection', headers: { cookie } });
 
-        it('lists every token for the caller, most recent first, including revoked ones, and never a token value', async () => {
-            const { cookie } = await signUpAndSignIn(app, { displayName: 'Alice' });
-            const meResponse = await app.inject({ method: 'GET', url: '/api/v1/me', headers: { cookie } });
-            const workspaceId = (JSON.parse(meResponse.body) as { workspaces: { workspaceId: string }[] }).workspaces[0]
-                ?.workspaceId as string;
+        expect(response.statusCode).toBe(200);
+        expect(JSON.parse(response.body)).toEqual({ mcpUrl: `${TEST_MCP_BASE_URL}/mcp` });
+    });
+});
 
-            const first = await app.inject({
-                method: 'POST',
-                url: '/api/v1/me/mcp-access-tokens',
-                headers: { cookie },
-                payload: { workspaceId, name: 'first' },
-            });
-            const firstId = (JSON.parse(first.body) as { id: string }).id;
+describe('/api/v1/me/connected-apps', () => {
+    let app: TestApp;
 
-            const second = await app.inject({
-                method: 'POST',
-                url: '/api/v1/me/mcp-access-tokens',
-                headers: { cookie },
-                payload: { workspaceId, name: 'second' },
-            });
-            const secondId = (JSON.parse(second.body) as { id: string }).id;
-
-            const revokeResponse = await app.inject({
-                method: 'DELETE',
-                url: `/api/v1/me/mcp-access-tokens/${firstId}`,
-                headers: { cookie },
-            });
-            expect(revokeResponse.statusCode).toBe(200);
-
-            const listResponse = await app.inject({
-                method: 'GET',
-                url: '/api/v1/me/mcp-access-tokens',
-                headers: { cookie },
-            });
-
-            expect(listResponse.statusCode).toBe(200);
-            const list = JSON.parse(listResponse.body) as {
-                id: string;
-                revokedAt: string | null;
-            }[];
-            expect(list.map((item) => item.id)).toEqual([secondId, firstId]);
-            expect(list.find((item) => item.id === firstId)?.revokedAt).not.toBeNull();
-            expect(list.find((item) => item.id === secondId)?.revokedAt).toBeNull();
-            for (const item of list) {
-                expect(item).not.toHaveProperty('token');
-                expect(item).not.toHaveProperty('tokenHash');
-            }
-        });
-
-        // Cross-tenant regression: a dropped userId filter would return every user's tokens.
-        it('does not return another user tokens', async () => {
-            const userA = await signUpAndSignIn(app, { displayName: 'User A' });
-            const userB = await signUpAndSignIn(app, { displayName: 'User B' });
-            const meResponseB = await app.inject({
-                method: 'GET',
-                url: '/api/v1/me',
-                headers: { cookie: userB.cookie },
-            });
-            const workspaceIdB = (JSON.parse(meResponseB.body) as { workspaces: { workspaceId: string }[] })
-                .workspaces[0]?.workspaceId as string;
-
-            await app.inject({
-                method: 'POST',
-                url: '/api/v1/me/mcp-access-tokens',
-                headers: { cookie: userB.cookie },
-                payload: { workspaceId: workspaceIdB },
-            });
-
-            const response = await app.inject({
-                method: 'GET',
-                url: '/api/v1/me/mcp-access-tokens',
-                headers: { cookie: userA.cookie },
-            });
-
-            expect(response.statusCode).toBe(200);
-            expect(JSON.parse(response.body)).toEqual([]);
-        });
+    beforeAll(async () => {
+        app = await createTestApp();
     });
 
-    describe('DELETE /api/v1/me/mcp-access-tokens/:tokenId', () => {
-        it('returns 401 when signed out', async () => {
-            const response = await app.inject({
-                method: 'DELETE',
-                url: `/api/v1/me/mcp-access-tokens/${randomUUID()}`,
-            });
+    afterAll(async () => {
+        await app.close();
+    });
 
-            expect(response.statusCode).toBe(401);
+    async function seedGrantFor({ userId }: { userId: string }): Promise<{ grantId: string; workspaceId: string }> {
+        const [membership] = await app.db
+            .select({ workspaceId: workspaceUsers.workspaceId })
+            .from(workspaceUsers)
+            .where(eq(workspaceUsers.userId, userId));
+
+        const [grant] = await app.db
+            .insert(oauthGrants)
+            .values({
+                userId,
+                clientId: TEST_OAUTH_CLIENT_ID,
+                workspaceId: membership.workspaceId,
+                scopes: ['mcp'],
+            })
+            .returning({ id: oauthGrants.id });
+
+        await app.db.insert(oauthAccessTokens).values({
+            tokenHash: Buffer.from(randomUUID().replace(/-/g, ''), 'hex'),
+            grantId: grant.id,
+            clientId: TEST_OAUTH_CLIENT_ID,
+            userId,
+            workspaceId: membership.workspaceId,
+            scopes: ['mcp'],
+            expiresAt: new Date(Date.now() + 60_000).toISOString(),
         });
 
-        it('returns 404 for a token that does not exist', async () => {
-            const { cookie } = await signUpAndSignIn(app, { displayName: 'Alice' });
+        return { grantId: grant.id, workspaceId: membership.workspaceId };
+    }
 
-            const response = await app.inject({
-                method: 'DELETE',
-                url: `/api/v1/me/mcp-access-tokens/${randomUUID()}`,
-                headers: { cookie },
-            });
+    it('returns 401 when signed out', async () => {
+        const response = await app.inject({ method: 'GET', url: '/api/v1/me/connected-apps' });
 
-            expect(response.statusCode).toBe(404);
-            const body = JSON.parse(response.body) as { title: string };
-            expect(body.title).toBe('Token not found');
+        expect(response.statusCode).toBe(401);
+    });
+
+    it("lists the caller's own connections and nobody else's", async () => {
+        const mine = await signUpAndSignIn(app, { displayName: 'Mine' });
+        const theirs = await signUpAndSignIn(app, { displayName: 'Theirs' });
+        await seedGrantFor({ userId: mine.userId });
+        await seedGrantFor({ userId: theirs.userId });
+
+        const response = await app.inject({
+            method: 'GET',
+            url: '/api/v1/me/connected-apps',
+            headers: { cookie: mine.cookie },
         });
 
-        // Cross-tenant regression: must 404 rather than revoke another user's token.
-        it('returns 404 and does not revoke another user token', async () => {
-            const userA = await signUpAndSignIn(app, { displayName: 'User A' });
-            const userB = await signUpAndSignIn(app, { displayName: 'User B' });
-            const meResponseB = await app.inject({
-                method: 'GET',
-                url: '/api/v1/me',
-                headers: { cookie: userB.cookie },
-            });
-            const workspaceIdB = (JSON.parse(meResponseB.body) as { workspaces: { workspaceId: string }[] })
-                .workspaces[0]?.workspaceId as string;
+        expect(response.statusCode).toBe(200);
+        const body = JSON.parse(response.body) as { clientId: string; verified: boolean }[];
+        expect(body).toHaveLength(1);
+        expect(body[0]).toMatchObject({ clientId: TEST_OAUTH_CLIENT_ID, verified: true });
+    });
 
-            const createResponse = await app.inject({
-                method: 'POST',
-                url: '/api/v1/me/mcp-access-tokens',
-                headers: { cookie: userB.cookie },
-                payload: { workspaceId: workspaceIdB },
-            });
-            const tokenId = (JSON.parse(createResponse.body) as { id: string }).id;
+    it('disconnecting revokes the grant and every token issued under it', async () => {
+        const { userId, cookie } = await signUpAndSignIn(app, { displayName: 'Ada' });
+        const { grantId } = await seedGrantFor({ userId });
 
-            const response = await app.inject({
-                method: 'DELETE',
-                url: `/api/v1/me/mcp-access-tokens/${tokenId}`,
-                headers: { cookie: userA.cookie },
-            });
-
-            expect(response.statusCode).toBe(404);
-
-            const [row] = await app.db
-                .select()
-                .from(mcpPersonalAccessTokens)
-                .where(eq(mcpPersonalAccessTokens.id, tokenId));
-            expect(row?.revokedAt).toBeNull();
+        const response = await app.inject({
+            method: 'DELETE',
+            url: `/api/v1/me/connected-apps?clientId=${encodeURIComponent(TEST_OAUTH_CLIENT_ID)}`,
+            headers: { cookie },
         });
 
-        it('revokes the caller own token and returns 200 with an empty body', async () => {
-            const { cookie } = await signUpAndSignIn(app, { displayName: 'Alice' });
-            const meResponse = await app.inject({ method: 'GET', url: '/api/v1/me', headers: { cookie } });
-            const workspaceId = (JSON.parse(meResponse.body) as { workspaces: { workspaceId: string }[] }).workspaces[0]
-                ?.workspaceId as string;
-            const createResponse = await app.inject({
-                method: 'POST',
-                url: '/api/v1/me/mcp-access-tokens',
-                headers: { cookie },
-                payload: { workspaceId },
-            });
-            const tokenId = (JSON.parse(createResponse.body) as { id: string }).id;
+        expect(response.statusCode).toBe(204);
 
-            const response = await app.inject({
-                method: 'DELETE',
-                url: `/api/v1/me/mcp-access-tokens/${tokenId}`,
-                headers: { cookie },
-            });
+        const [grant] = await app.db.select().from(oauthGrants).where(eq(oauthGrants.id, grantId));
+        const [token] = await app.db.select().from(oauthAccessTokens).where(eq(oauthAccessTokens.grantId, grantId));
 
-            expect(response.statusCode).toBe(200);
-            expect(response.body).toBe('');
+        expect(grant.revokedAt).not.toBeNull();
+        expect(token.revokedAt).not.toBeNull();
+    });
 
-            const [row] = await app.db
-                .select()
-                .from(mcpPersonalAccessTokens)
-                .where(eq(mcpPersonalAccessTokens.id, tokenId));
-            expect(row?.revokedAt).not.toBeNull();
+    // Another user's client id must be indistinguishable from one nobody has connected.
+    it('returns 404 for a client the caller has not connected', async () => {
+        const { cookie } = await signUpAndSignIn(app, { displayName: 'Ada' });
+
+        const response = await app.inject({
+            method: 'DELETE',
+            url: `/api/v1/me/connected-apps?clientId=${encodeURIComponent('https://other.test/oauth-client')}`,
+            headers: { cookie },
         });
+
+        expect(response.statusCode).toBe(404);
     });
 });

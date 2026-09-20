@@ -40,6 +40,9 @@
             "path": "./packages/auth"
         },
         {
+            "path": "./packages/ssrf"
+        },
+        {
             "path": "./packages/storage"
         },
         {

@@ -24,6 +24,7 @@
         "@app/db": "workspace:*",
         "@app/domain": "workspace:*",
         "@app/errors": "workspace:*",
+        "@app/ssrf": "workspace:*",
         "@app/storage": "workspace:*",
         "drizzle-orm": "0.45.2"
     },

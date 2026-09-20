@@ -1,6 +1,6 @@
 import { schema, type Db, type Tx } from '@app/db';
 import { EntityNotFoundError, ForbiddenActionError } from '@app/errors';
-import { and, eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 
 const { workspaceUsers } = schema;
 
@@ -81,6 +81,29 @@ export class WorkspaceMembershipService {
         }
 
         return membership;
+    }
+
+    /**
+     * The workspace an OAuth grant is pinned to when the user approves a client.
+     *
+     * Phase 1 gives every account exactly one workspace and hides the concept from the UI, so
+     * consent asks nothing about it. The oldest owned workspace is the account's own; a user who
+     * later belongs to someone else's must not have a client silently pointed at it.
+     *
+     * @throws EntityNotFoundError when the user owns no workspace, which an account created through
+     * `UserProvisioningService` never is.
+     */
+    async requireDefaultWorkspaceId({ userId, tx }: { userId: string; tx?: Tx }): Promise<string> {
+        const [row] = await (tx ?? this.db)
+            .select({ workspaceId: workspaceUsers.workspaceId })
+            .from(workspaceUsers)
+            .where(and(eq(workspaceUsers.userId, userId), eq(workspaceUsers.role, WorkspaceRole.Owner)))
+            .orderBy(asc(workspaceUsers.createdAt), asc(workspaceUsers.workspaceId))
+            .limit(1);
+
+        if (!row) throw new EntityNotFoundError('Workspace not found');
+
+        return row.workspaceId;
     }
 
     /** The membership, or `null` when the user does not belong to the workspace. */

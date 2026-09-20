@@ -123,6 +123,9 @@ importers:
       '@app/services':
         specifier: workspace:*
         version: link:../../packages/services
+      '@app/ssrf':
+        specifier: workspace:*
+        version: link:../../packages/ssrf
       '@app/storage':
         specifier: workspace:*
         version: link:../../packages/storage
@@ -229,6 +232,9 @@ importers:
       '@app/nest-common':
         specifier: workspace:*
         version: link:../../packages/nest-common
+      '@fastify/cors':
+        specifier: 11.3.0
+        version: 11.3.0
       '@modelcontextprotocol/sdk':
         specifier: 1.30.0
         version: 1.30.0(zod@4.4.3)
@@ -553,6 +559,9 @@ importers:
       '@app/domain':
         specifier: workspace:*
         version: link:../domain
+      '@app/errors':
+        specifier: workspace:*
+        version: link:../errors
       zod:
         specifier: 4.4.3
         version: 4.4.3
@@ -857,6 +866,9 @@ importers:
       '@app/errors':
         specifier: workspace:*
         version: link:../errors
+      '@app/ssrf':
+        specifier: workspace:*
+        version: link:../ssrf
       '@app/storage':
         specifier: workspace:*
         version: link:../storage
@@ -879,6 +891,25 @@ importers:
       testcontainers:
         specifier: 12.1.0
         version: 12.1.0
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(jsdom@25.0.1)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@1.21.7)(tsx@4.23.12)(yaml@2.9.0))
+
+  packages/ssrf:
+    dependencies:
+      undici:
+        specifier: 8.10.2
+        version: 8.10.2
+    devDependencies:
+      '@app/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      '@types/node':
+        specifier: 26.2.0
+        version: 26.2.0
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -6830,6 +6861,10 @@ packages:
     resolution: {integrity: sha512-HvltHd7avK13QIw/oLe4qoOLyoVSoafqJ2jYOrtMRBkbYT31eiBQ8O0ehRKZiEZCMEyLFQNIADpgCWC5fALvYQ==}
     engines: {node: '>=22.19.0'}
 
+  undici@8.10.2:
+    resolution: {integrity: sha512-/y4/bH9YNU5hi9NIrpOuvGXFcxrj3CMrV+/AYpowAYTpHn8gX/XPFjNy766FPoYY0miQhdW977JFWKGNhBdwyQ==}
+    engines: {node: '>=22.19.0'}
+
   unenv@2.0.0-rc.24:
     resolution: {integrity: sha512-i7qRCmY42zmCwnYlh9H2SvLEypEFGye5iRmEMKjcGi7zk9UquigRjFtTLz0TYqr0ZGLZhaMHl/foy1bZR+Cwlw==}
 
@@ -12666,6 +12701,8 @@ snapshots:
   undici@7.29.0: {}
 
   undici@8.10.0: {}
+
+  undici@8.10.2: {}
 
   unenv@2.0.0-rc.24:
     dependencies:

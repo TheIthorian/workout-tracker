@@ -19,6 +19,7 @@
         "@app/errors": "workspace:*",
         "@app/logger": "workspace:*",
         "@app/nest-common": "workspace:*",
+        "@fastify/cors": "11.3.0",
         "@modelcontextprotocol/sdk": "1.30.0",
         "@nestjs/common": "11.1.28",
         "@nestjs/core": "11.1.28",

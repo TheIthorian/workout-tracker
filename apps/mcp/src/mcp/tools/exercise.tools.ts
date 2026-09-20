@@ -29,7 +29,7 @@ import { attachExerciseLinks } from './exercise-links.js';
  * the same as for an exercise in another workspace. Guide images are catalog content served from a
  * CDN — there is no image tool.
  *
- * No tool here takes a `workspaceId`; it comes from the personal access token, same as every other
+ * No tool here takes a `workspaceId`; it comes from the access token, same as every other
  * tool in this app.
  */
 export function buildExerciseTools({

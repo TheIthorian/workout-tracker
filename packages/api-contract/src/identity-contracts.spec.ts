@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { loginRequestSchema, signupRequestSchema } from './auth.contract.js';
-import { postMcpAccessTokenRequestSchema } from './mcp-token.contract.js';
+import { clientIdMetadataSchema, oauthAuthorizeQuerySchema } from './oauth.contract.js';
 import { patchUserRequestSchema, userResponseSchema } from './user.contract.js';
 import { WorkspaceRole, workspaceResponseSchema } from './workspace.contract.js';
 
@@ -62,16 +62,36 @@ describe('workspace contracts', () => {
     });
 });
 
-describe('mcp token contracts', () => {
-    it('requires the workspace the token is pinned to', () => {
-        expect(postMcpAccessTokenRequestSchema.safeParse({ name: 'laptop' }).success).toBe(false);
-        expect(postMcpAccessTokenRequestSchema.safeParse({ workspaceId: GUID }).success).toBe(true);
+describe('oauth contracts', () => {
+    it('accepts an authorization request with every parameter missing, so the flow can answer with an OAuth error', () => {
+        expect(oauthAuthorizeQuerySchema.safeParse({}).success).toBe(true);
     });
 
-    it('accepts an optional name of at most 128 characters', () => {
-        expect(postMcpAccessTokenRequestSchema.safeParse({ workspaceId: GUID, name: 'laptop' }).success).toBe(true);
-        expect(postMcpAccessTokenRequestSchema.safeParse({ workspaceId: GUID, name: 'x'.repeat(129) }).success).toBe(
+    it('requires a metadata document to name its own client_id and at least one redirect_uri', () => {
+        expect(
+            clientIdMetadataSchema.safeParse({
+                client_id: 'https://client.example/oauth-client',
+                redirect_uris: ['https://client.example/callback'],
+            }).success,
+        ).toBe(true);
+        expect(clientIdMetadataSchema.safeParse({ client_id: 'https://client.example/oauth-client' }).success).toBe(
             false,
         );
+        expect(
+            clientIdMetadataSchema.safeParse({
+                client_id: 'https://client.example/oauth-client',
+                redirect_uris: [],
+            }).success,
+        ).toBe(false);
+    });
+
+    it('strips members a client publishes for other authorization servers', () => {
+        const parsed = clientIdMetadataSchema.parse({
+            client_id: 'https://client.example/oauth-client',
+            redirect_uris: ['https://client.example/callback'],
+            jwks_uri: 'https://client.example/jwks.json',
+        });
+
+        expect(parsed).not.toHaveProperty('jwks_uri');
     });
 });

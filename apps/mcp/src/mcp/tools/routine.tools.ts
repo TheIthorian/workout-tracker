@@ -28,7 +28,7 @@ const TARGET_HELP =
  * A tool edits the exercise list by sending the whole ordered list, which `apps/api` applies as one
  * replacement — simpler for a model than diffing slot by slot.
  *
- * No tool here takes a `workspaceId`; it comes from the personal access token, same as every other
+ * No tool here takes a `workspaceId`; it comes from the access token, same as every other
  * tool in this app.
  */
 export function buildRoutineTools({

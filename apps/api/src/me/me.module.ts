@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
-import { McpAccessTokensController } from './mcp-access-tokens.controller.js';
+import { OAuthModule } from '../oauth/oauth.module.js';
+import { ConnectedAppsController } from './connected-apps.controller.js';
 import { MeController } from './me.controller.js';
 import { meServiceProviders } from './me.providers.js';
 
-/** Wires `GET/PATCH/DELETE /api/v1/me` and the three `/api/v1/me/mcp-access-tokens` routes. */
+/** Wires `GET/PATCH/DELETE /api/v1/me` and the `/api/v1/me/connected-apps` routes. */
 @Module({
-    controllers: [MeController, McpAccessTokensController],
+    imports: [OAuthModule],
+    controllers: [MeController, ConnectedAppsController],
     providers: [...meServiceProviders],
 })
 export class MeModule {}

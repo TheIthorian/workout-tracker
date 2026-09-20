@@ -14,11 +14,7 @@ export {
     type ExerciseSummary,
     type PaginatedExercises,
 } from './exercises.service.js';
-export {
-    McpAccessTokensService,
-    type McpAccessTokenListItem,
-    type McpAccessTokenCreationResult,
-} from './mcp-access-tokens.service.js';
+export * from './oauth/index.js';
 export {
     RoutinesService,
     type PaginatedRoutines,

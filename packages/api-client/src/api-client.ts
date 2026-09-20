@@ -19,7 +19,7 @@ export type RetryPolicy = {
 export type ApiClientConfig = {
     /** The API's origin, without the `/api/v1` prefix. Trailing slashes are tolerated. */
     baseUrl: string;
-    /** The MCP personal access token, forwarded as a bearer on every request. */
+    /** The MCP OAuth access token, forwarded as a bearer on every request. */
     token: string;
     /** Injected so tests never reach the network. Defaults to the global `fetch`. */
     fetch?: FetchLike;

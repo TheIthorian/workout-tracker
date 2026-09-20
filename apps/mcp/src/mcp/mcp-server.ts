@@ -41,7 +41,7 @@ export function buildServerInstructions({ webAppBaseUrl }: { webAppBaseUrl: stri
         'Workout tracker assistant. Use these tools to read and manage the exercise library, routines ' +
         '(workout templates), and workout sessions. Start a session from a routine, log its ' +
         'sets, and complete it when finished; only one session may be active at a time. ' +
-        'The MCP URL token determines which user data these tools can access. ' +
+        'The authorized account determines which user data these tools can access. ' +
         "Exercise, routine, and session responses carry a webUrl for that resource's page in the web app; link to " +
         `that rather than quoting a bare id. The pattern is ${webAppBaseUrl}/exercises/{exerciseId}, ` +
         `${webAppBaseUrl}/routines/{routineId}, and ${webAppBaseUrl}/sessions/{sessionId}.`

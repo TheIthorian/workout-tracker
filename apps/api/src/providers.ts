@@ -5,12 +5,12 @@ import { WorkspaceMembershipService } from '@app/services';
 import { StorageService } from '@app/storage';
 import {
     MCP_TOKEN_SERVICE,
-    McpPatAuthGuard,
+    McpBearerAuthGuard,
     RESOURCE_URL_GENERATOR,
     ResourceUrlGenerator,
     SESSION_AUTH_SERVICE,
     SessionAuthGuard,
-    SessionOrMcpPatGuard,
+    SessionOrMcpBearerGuard,
 } from '@app/nest-common';
 import type { Provider } from '@nestjs/common';
 import { loadEnv, toLoggerConfig } from './config/load-env.js';
@@ -150,10 +150,10 @@ export const infrastructureProviders: Provider[] = [
         inject: [DB],
     },
     // Registered here (rather than left to Nest's per-controller `@UseGuards` auto-discovery) so
-    // `SessionOrMcpPatGuard` - which takes both as constructor dependencies - resolves them from the
+    // `SessionOrMcpBearerGuard` - which takes both as constructor dependencies - resolves them from the
     // same global container it is itself resolved from, regardless of which feature module's
     // controller triggers its instantiation first.
     SessionAuthGuard,
-    McpPatAuthGuard,
-    SessionOrMcpPatGuard,
+    McpBearerAuthGuard,
+    SessionOrMcpBearerGuard,
 ];

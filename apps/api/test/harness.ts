@@ -1,16 +1,16 @@
 import { randomUUID } from 'node:crypto';
-import { AuthService, UserProvisioningService } from '@app/auth';
+import { AuthService, generateOpaqueToken, hashOpaqueToken, UserProvisioningService } from '@app/auth';
 import { schema, type Db } from '@app/db';
 import { startTestDatabase } from '@app/db/testing';
 import { createLogger, type Logger } from '@app/logger';
-import { McpAccessTokensService, WorkspaceMembershipService, WorkspaceRole } from '@app/services';
+import { ACCESS_TOKEN_TTL_SECONDS, WorkspaceRole } from '@app/services';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Test } from '@nestjs/testing';
 import { AppModule } from '../src/app.module.js';
 import { configureApp } from '../src/bootstrap.js';
 import { APP_LOGGER, AUTH_SERVICE, DB } from '../src/providers.js';
 
-const { workspaces, workspaceUsers } = schema;
+const { oauthAccessTokens, oauthGrants, workspaces, workspaceUsers } = schema;
 
 /** The web-app origin every `webUrl` in a test response is built from. */
 export const TEST_WEB_APP_BASE_URL = 'https://app.test';
@@ -20,6 +20,12 @@ export const TEST_API_BASE_URL = 'https://api.test';
 
 /** The MCP origin every `mcpUrl` in a test response is built from. */
 export const TEST_MCP_BASE_URL = 'https://mcp.test';
+
+/** The one client id every OAuth test uses; its host is the whole allowlist below. */
+export const TEST_OAUTH_CLIENT_ID = 'https://client.test/oauth-client';
+
+/** The one client id the test app vouches for. Everything else connects, marked unverified. */
+export const TEST_VERIFIED_CLIENT_IDS = TEST_OAUTH_CLIENT_ID;
 
 /** Origin the test app builds catalog image urls from. */
 export const TEST_CATALOG_IMAGE_BASE_URL = 'https://cdn.test';
@@ -87,6 +93,10 @@ export async function createTestApp({
     process.env['API_BASE_URL'] ??= TEST_API_BASE_URL;
     process.env['MCP_BASE_URL'] ??= TEST_MCP_BASE_URL;
     process.env['CATALOG_IMAGE_BASE_URL'] ??= TEST_CATALOG_IMAGE_BASE_URL;
+    process.env['MCP_OAUTH_VERIFIED_CLIENT_IDS'] ??= TEST_VERIFIED_CLIENT_IDS;
+    // The production shape - a named origin rather than the wildcard - so the CORS assertions in
+    // test/oauth.e2e.spec.ts exercise the policy a deployment actually runs.
+    process.env['CORS_ORIGIN'] ??= TEST_WEB_APP_BASE_URL;
     // Object storage is required configuration for this app, so the container refuses to boot
     // without it; no suite talks to storage, so placeholders are enough.
     process.env['S3_BUCKET'] ??= 'test-bucket';
@@ -208,16 +218,38 @@ export async function seedMembership(
 }
 
 /**
- * Issues a real personal access token through `McpAccessTokensService`, so a test authenticates the
- * same way `apps/mcp` does - against a stored sha256 hash - rather than against a row hand-inserted
- * with a shape the service might not produce.
+ * Issues an OAuth access token the way the token endpoint does - a grant row plus a token row
+ * holding only the sha256 hash - so a test authenticates against exactly what `McpTokenService`
+ * reads rather than against a shape hand-rolled here.
  */
 export async function seedMcpToken(
     db: Db,
-    { userId, workspaceId }: { userId: string; workspaceId: string },
+    {
+        userId,
+        workspaceId,
+        clientId = TEST_OAUTH_CLIENT_ID,
+    }: { userId: string; workspaceId: string; clientId?: string },
 ): Promise<string> {
-    const service = new McpAccessTokensService({ db, membership: new WorkspaceMembershipService({ db }) });
-    const { token } = await service.createToken({ userId, workspaceId, name: 'test' });
+    const token = generateOpaqueToken();
+
+    const [grant] = await db
+        .insert(oauthGrants)
+        .values({ userId, clientId, workspaceId, scopes: ['mcp'] })
+        .onConflictDoUpdate({
+            target: [oauthGrants.userId, oauthGrants.clientId],
+            set: { workspaceId, scopes: ['mcp'], revokedAt: null },
+        })
+        .returning({ id: oauthGrants.id });
+
+    await db.insert(oauthAccessTokens).values({
+        tokenHash: hashOpaqueToken(token),
+        grantId: grant.id,
+        clientId,
+        userId,
+        workspaceId,
+        scopes: ['mcp'],
+        expiresAt: new Date(Date.now() + ACCESS_TOKEN_TTL_SECONDS * 1000).toISOString(),
+    });
 
     return token;
 }

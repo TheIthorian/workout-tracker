@@ -1,10 +1,13 @@
 import compress from '@fastify/compress';
 import cookie from '@fastify/cookie';
+import type { FastifyCorsOptions } from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import { createLogger, type Logger } from '@app/logger';
 import { AppErrorFilter, PinoNestLogger, RequestContextMiddleware, registerRequestLogging } from '@app/nest-common';
+import { RequestMethod } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
+import type { FastifyRequest } from 'fastify';
 import { AppModule } from './app.module.js';
 import { loadEnv, toLoggerConfig } from './config/load-env.js';
 
@@ -13,6 +16,21 @@ const MAX_UPLOAD_BYTES = 60 * 1024 * 1024;
 
 /** Threshold in bytes above which `@fastify/compress` compresses a response body. */
 const COMPRESSION_THRESHOLD_BYTES = 1024;
+
+/**
+ * Routes any origin may read. OAuth discovery is meant to be world-readable, and a browser-based
+ * MCP client reaches the token endpoints from its own origin; restricting these to the SPA's origin
+ * makes such a client fail discovery and fall back to guessing a registration endpoint.
+ *
+ * Safe because all three are credential-free: none reads a cookie, so a `*` origin hands a hostile
+ * page nothing it could not have fetched from its own server. Every cookie-authenticated route -
+ * the consent endpoints included - stays on the SPA-only policy below.
+ */
+const PUBLIC_CORS_PATHS = new Set([
+    '/.well-known/oauth-authorization-server',
+    '/api/v1/oauth/token',
+    '/api/v1/oauth/revoke',
+]);
 
 /**
  * Creates and configures the Nest Fastify application. Does not call `listen` - `main.ts` and
@@ -65,15 +83,35 @@ export async function configureApp(app: NestFastifyApplication, { logger }: { lo
     registerRequestContextHook(app);
     registerRequestLogging({ app: app.getHttpAdapter().getInstance(), logger });
 
-    app.setGlobalPrefix('api');
+    // RFC 8414 §3 derives the metadata document's location from the issuer identifier, which is
+    // this deployment's origin - a client looks for it at `/.well-known/...` and nowhere else, so
+    // that one route cannot sit behind the application's prefix.
+    app.setGlobalPrefix('api', {
+        exclude: [{ path: '.well-known/oauth-authorization-server', method: RequestMethod.GET }],
+    });
     app.useGlobalFilters(new AppErrorFilter(logger));
 
     const corsOrigin = String(env['CORS_ORIGIN']);
-    app.enableCors({
+    const appPolicy: FastifyCorsOptions = {
         origin: corsOrigin === '*' ? true : corsOrigin.split(',').map((origin) => origin.trim()),
         // Session cookies require this whenever the origin is not the wildcard.
         credentials: corsOrigin !== '*',
+    };
+
+    // A delegator rather than one static policy: the discovery and token routes need a wider origin
+    // than the rest of the API, and `@fastify/cors` decides per request when given one.
+    app.enableCors({
+        delegator: (request: FastifyRequest, callback: (error: Error | null, options: FastifyCorsOptions) => void) => {
+            callback(null, isPublicCorsPath(request.url) ? { origin: '*', credentials: false } : appPolicy);
+        },
     });
+}
+
+/** Whether a request path is one of {@link PUBLIC_CORS_PATHS}, ignoring any query string. */
+function isPublicCorsPath(url: string): boolean {
+    const queryStart = url.indexOf('?');
+
+    return PUBLIC_CORS_PATHS.has(queryStart === -1 ? url : url.slice(0, queryStart));
 }
 
 /**

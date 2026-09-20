@@ -17,7 +17,7 @@ import type {
     SaveExercisePreferencesRequest,
     SaveExerciseRequest,
 } from '@/models/exercise';
-import type { McpAccessTokenCreated, McpAccessTokenListItem } from '@/models/mcp';
+import type { ConnectedApp, McpConnection, OAuthConsentDecision, OAuthConsentRequest } from '@/models/mcp';
 import type { MuscleVolumeResponse } from '@/models/muscle';
 import type { PaginatedResponse } from '@/models/pagination';
 import type {
@@ -51,11 +51,18 @@ export const authApi = {
     deleteMe: () => httpClient.delete<void>('/api/v1/me'),
 };
 
-export const mcpAccessTokensApi = {
-    list: () => httpClient.get<McpAccessTokenListItem[]>('/api/v1/me/mcp-access-tokens'),
-    create: (body: { workspaceId: string; name?: string | null }) =>
-        httpClient.post<McpAccessTokenCreated>('/api/v1/me/mcp-access-tokens', body),
-    revoke: (tokenId: string) => httpClient.delete<void>(`/api/v1/me/mcp-access-tokens/${tokenId}`),
+export const mcpApi = {
+    connection: () => httpClient.get<McpConnection>('/api/v1/me/mcp-connection'),
+    listConnectedApps: () => httpClient.get<ConnectedApp[]>('/api/v1/me/connected-apps'),
+    disconnectApp: (clientId: string) =>
+        httpClient.delete<void>(`/api/v1/me/connected-apps?clientId=${encodeURIComponent(clientId)}`),
+};
+
+/** The consent screen's half of the OAuth authorization flow. */
+export const oauthApi = {
+    getConsentRequest: (requestId: string) => httpClient.get<OAuthConsentRequest>(`/api/v1/oauth/consent/${requestId}`),
+    decideConsent: (requestId: string, decision: OAuthConsentDecision) =>
+        httpClient.post<{ redirectTo: string }>(`/api/v1/oauth/consent/${requestId}`, { decision }),
 };
 
 /** The workspace's exercise library. */
