@@ -4,7 +4,7 @@ import { startTestDatabase } from '@app/db/testing';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ClientIdMetadataService } from './client-id-metadata.service.js';
-import type { FetchLike } from './safe-fetch.js';
+import type { FetchLike } from '@app/ssrf';
 import { OAuthClientsService } from './oauth-clients.service.js';
 
 const { oauthClients } = schema;

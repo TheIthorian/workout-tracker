@@ -37,25 +37,14 @@ put at `https://claude.ai/public/artifacts/…`. The trailing slash on a prefix 
 
 ## The metadata fetch is an SSRF surface
 
-The URL being dereferenced arrives from an unauthenticated caller, so `createSafeFetch`
-(`packages/services/src/oauth/safe-fetch.ts`) is what stands between `GET /oauth/authorize` and
-whatever this deployment's network can reach:
+The URL being dereferenced arrives from an unauthenticated caller, so the request goes through
+`createSafeFetch` from `@app/ssrf`: https only, no redirects, every resolved address must be public
+unicast, and those addresses are pinned onto the connection so a second lookup cannot rebind. That
+package's README has the detail, including why it has no way to turn the check off.
 
-- https only, and no redirects — a redirect would escape every check below.
-- The host is resolved once, and **every** address it resolves to must be public unicast. Loopback,
-  private, carrier-grade NAT, link-local (`169.254.169.254` is where cloud instance metadata lives),
-  multicast, reserved and documentation ranges are all refused, as are the v4 addresses tunnelled
-  inside v6 forms (v4-mapped, NAT64, 6to4). One private address in a multi-record answer fails the
-  whole request; which address a connection would have picked is not ours to guess.
-- Those addresses are then pinned onto the connection. Validating a hostname and handing the
-  hostname to `fetch` would leave a DNS-rebinding window in which the second lookup answers
-  differently.
-- Five-second timeout; the body must be JSON; the body is read against a 64 KiB cap **while
-  streaming**, because `content-length` is a claim and a server that omits it must not be able to
-  make this process buffer an endless response.
-
-`MCP_OAUTH_ALLOW_PRIVATE_CLIENT_HOSTS=true` opens the address gate for local development against a
-client on the same machine. It must never be set in a deployment.
+What this module adds on top is the response budget: a five-second timeout, a `content-type` of
+`application/json`, and a 64 KiB cap enforced **while streaming**, because `content-length` is a
+claim and a server that omits it must not be able to make this process buffer an endless body.
 
 ## Where a failure goes
 
@@ -146,6 +135,7 @@ curl -si  https://<mcp-tunnel>/mcp -X POST | grep -i www-authenticate
 ```
 
 The MCP Inspector (`npx @modelcontextprotocol/inspector`) drives the whole flow, including consent,
-against those URLs. If you point it at a `client_id` served from your own machine, the address check
-will refuse it — that is what `MCP_OAUTH_ALLOW_PRIVATE_CLIENT_HOSTS=true` is for, locally and
-nowhere else.
+against those URLs. Its `client_id` has to be a metadata document this server can actually reach, so
+serve the test client's document from somewhere public — a gist's raw URL, GitHub Pages, or a third
+tunnel — rather than from `localhost`. `@app/ssrf` refuses a private address and offers no way
+around it, deliberately.

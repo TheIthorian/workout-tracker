@@ -21,6 +21,7 @@
         "@app/logger": "workspace:*",
         "@app/nest-common": "workspace:*",
         "@app/services": "workspace:*",
+        "@app/ssrf": "workspace:*",
         "@app/storage": "workspace:*",
         "@fastify/compress": "9.1.0",
         "@fastify/cookie": "11.0.2",

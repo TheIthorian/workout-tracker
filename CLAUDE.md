@@ -39,6 +39,7 @@ packages/
   domain/           # Pure logic, no I/O
   catalog/          # Exercise content file format and loader (reads the filesystem, nothing else)
   services/         # Business logic as plain classes, no framework
+  ssrf/             # Outbound fetch for caller-supplied URLs — public addresses only, no rebinding
   auth/             # Better Auth wiring, sign-in lockout, MCP access-token hashing and validation
   storage/          # S3/MinIO/R2 access
   image/            # sharp-based catalog image processing; linked by apps/admin and the API's startup seed
@@ -245,13 +246,9 @@ database connection of its own, so it forwards the token it was given to `apps/a
   `https://claude.ai/public/artifacts/…` must not inherit `claude.ai`'s standing. Suffix matching on
   hosts is doubly wrong: `evil-claude.ai` ends with `claude.ai`.
 - **The metadata fetch is an SSRF surface, because the URL comes from an unauthenticated caller.**
-  It goes through `createSafeFetch`, which resolves the host, refuses any non-public address
-  (loopback, private, CGNAT, link-local — cloud metadata lives at `169.254.169.254` — multicast and
-  reserved, including the v4 addresses tunnelled inside v6), and pins those addresses onto the
-  connection so a second lookup cannot rebind to another one. The body is read against a hard byte
-  cap while streaming, never buffered whole on the strength of a `content-length` header.
-  `MCP_OAUTH_ALLOW_PRIVATE_CLIENT_HOSTS` opens that gate for local development and must stay off in
-  a deployment.
+  It goes through `createSafeFetch` from `@app/ssrf`, and so must anything else that ever
+  dereferences a caller-supplied URL. The body is read against a hard byte cap while streaming,
+  never buffered whole on the strength of a `content-length` header.
 - **Access and refresh tokens are opaque and stored as sha256 hashes**, so a disconnected app stops
   working on one write. Do not replace them with JWTs.
 - **A failure that involves the client's own identity is rendered to the user, never redirected**

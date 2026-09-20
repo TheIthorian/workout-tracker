@@ -2,13 +2,13 @@ import { type Db } from '@app/db';
 import {
     ClientIdMetadataService,
     ConnectedAppsService,
-    createSafeFetch,
     OAuthAuthorizationService,
     OAuthClientsService,
     OAuthTokensService,
     parseVerifiedClientIds,
     type WorkspaceMembershipService,
 } from '@app/services';
+import { createSafeFetch } from '@app/ssrf';
 import { RESOURCE_URL_GENERATOR, type ResourceUrlGenerator } from '@app/nest-common';
 import type { Provider } from '@nestjs/common';
 import { loadEnv } from '../config/load-env.js';
@@ -34,19 +34,12 @@ export const CONNECTED_APPS_SERVICE = Symbol('CONNECTED_APPS_SERVICE');
 export const oauthServiceProviders: Provider[] = [
     {
         provide: OAUTH_CLIENTS_SERVICE,
-        useFactory: (db: Db): OAuthClientsService => {
-            const env = loadEnv();
-
-            return new OAuthClientsService({
+        useFactory: (db: Db): OAuthClientsService =>
+            new OAuthClientsService({
                 db,
-                metadata: new ClientIdMetadataService({
-                    fetch: createSafeFetch({
-                        allowPrivateHosts: Boolean(env['MCP_OAUTH_ALLOW_PRIVATE_CLIENT_HOSTS']),
-                    }),
-                }),
-                verifiedClientIds: parseVerifiedClientIds(String(env['MCP_OAUTH_VERIFIED_CLIENT_IDS'])),
-            });
-        },
+                metadata: new ClientIdMetadataService({ fetch: createSafeFetch() }),
+                verifiedClientIds: parseVerifiedClientIds(String(loadEnv()['MCP_OAUTH_VERIFIED_CLIENT_IDS'])),
+            }),
         inject: [DB],
     },
     {

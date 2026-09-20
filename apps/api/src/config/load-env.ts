@@ -58,10 +58,6 @@ const schema = Joi.object({
     // connect - an unlisted client still authorizes, carrying an unverified warning. Required
     // rather than defaulted so a deployment states its position; empty means "vouch for nobody".
     MCP_OAUTH_VERIFIED_CLIENT_IDS: Joi.string().allow('').required(),
-    // Lets the metadata-document fetch reach a private network address. For local development
-    // against a client running on this machine, and never for a deployment: it is what stops a
-    // caller-supplied client_id reaching internal services or a cloud metadata endpoint.
-    MCP_OAUTH_ALLOW_PRIVATE_CLIENT_HOSTS: Joi.boolean().default(false),
     // Origin catalog image URLs are built from: `${CATALOG_IMAGE_BASE_URL}/${storage_key}`. In
     // production a CDN in front of the bucket; locally MinIO's anonymous-read `catalog/` prefix.
     // Required: a missing value produces image URLs that look right and 404.

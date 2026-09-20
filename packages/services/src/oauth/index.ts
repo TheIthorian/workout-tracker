@@ -7,8 +7,6 @@ export {
     MIN_METADATA_TTL_MS,
     type ClientIdMetadataResult,
 } from './client-id-metadata.service.js';
-export { isPublicUnicastAddress } from './ip-address.js';
-export { BlockedAddressError, createSafeFetch, type FetchLike } from './safe-fetch.js';
 export { ConnectedAppsService } from './connected-apps.service.js';
 export {
     AUTHORIZATION_CODE_TTL_MS,

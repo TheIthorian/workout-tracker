@@ -5,7 +5,7 @@ import {
     MAX_METADATA_TTL_MS,
     MIN_METADATA_TTL_MS,
 } from './client-id-metadata.service.js';
-import type { FetchLike } from './safe-fetch.js';
+import type { FetchLike } from '@app/ssrf';
 
 const CLIENT_ID = 'https://client.example/oauth-client';
 

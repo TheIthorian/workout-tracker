@@ -1,5 +1,5 @@
 import { clientIdMetadataSchema, OAuthGrantType, OAuthResponseType, type ClientIdMetadata } from '@app/api-contract';
-import { createSafeFetch, type FetchLike } from './safe-fetch.js';
+import { createSafeFetch, type FetchLike } from '@app/ssrf';
 
 /** A document larger than this is not a client's metadata, whatever else it is. */
 export const MAX_METADATA_BYTES = 64 * 1024;
@@ -19,9 +19,9 @@ export type ClientIdMetadataResult =
  * Fetches and validates a Client ID Metadata Document from the `client_id` URL itself.
  *
  * Any user can name a `client_id`, so this reaches a URL nobody has vetted. Everything that follows
- * treats the response as hostile: {@link createSafeFetch} keeps the request on the public internet,
- * the body is read against a hard byte cap rather than buffered whole, and nothing is believed
- * until the schema and the `client_id` equality check have passed.
+ * treats the response as hostile: `@app/ssrf` keeps the request on the public internet, the body is
+ * read against a hard byte cap rather than buffered whole, and nothing is believed until the schema
+ * and the `client_id` equality check have passed.
  */
 export class ClientIdMetadataService {
     private readonly fetch: FetchLike;

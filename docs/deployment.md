@@ -268,8 +268,7 @@ Then sign up through the web app and copy the server URL from Settings → Integ
 client. The client will send you back to the web app to sign in and approve the connection. Any
 client may connect; one whose `client_id` URL is not listed in `MCP_OAUTH_VERIFIED_CLIENT_IDS` is
 shown on the consent screen as unverified, so set that variable to the metadata-document URLs you
-actually vouch for. Leave `MCP_OAUTH_ALLOW_PRIVATE_CLIENT_HOSTS` unset: it exists for local
-development and turning it on lets a caller-supplied `client_id` reach your internal network.
+actually vouch for.
 
 ## CI/CD
 

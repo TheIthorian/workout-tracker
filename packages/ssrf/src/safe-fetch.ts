@@ -17,24 +17,24 @@ type LookupCallback = (error: Error | null, addressOrAddresses: string | LookupA
 /**
  * A `fetch` that will only talk to public internet addresses.
  *
- * Any user can name a `client_id`, and this server dereferences it, so without this the
- * authorization endpoint is a server-side request forgery primitive pointed at whatever the
- * deployment's network can reach — a cloud instance-metadata service most of all.
+ * A URL a caller supplied is a URL this deployment's network will dereference from the inside, so
+ * without this any endpoint that follows one is a server-side request forgery primitive pointed at
+ * whatever that network can reach — a cloud instance-metadata service most of all.
  *
  * Resolution happens once, here, and the resolved addresses are then pinned onto the connection.
  * Validating a hostname and then handing the hostname to `fetch` would leave a DNS-rebinding window
  * in which the second lookup returns an address the first one did not.
  *
- * @param allowPrivateHosts lets a request reach a private address. For local development against a
- * client running on this machine, and never for a deployment.
+ * There is no option to relax any of this. Code that genuinely needs to reach a private address
+ * should call `fetch` itself rather than ask a security boundary to stand aside.
  */
-export function createSafeFetch({ allowPrivateHosts = false }: { allowPrivateHosts?: boolean } = {}): FetchLike {
+export function createSafeFetch(): FetchLike {
     return async (url: string | URL, init?: RequestInit): Promise<Response> => {
         const target = new URL(url);
 
         if (target.protocol !== 'https:') throw new BlockedAddressError('Only https URLs may be fetched.');
 
-        const addresses = await resolveAddresses({ hostname: target.hostname, allowPrivateHosts });
+        const addresses = await resolveAddresses({ hostname: target.hostname });
         const dispatcher = new Agent({ connect: { lookup: pinLookup(addresses) } });
 
         try {
@@ -51,13 +51,7 @@ export function createSafeFetch({ allowPrivateHosts = false }: { allowPrivateHos
  * All of them, not the first: a record that mixes one public address with one private one is
  * exactly how this gets attacked, and which one a connection picks is not ours to decide.
  */
-async function resolveAddresses({
-    hostname,
-    allowPrivateHosts,
-}: {
-    hostname: string;
-    allowPrivateHosts: boolean;
-}): Promise<LookupAddress[]> {
+async function resolveAddresses({ hostname }: { hostname: string }): Promise<LookupAddress[]> {
     // A bracketed IPv6 literal arrives with its brackets still on.
     const literal = hostname.replace(/^\[|\]$/g, '');
 
@@ -68,7 +62,7 @@ async function resolveAddresses({
 
     if (resolved.length === 0) throw new BlockedAddressError(`${hostname} resolves to nothing.`);
 
-    if (!allowPrivateHosts && !resolved.every((entry) => isPublicUnicastAddress(entry.address))) {
+    if (!resolved.every((entry) => isPublicUnicastAddress(entry.address))) {
         throw new BlockedAddressError(`${hostname} resolves to a non-public address.`);
     }
 

@@ -123,6 +123,9 @@ importers:
       '@app/services':
         specifier: workspace:*
         version: link:../../packages/services
+      '@app/ssrf':
+        specifier: workspace:*
+        version: link:../../packages/ssrf
       '@app/storage':
         specifier: workspace:*
         version: link:../../packages/storage
@@ -860,15 +863,15 @@ importers:
       '@app/errors':
         specifier: workspace:*
         version: link:../errors
+      '@app/ssrf':
+        specifier: workspace:*
+        version: link:../ssrf
       '@app/storage':
         specifier: workspace:*
         version: link:../storage
       drizzle-orm:
         specifier: 0.45.2
         version: 0.45.2(@cloudflare/workers-types@5.20260816.1)(@opentelemetry/api@1.9.1)(@types/pg@8.23.1)(kysely@0.29.5)(pg@8.23.0)
-      undici:
-        specifier: 8.10.2
-        version: 8.10.2
     devDependencies:
       '@app/logger':
         specifier: workspace:*
@@ -885,6 +888,25 @@ importers:
       testcontainers:
         specifier: 12.1.0
         version: 12.1.0
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(jsdom@25.0.1)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@1.21.7)(tsx@4.23.12)(yaml@2.9.0))
+
+  packages/ssrf:
+    dependencies:
+      undici:
+        specifier: 8.10.2
+        version: 8.10.2
+    devDependencies:
+      '@app/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      '@types/node':
+        specifier: 26.2.0
+        version: 26.2.0
       typescript:
         specifier: 6.0.3
         version: 6.0.3
