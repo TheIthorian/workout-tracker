@@ -10,10 +10,10 @@ import {
     pgEnum,
     pgTable,
     text,
-    timestamp,
     uniqueIndex,
     uuid,
 } from 'drizzle-orm/pg-core';
+import { timestamptz } from './timestamptz.js';
 import { user } from './auth.js';
 import { exercises, trackingTypeEnum } from './exercises.js';
 import { routines } from './routines.js';
@@ -32,15 +32,15 @@ export const workoutSessions = pgTable(
         userId: uuid('user_id'),
         routineId: uuid('routine_id'),
         name: text('name').notNull(),
-        startedAt: timestamp('started_at', { withTimezone: true, mode: 'string' })
+        startedAt: timestamptz('started_at')
             .default(sql`now()`)
             .notNull(),
-        completedAt: timestamp('completed_at', { withTimezone: true, mode: 'string' }),
+        completedAt: timestamptz('completed_at'),
         notes: text('notes'),
-        createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+        createdAt: timestamptz('created_at')
             .default(sql`now()`)
             .notNull(),
-        updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' })
+        updatedAt: timestamptz('updated_at')
             .default(sql`now()`)
             .notNull(),
     },
@@ -80,15 +80,15 @@ export const sessionExercises = pgTable(
         targetSets: integer('target_sets').notNull(),
         restSeconds: integer('rest_seconds'),
         notes: text('notes'),
-        skippedAt: timestamp('skipped_at', { withTimezone: true, mode: 'string' }),
+        skippedAt: timestamptz('skipped_at'),
         targetReps: integer('target_reps'),
         targetWeightKg: numeric('target_weight_kg', { precision: 7, scale: 2, mode: 'number' }),
         targetDurationSeconds: integer('target_duration_seconds'),
         targetDistanceM: numeric('target_distance_m', { precision: 9, scale: 2, mode: 'number' }),
-        createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+        createdAt: timestamptz('created_at')
             .default(sql`now()`)
             .notNull(),
-        updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' })
+        updatedAt: timestamptz('updated_at')
             .default(sql`now()`)
             .notNull(),
     },
@@ -126,7 +126,7 @@ export const setEntries = pgTable(
         workspaceId: uuid('workspace_id').notNull(),
         sessionExerciseId: uuid('session_exercise_id').notNull(),
         setIndex: integer('set_index').notNull(),
-        completedAt: timestamp('completed_at', { withTimezone: true, mode: 'string' })
+        completedAt: timestamptz('completed_at')
             .default(sql`now()`)
             .notNull(),
         isWarmup: boolean('is_warmup').default(false).notNull(),
@@ -135,10 +135,10 @@ export const setEntries = pgTable(
         reps: integer('reps'),
         durationSeconds: integer('duration_seconds'),
         distanceM: numeric('distance_m', { precision: 9, scale: 2, mode: 'number' }),
-        createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+        createdAt: timestamptz('created_at')
             .default(sql`now()`)
             .notNull(),
-        updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' })
+        updatedAt: timestamptz('updated_at')
             .default(sql`now()`)
             .notNull(),
     },

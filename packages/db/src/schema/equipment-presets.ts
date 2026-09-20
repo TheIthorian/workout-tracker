@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
-import { foreignKey, index, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { foreignKey, index, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { timestamptz } from './timestamptz.js';
 import { equipmentEnum } from './exercises.js';
 import { workspaces } from './workspaces.js';
 
@@ -17,10 +18,10 @@ export const equipmentPresets = pgTable(
             .array()
             .notNull()
             .default(sql`'{}'::equipment[]`),
-        createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+        createdAt: timestamptz('created_at')
             .default(sql`now()`)
             .notNull(),
-        updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' })
+        updatedAt: timestamptz('updated_at')
             .default(sql`now()`)
             .notNull(),
     },

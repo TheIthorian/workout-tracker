@@ -1,3 +1,4 @@
+export * from './timestamptz.js';
 export * from './auth.js';
 export * from './lockout.js';
 export * from './workspaces.js';
