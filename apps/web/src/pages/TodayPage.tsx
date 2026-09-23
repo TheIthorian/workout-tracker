@@ -1,26 +1,32 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, BookOpen, Clock, Dumbbell, Play, Plus } from 'lucide-react';
+import { ArrowRight, BookOpen, Clock, Dumbbell, Play } from 'lucide-react';
 import { LoadingState } from '@/components/common/LoadingState';
 import { EmptyState } from '@/components/common/EmptyState';
 import { StartWorkoutButton } from '@/components/sessions/StartWorkoutButton';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useRoutines } from '@/hooks/use-routines';
 import { useActiveSession, useStartSession } from '@/hooks/use-sessions';
 import { getStartWorkoutBlockedReason } from '@/lib/start-workout';
-import { formatEstimatedDuration } from '@/models/routine';
+import { RoutineOrder, formatEstimatedDuration } from '@/models/routine';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 
-/** Starts or resumes training, with quick access to saved routines and the library. */
+/**
+ * Starts or resumes training, with quick access to saved routines and the library. Routines are
+ * listed best pick first, and the main action starts the top one.
+ */
 export default function TodayPage(): JSX.Element {
     const { workspaceId } = useWorkspace();
     const navigate = useNavigate();
     const { user } = useAuth();
     const active = useActiveSession({ workspaceId });
-    const routinesQuery = useRoutines({ workspaceId });
+    const routinesQuery = useRoutines({ workspaceId, sort: RoutineOrder.Recommended });
     const startSession = useStartSession({ workspaceId });
     const routines =
         routinesQuery.data?.pages.flatMap((page) => page.data).filter((routine) => !routine.archivedAt) ?? [];
+    const recommended = routines.find((routine) => routine.recommendationScore !== null) ?? null;
+    const recommendedDuration = recommended ? formatEstimatedDuration(recommended.estimatedDurationSeconds) : null;
     const session = active.data?.session;
     const startBlockedReason = getStartWorkoutBlockedReason({ hasActiveSession: Boolean(session) });
     const start = (routineId?: string): void => {
@@ -63,22 +69,28 @@ export default function TodayPage(): JSX.Element {
                         <div className="relative max-w-lg">
                             <span className="mb-7 flex items-center gap-2 text-xs font-medium text-[#c8dfac]">
                                 <span className="h-1.5 w-1.5 rounded-full bg-[#c8dfac]" />
-                                {session ? 'WORKOUT IN PROGRESS' : 'YOUR NEXT SESSION'}
+                                {session
+                                    ? 'WORKOUT IN PROGRESS'
+                                    : recommended
+                                      ? 'RECOMMENDED NEXT'
+                                      : 'YOUR NEXT SESSION'}
                             </span>
                             <h2 className="text-3xl sm:text-4xl">
-                                {session ? session.name : 'Show up. Set your pace.'}
+                                {session ? session.name : recommended ? recommended.name : 'Show up. Set your pace.'}
                             </h2>
                             <p className="mt-3 text-sm leading-relaxed text-[#d0dfd5]">
                                 {session
                                     ? `${session.state.progress.loggedSets} working sets logged. Pick up right where you left off.`
-                                    : 'Start with a blank workout and add movements as you go. You bring the effort. We’ll keep track.'}
+                                    : recommended
+                                      ? `Works the muscles you’ve rested longest, balanced with the routines you enjoy most.${recommendedDuration ? ` ${recommendedDuration}.` : ''}`
+                                      : 'Start with a blank workout and add movements as you go. You bring the effort. We’ll keep track.'}
                             </p>
                             <Button
                                 className="mt-7 bg-[#d5e8b5] text-[#234d3d] hover:bg-[#e0edcb]"
                                 disabled={startSession.isPending}
-                                onClick={() => (session ? navigate(`/sessions/${session.id}`) : start())}
+                                onClick={() => (session ? navigate(`/sessions/${session.id}`) : start(recommended?.id))}
                             >
-                                {session ? <ArrowRight /> : <Plus />}
+                                {session ? <ArrowRight /> : <Play />}
                                 {startSession.isPending ? 'Starting…' : session ? 'Resume workout' : 'Start a workout'}
                             </Button>
                         </div>
@@ -102,8 +114,13 @@ export default function TodayPage(): JSX.Element {
                                                 <Dumbbell className="h-5 w-5" />
                                             </span>
                                             <Link to={`/routines/${routine.id}`} className="min-w-0 flex-1">
-                                                <span className="block break-words text-sm font-semibold">
-                                                    {routine.name}
+                                                <span className="flex flex-wrap items-center gap-2">
+                                                    <span className="break-words text-sm font-semibold">
+                                                        {routine.name}
+                                                    </span>
+                                                    {!session && routine.id === recommended?.id && (
+                                                        <Badge variant="secondary">Recommended</Badge>
+                                                    )}
                                                 </span>
                                                 <span className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
                                                     <span>

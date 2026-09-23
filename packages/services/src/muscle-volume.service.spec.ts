@@ -8,6 +8,7 @@ import { ExercisesService } from './exercises.service.js';
 import { MuscleVolumeService } from './muscle-volume.service.js';
 import { seedUser, seedWorkspace } from './testing.js';
 import { WorkoutSessionsService } from './workout-sessions.service.js';
+import { RoutineRecommendationsService } from './routine-recommendations.service.js';
 import { WorkspaceMembershipService } from './workspace-membership.service.js';
 
 let database: Awaited<ReturnType<typeof startTestDatabase>>;
@@ -26,8 +27,12 @@ beforeAll(async () => {
     db = database.db;
     const membership = new WorkspaceMembershipService({ db });
     muscleVolume = new MuscleVolumeService({ db, membership });
-    exercises = new ExercisesService({ db, membership });
-    sessions = new WorkoutSessionsService({ db, membership });
+    exercises = new ExercisesService({ db, membership, recommendations: new RoutineRecommendationsService({ db }) });
+    sessions = new WorkoutSessionsService({
+        db,
+        membership,
+        recommendations: new RoutineRecommendationsService({ db }),
+    });
 
     userId = await seedUser(db, 'Member');
     workspaceId = await seedWorkspace(db, userId);

@@ -7,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ExerciseGuideService } from './exercise-guide.service.js';
 import { ExercisesService } from './exercises.service.js';
 import { seedCatalogExercise, seedUser, seedWorkspace } from './testing.js';
+import { RoutineRecommendationsService } from './routine-recommendations.service.js';
 import { WorkspaceMembershipService } from './workspace-membership.service.js';
 
 let database: Awaited<ReturnType<typeof startTestDatabase>>;
@@ -26,7 +27,7 @@ beforeAll(async () => {
     database = await startTestDatabase();
     db = database.db;
     const membership = new WorkspaceMembershipService({ db });
-    exercises = new ExercisesService({ db, membership });
+    exercises = new ExercisesService({ db, membership, recommendations: new RoutineRecommendationsService({ db }) });
     guides = new ExerciseGuideService({ db, membership });
 
     userId = await seedUser(db, 'Member');

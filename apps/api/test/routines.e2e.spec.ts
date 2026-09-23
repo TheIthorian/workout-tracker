@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { routineDetailResponseSchema } from '@app/api-contract';
+import { routineDetailResponseSchema, routineListResponseSchema } from '@app/api-contract';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestApp, signIn, TEST_WEB_APP_BASE_URL, type TestApp } from './harness.js';
 
@@ -94,6 +94,60 @@ describe('routine routes', () => {
             headers: { cookie },
         });
         expect((JSON.parse(listed.body) as { data: { id: string }[] }).data.map((row) => row.id)).toEqual([routineId]);
+    });
+
+    it('lists in recommended order, and keeps an excluded routine unscored', async () => {
+        const { cookie, workspaceId } = await signUpUser();
+        const exerciseId = await createExercise({ cookie, workspaceId, name: 'Squat' });
+        const empty = await createRoutine({ cookie, workspaceId });
+        const legs = await createRoutine({ cookie, workspaceId });
+        await app.inject({
+            method: 'POST',
+            url: `/api/v1/workspaces/${workspaceId}/routines/${legs}/exercises`,
+            headers: { cookie },
+            payload: { exerciseId },
+        });
+
+        const recommended = await app.inject({
+            method: 'GET',
+            url: `/api/v1/workspaces/${workspaceId}/routines?sort=recommended`,
+            headers: { cookie },
+        });
+        expect(recommended.statusCode).toBe(200);
+        const body = routineListResponseSchema.parse(JSON.parse(recommended.body));
+        expect(body.data.map((routine) => routine.id)).toEqual([legs, empty]);
+        expect(body.data[0]?.recommendationScore).not.toBeNull();
+        expect(body.data[1]?.recommendationScore).toBeNull();
+
+        const excluded = await app.inject({
+            method: 'PATCH',
+            url: `/api/v1/workspaces/${workspaceId}/routines/${legs}`,
+            headers: { cookie },
+            payload: { excludedFromRecommendations: true },
+        });
+        expect(routineDetailResponseSchema.parse(JSON.parse(excluded.body)).excludedFromRecommendations).toBe(true);
+
+        const afterExclusion = await app.inject({
+            method: 'GET',
+            url: `/api/v1/workspaces/${workspaceId}/routines?sort=recommended`,
+            headers: { cookie },
+        });
+        const scores = routineListResponseSchema
+            .parse(JSON.parse(afterExclusion.body))
+            .data.map((routine) => routine.recommendationScore);
+        expect(scores).toEqual([null, null]);
+    });
+
+    it('rejects an unknown sort with a 400', async () => {
+        const { cookie, workspaceId } = await signUpUser();
+
+        const response = await app.inject({
+            method: 'GET',
+            url: `/api/v1/workspaces/${workspaceId}/routines?sort=random`,
+            headers: { cookie },
+        });
+
+        expect(response.statusCode).toBe(400);
     });
 
     it('returns 404, not 400, for a malformed routine id', async () => {

@@ -31,6 +31,17 @@ export {
     type NextEffortSuggestion,
     type NextEffortTarget,
 } from './next-effort.js';
+export {
+    MUSCLE_RECOVERY_DAYS,
+    RECOMMENDATION_WEIGHTS,
+    ROUTINE_FREQUENCY_WINDOW_DAYS,
+    RoutineOrder,
+    UNTAGGED_MUSCLE_REST,
+    scoreRoutineRecommendations,
+    type RecommendationCandidate,
+    type RoutineRecommendation,
+    type TrainedExercise,
+} from './routine-recommendation.js';
 export { DEFAULT_REST_SECONDS, resolveRestSeconds, restTimer, sessionRestTimer, type RestTimer } from './rest-timer.js';
 export {
     SessionExerciseSource,

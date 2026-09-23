@@ -6,6 +6,7 @@ import { TrackingType } from '@app/domain';
 import {
     ACCESS_TOKEN_TTL_SECONDS,
     ExercisesService,
+    RoutineRecommendationsService,
     RoutinesService,
     WorkspaceMembershipService,
     WorkspaceRole,
@@ -176,7 +177,11 @@ export async function seedExercise(
         trackingType = TrackingType.WeightReps,
     }: { userId: string; workspaceId: string; name: string; trackingType?: TrackingType },
 ): Promise<{ id: string }> {
-    const service = new ExercisesService({ db, membership: new WorkspaceMembershipService({ db }) });
+    const service = new ExercisesService({
+        db,
+        membership: new WorkspaceMembershipService({ db }),
+        recommendations: new RoutineRecommendationsService({ db }),
+    });
 
     return service.create({ userId, workspaceId, name, trackingType });
 }
@@ -189,7 +194,11 @@ export async function seedRoutine(
     db: Db,
     { userId, workspaceId, name }: { userId: string; workspaceId: string; name: string },
 ): Promise<{ id: string }> {
-    const service = new RoutinesService({ db, membership: new WorkspaceMembershipService({ db }) });
+    const service = new RoutinesService({
+        db,
+        membership: new WorkspaceMembershipService({ db }),
+        recommendations: new RoutineRecommendationsService({ db }),
+    });
 
     return service.create({ userId, workspaceId, name });
 }

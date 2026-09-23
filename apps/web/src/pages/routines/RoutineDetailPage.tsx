@@ -21,6 +21,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
@@ -61,6 +62,7 @@ export default function RoutineDetailPage(): JSX.Element {
     const [isDetailsOpen, setDetailsOpen] = useState(false);
     const [nameDraft, setNameDraft] = useState('');
     const [descriptionDraft, setDescriptionDraft] = useState('');
+    const [recommendedDraft, setRecommendedDraft] = useState(true);
 
     const { data: routine, isLoading, isError } = useRoutine({ workspaceId, routineId });
     const updateRoutine = useUpdateRoutine({ workspaceId });
@@ -94,12 +96,20 @@ export default function RoutineDetailPage(): JSX.Element {
     const openDetails = (): void => {
         setNameDraft(routine.name);
         setDescriptionDraft(routine.description ?? '');
+        setRecommendedDraft(!routine.excludedFromRecommendations);
         setDetailsOpen(true);
     };
 
     const saveDetails = (): void => {
         updateRoutine.mutate(
-            { routineId, data: { name: nameDraft.trim(), description: descriptionDraft.trim() || null } },
+            {
+                routineId,
+                data: {
+                    name: nameDraft.trim(),
+                    description: descriptionDraft.trim() || null,
+                    excludedFromRecommendations: !recommendedDraft,
+                },
+            },
             {
                 onSuccess: () => setDetailsOpen(false),
                 onError: (error) =>
@@ -240,6 +250,11 @@ export default function RoutineDetailPage(): JSX.Element {
                             Archived
                         </Badge>
                     )}
+                    {!isArchived && routine.excludedFromRecommendations && (
+                        <Badge variant="outline" className="mt-2">
+                            Not recommended
+                        </Badge>
+                    )}
                 </div>
                 <div className="flex gap-2">
                     <StartWorkoutButton
@@ -352,7 +367,9 @@ export default function RoutineDetailPage(): JSX.Element {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Edit routine</DialogTitle>
-                        <DialogDescription>Name and an optional description.</DialogDescription>
+                        <DialogDescription>
+                            Name, an optional description, and whether it is suggested.
+                        </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                         <div className="space-y-2">
@@ -372,6 +389,22 @@ export default function RoutineDetailPage(): JSX.Element {
                                 maxLength={2000}
                                 rows={3}
                                 onChange={(event) => setDescriptionDraft(event.target.value)}
+                            />
+                        </div>
+                        <div className="flex items-start justify-between gap-4 rounded-xl border p-4">
+                            <div className="space-y-1">
+                                <Label htmlFor="routine-recommended" className="cursor-pointer">
+                                    Include in recommendations
+                                </Label>
+                                <p id="routine-recommended-hint" className="text-xs text-muted-foreground">
+                                    Recommended routines can be picked for “Start a workout” on your home page.
+                                </p>
+                            </div>
+                            <Switch
+                                id="routine-recommended"
+                                aria-describedby="routine-recommended-hint"
+                                checked={recommendedDraft}
+                                onCheckedChange={setRecommendedDraft}
                             />
                         </div>
                     </div>

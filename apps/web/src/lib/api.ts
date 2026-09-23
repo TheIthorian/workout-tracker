@@ -35,7 +35,8 @@ import type {
     PatchRoutineExerciseRequest,
     PatchRoutineRequest,
     RoutineDetail,
-    Routine,
+    RoutineListItem,
+    RoutineOrder,
     SaveRoutineExerciseRequest,
     SaveRoutineRequest,
 } from '@/models/routine';
@@ -170,8 +171,8 @@ export const onboardingApi = {
 export const routinesApi = {
     getAll: (
         workspaceId: string,
-        params?: { search?: string; includeArchived?: boolean; page?: number; pageSize?: number },
-    ) => httpClient.get<PaginatedResponse<Routine>>(`/api/v1/workspaces/${workspaceId}/routines`, { params }),
+        params?: { search?: string; includeArchived?: boolean; page?: number; pageSize?: number; sort?: RoutineOrder },
+    ) => httpClient.get<PaginatedResponse<RoutineListItem>>(`/api/v1/workspaces/${workspaceId}/routines`, { params }),
     getById: (workspaceId: string, routineId: string) =>
         httpClient.get<RoutineDetail & { webUrl: string }>(`/api/v1/workspaces/${workspaceId}/routines/${routineId}`),
     create: (workspaceId: string, data: SaveRoutineRequest) =>

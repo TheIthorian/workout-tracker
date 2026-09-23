@@ -1,4 +1,4 @@
-import { Equipment, TrackingType } from '@app/domain';
+import { Equipment, RoutineOrder, TrackingType } from '@app/domain';
 import { describe, expect, it } from 'vitest';
 import {
     patchRoutineExerciseRequestSchema,
@@ -6,6 +6,7 @@ import {
     postRoutineExerciseRequestSchema,
     putRoutineExercisesRequestSchema,
     routineExerciseSummarySchema,
+    routineListItemSchema,
     routineListQuerySchema,
     routineResponseSchema,
 } from './routine.contract.js';
@@ -80,12 +81,24 @@ describe('patchRoutineRequestSchema', () => {
         expect(patchRoutineRequestSchema.safeParse({}).success).toBe(false);
         expect(patchRoutineRequestSchema.safeParse({ archived: true }).success).toBe(true);
     });
+
+    it('accepts excluding a routine from recommendations', () => {
+        expect(patchRoutineRequestSchema.parse({ excludedFromRecommendations: true })).toEqual({
+            excludedFromRecommendations: true,
+        });
+    });
 });
 
 describe('routineListQuerySchema', () => {
     it('reads includeArchived as a boolean', () => {
         expect(routineListQuerySchema.parse({ includeArchived: 'true' }).includeArchived).toBe(true);
         expect(routineListQuerySchema.parse({}).includeArchived).toBe(false);
+    });
+
+    it('sorts by name unless recommended order is asked for', () => {
+        expect(routineListQuerySchema.parse({}).sort).toBe(RoutineOrder.Name);
+        expect(routineListQuerySchema.parse({ sort: 'recommended' }).sort).toBe(RoutineOrder.Recommended);
+        expect(routineListQuerySchema.safeParse({ sort: 'random' }).success).toBe(false);
     });
 });
 
@@ -95,6 +108,7 @@ describe('routineResponseSchema', () => {
         name: 'Push Day',
         description: null,
         archivedAt: null,
+        excludedFromRecommendations: false,
         exerciseCount: 2,
         estimatedDurationSeconds: 2400,
         lastCompletedAt: null,
@@ -128,5 +142,27 @@ describe('routineResponseSchema', () => {
             false,
         );
         expect(routineResponseSchema.safeParse({ ...routine, estimatedDurationSeconds: -1 }).success).toBe(false);
+    });
+});
+
+describe('routineListItemSchema', () => {
+    const item = {
+        id: '4b6c7e39-0f8b-4c8b-9a8e-2d1f0f0e1a12',
+        name: 'Push Day',
+        description: null,
+        archivedAt: null,
+        excludedFromRecommendations: false,
+        exerciseCount: 2,
+        estimatedDurationSeconds: 2400,
+        lastCompletedAt: null,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+        recommendationScore: 64,
+    };
+
+    it('carries a 0-100 score, or null for a routine that is not recommended', () => {
+        expect(routineListItemSchema.parse(item).recommendationScore).toBe(64);
+        expect(routineListItemSchema.parse({ ...item, recommendationScore: null }).recommendationScore).toBeNull();
+        expect(routineListItemSchema.safeParse({ ...item, recommendationScore: 101 }).success).toBe(false);
     });
 });

@@ -13,23 +13,30 @@ import type { PaginatedResponse } from '@/models/pagination';
 import type {
     PatchRoutineExerciseRequest,
     PatchRoutineRequest,
-    Routine,
     RoutineDetail,
+    RoutineListItem,
+    RoutineOrder,
     SaveRoutineExerciseRequest,
     SaveRoutineRequest,
 } from '@/models/routine';
 
-/** The user's routines, optionally filtered by name, one page at a time. `search` is assumed trimmed. */
+/**
+ * The user's routines, optionally filtered by name, one page at a time, by name unless `sort` says
+ * otherwise. `search` is assumed trimmed.
+ */
 export function useRoutines({
     workspaceId,
     search,
+    sort,
 }: {
     workspaceId: string;
     search?: string;
-}): UseInfiniteQueryResult<InfiniteData<PaginatedResponse<Routine>>, Error> {
+    sort?: RoutineOrder;
+}): UseInfiniteQueryResult<InfiniteData<PaginatedResponse<RoutineListItem>>, Error> {
     return useInfiniteQuery({
-        queryKey: ['routines', workspaceId, { search: search ?? '' }],
-        queryFn: ({ pageParam }) => routinesApi.getAll(workspaceId, { search: search || undefined, page: pageParam }),
+        queryKey: ['routines', workspaceId, { search: search ?? '', sort: sort ?? null }],
+        queryFn: ({ pageParam }) =>
+            routinesApi.getAll(workspaceId, { search: search || undefined, sort, page: pageParam }),
         initialPageParam: 1,
         getNextPageParam: (lastPage) => (lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined),
         enabled: Boolean(workspaceId),
@@ -169,7 +176,7 @@ function useRoutineSlotMutation<TVariables>({
                 ['routines', workspaceId, routineId],
                 (previous) => (previous ? { ...previous, ...routine } : previous),
             );
-            // Only the list queries (their third key element is the `{ search }` object): the
+            // Only the list queries (their third key element is the `{ search, sort }` object): the
             // detail query was just written above and must not be refetched over.
             queryClient.invalidateQueries({
                 queryKey: ['routines', workspaceId],

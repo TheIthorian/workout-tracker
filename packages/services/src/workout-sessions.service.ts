@@ -15,6 +15,7 @@ import {
     SetShapeMismatchError,
 } from '@app/errors';
 import { asc, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
+import type { RoutineRecommendationsService } from './routine-recommendations.service.js';
 import type { WorkspaceMembershipService } from './workspace-membership.service.js';
 
 const { exercisePreferences, exercises, routineExercises, routines, sessionExercises, setEntries, workoutSessions } =
@@ -82,10 +83,20 @@ export type PaginatedSessions = {
 export class WorkoutSessionsService {
     private readonly db: Db;
     private readonly membership: WorkspaceMembershipService;
+    private readonly recommendations: RoutineRecommendationsService;
 
-    constructor({ db, membership }: { db: Db; membership: WorkspaceMembershipService }) {
+    constructor({
+        db,
+        membership,
+        recommendations,
+    }: {
+        db: Db;
+        membership: WorkspaceMembershipService;
+        recommendations: RoutineRecommendationsService;
+    }) {
         this.db = db;
         this.membership = membership;
+        this.recommendations = recommendations;
     }
 
     /** Lists sessions newest first. */
@@ -205,7 +216,7 @@ export class WorkoutSessionsService {
         notes?: string | null;
     }): Promise<SessionDetail> {
         await this.membership.require({ userId, workspaceId });
-        return withTransaction(this.db, async (tx) => {
+        const detail = await withTransaction(this.db, async (tx) => {
             await this.requireSession({ db: tx, workspaceId, sessionId, active: true });
             const [working] = await tx
                 .select({ id: setEntries.id })
@@ -232,6 +243,10 @@ export class WorkoutSessionsService {
                 .where(scopedToWorkspace(workoutSessions, workspaceId, eq(workoutSessions.id, sessionId)));
             return this.loadDetail({ db: tx, workspaceId, sessionId });
         });
+
+        await this.recommendations.recalculate({ workspaceId });
+
+        return detail;
     }
 
     /** Permanently abandons an active session. */

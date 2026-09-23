@@ -1,5 +1,6 @@
 import { schema, scopedToWorkspace, scopedToWorkspaceOrGlobal, withTransaction, type Db, type Tx } from '@app/db';
 import {
+    RoutineOrder,
     estimateRoutineSeconds,
     validateSetMeasurements,
     type Equipment,
@@ -8,6 +9,7 @@ import {
 } from '@app/domain';
 import { EntityNotFoundError, SetShapeMismatchError } from '@app/errors';
 import { asc, count, eq, ilike, inArray, isNotNull, isNull, max, or, sql } from 'drizzle-orm';
+import type { RoutineRecommendationsService } from './routine-recommendations.service.js';
 import type { WorkspaceMembershipService } from './workspace-membership.service.js';
 
 const { exercises, routineExercises, routines, workoutSessions } = schema;
@@ -17,6 +19,7 @@ export type RoutineSummary = {
     name: string;
     description: string | null;
     archivedAt: string | null;
+    excludedFromRecommendations: boolean;
     exerciseCount: number;
     /** Estimated seconds to work through the routine; 0 when nothing in it has a usable target. */
     estimatedDurationSeconds: number;
@@ -56,8 +59,14 @@ export type RoutineExerciseInput = { exerciseId: string; targetSets: number } & 
     Omit<RoutineExerciseTargets, 'targetSets'>
 >;
 
+/** A routine as listed, with how strongly it is recommended as the next workout. */
+export type RoutineListItem = RoutineSummary & {
+    /** 0-100, higher is a better pick now; null when excluded, archived, or empty. */
+    recommendationScore: number | null;
+};
+
 export type PaginatedRoutines = {
-    data: RoutineSummary[];
+    data: RoutineListItem[];
     page: number;
     pageSize: number;
     totalCount: number;
@@ -74,16 +83,28 @@ export type PaginatedRoutines = {
 export class RoutinesService {
     private readonly db: Db;
     private readonly membership: WorkspaceMembershipService;
+    private readonly recommendations: RoutineRecommendationsService;
 
-    constructor({ db, membership }: { db: Db; membership: WorkspaceMembershipService }) {
+    constructor({
+        db,
+        membership,
+        recommendations,
+    }: {
+        db: Db;
+        membership: WorkspaceMembershipService;
+        recommendations: RoutineRecommendationsService;
+    }) {
         this.db = db;
         this.membership = membership;
+        this.recommendations = recommendations;
     }
 
     /**
-     * A page of the workspace's routines by name, each with its slot count.
+     * A page of the workspace's routines, each with its slot count and recommendation score.
      *
      * @param search matches anywhere in the name, case-insensitively.
+     * @param order by name (the default), or highest recommendation score first with unscored
+     * routines after, by name.
      * @throws EntityNotFoundError when the caller is not a member of the workspace.
      */
     async list({
@@ -93,6 +114,7 @@ export class RoutinesService {
         pageSize,
         search,
         includeArchived,
+        order = RoutineOrder.Name,
     }: {
         userId: string;
         workspaceId: string;
@@ -100,6 +122,7 @@ export class RoutinesService {
         pageSize: number;
         search?: string;
         includeArchived?: boolean;
+        order?: RoutineOrder;
     }): Promise<PaginatedRoutines> {
         await this.membership.require({ userId, workspaceId });
 
@@ -109,13 +132,20 @@ export class RoutinesService {
             search === undefined || search === '' ? undefined : ilike(routines.name, `%${search}%`),
             includeArchived === true ? undefined : isNull(routines.archivedAt),
         );
+        await this.recommendations.recalculateIfStale({ workspaceId });
+
+        const byName = [asc(routines.name), asc(routines.createdAt)];
+        const orderBy =
+            order === RoutineOrder.Recommended
+                ? [sql`${routines.recommendationScore} desc nulls last`, ...byName]
+                : byName;
 
         const [data, [totals]] = await Promise.all([
             this.db
-                .select(ROUTINE_SUMMARY_COLUMNS)
+                .select({ ...ROUTINE_SUMMARY_COLUMNS, recommendationScore: routines.recommendationScore })
                 .from(routines)
                 .where(where)
-                .orderBy(asc(routines.name), asc(routines.createdAt))
+                .orderBy(...orderBy)
                 .limit(pageSize)
                 .offset((page - 1) * pageSize),
             this.db.select({ totalCount: count() }).from(routines).where(where),
@@ -181,7 +211,14 @@ export class RoutinesService {
 
         const [row] = await this.db
             .insert(routines)
-            .values({ workspaceId, createdByUserId: userId, name, description: description ?? null })
+            // Empty, so unscored, and it changes no other routine's score: stamp it as fresh.
+            .values({
+                workspaceId,
+                createdByUserId: userId,
+                name,
+                description: description ?? null,
+                recommendationScoredAt: new Date().toISOString(),
+            })
             .returning({ id: routines.id });
 
         return this.loadDetail({ db: this.db, workspaceId, routineId: row.id });
@@ -191,6 +228,7 @@ export class RoutinesService {
      * Updates a routine's own fields. Only the fields present are written.
      *
      * @param archived true archives the routine, false restores it.
+     * @param excludedFromRecommendations true keeps the routine out of recommendations.
      * @throws EntityNotFoundError when the caller is not a member, or the routine is not in this
      * workspace.
      */
@@ -201,6 +239,7 @@ export class RoutinesService {
         name,
         description,
         archived,
+        excludedFromRecommendations,
     }: {
         userId: string;
         workspaceId: string;
@@ -208,25 +247,35 @@ export class RoutinesService {
         name?: string;
         description?: string | null;
         archived?: boolean;
+        excludedFromRecommendations?: boolean;
     }): Promise<RoutineDetail> {
         await this.membership.require({ userId, workspaceId });
 
         const now = new Date().toISOString();
 
-        const [row] = await this.db
-            .update(routines)
-            .set({
-                ...(name === undefined ? {} : { name }),
-                ...(description === undefined ? {} : { description }),
-                ...(archived === undefined ? {} : { archivedAt: archived ? now : null }),
-                updatedAt: now,
-            })
-            .where(scopedToWorkspace(routines, workspaceId, eq(routines.id, routineId)))
-            .returning({ id: routines.id });
+        const detail = await withTransaction(this.db, async (tx) => {
+            const [row] = await tx
+                .update(routines)
+                .set({
+                    ...(name === undefined ? {} : { name }),
+                    ...(description === undefined ? {} : { description }),
+                    ...(archived === undefined ? {} : { archivedAt: archived ? now : null }),
+                    ...(excludedFromRecommendations === undefined ? {} : { excludedFromRecommendations }),
+                    updatedAt: now,
+                })
+                .where(scopedToWorkspace(routines, workspaceId, eq(routines.id, routineId)))
+                .returning({ id: routines.id });
 
-        if (!row) throw new EntityNotFoundError('Routine not found');
+            if (!row) throw new EntityNotFoundError('Routine not found');
 
-        return this.loadDetail({ db: this.db, workspaceId, routineId });
+            return this.loadDetail({ db: tx, workspaceId, routineId });
+        });
+
+        if (archived !== undefined || excludedFromRecommendations !== undefined) {
+            await this.recommendations.recalculate({ workspaceId });
+        }
+
+        return detail;
     }
 
     /**
@@ -248,7 +297,7 @@ export class RoutinesService {
     } & RoutineExerciseInput): Promise<RoutineDetail> {
         await this.membership.require({ userId, workspaceId });
 
-        return withTransaction(this.db, async (tx) => {
+        const detail = await withTransaction(this.db, async (tx) => {
             await this.requireRoutine({ db: tx, workspaceId, routineId });
             const trackingTypes = await this.requireAssignableExercises({
                 db: tx,
@@ -266,6 +315,10 @@ export class RoutinesService {
 
             return this.loadDetail({ db: tx, workspaceId, routineId });
         });
+
+        await this.recommendations.recalculate({ workspaceId });
+
+        return detail;
     }
 
     /**
@@ -362,7 +415,7 @@ export class RoutinesService {
     }): Promise<RoutineDetail> {
         await this.membership.require({ userId, workspaceId });
 
-        return withTransaction(this.db, async (tx) => {
+        const detail = await withTransaction(this.db, async (tx) => {
             const deleted = await tx
                 .delete(routineExercises)
                 .where(
@@ -394,6 +447,10 @@ export class RoutinesService {
 
             return this.loadDetail({ db: tx, workspaceId, routineId });
         });
+
+        await this.recommendations.recalculate({ workspaceId });
+
+        return detail;
     }
 
     /**
@@ -417,7 +474,7 @@ export class RoutinesService {
     }): Promise<RoutineDetail> {
         await this.membership.require({ userId, workspaceId });
 
-        return withTransaction(this.db, async (tx) => {
+        const detail = await withTransaction(this.db, async (tx) => {
             await this.requireRoutine({ db: tx, workspaceId, routineId });
 
             const current = await tx
@@ -456,6 +513,10 @@ export class RoutinesService {
 
             return this.loadDetail({ db: tx, workspaceId, routineId });
         });
+
+        await this.recommendations.recalculate({ workspaceId });
+
+        return detail;
     }
 
     private async requireRoutine({
@@ -660,6 +721,7 @@ const ROUTINE_SUMMARY_COLUMNS = {
     name: routines.name,
     description: routines.description,
     archivedAt: routines.archivedAt,
+    excludedFromRecommendations: routines.excludedFromRecommendations,
     // The comparison must stay inside a nested `SQL` so the single-table rewrite (which strips
     // top-level `PgColumn` qualifiers) does not strip `routines.id`'s.
     exerciseCount: sql<number>`(select count(*) from ${routineExercises} where ${eq(

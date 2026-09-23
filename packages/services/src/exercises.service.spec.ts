@@ -7,6 +7,7 @@ import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ExercisesService } from './exercises.service.js';
 import { seedCatalogExercise, seedUser, seedWorkspace } from './testing.js';
+import { RoutineRecommendationsService } from './routine-recommendations.service.js';
 import { WorkspaceMembershipService } from './workspace-membership.service.js';
 
 let database: Awaited<ReturnType<typeof startTestDatabase>>;
@@ -21,7 +22,11 @@ let otherWorkspaceId: string;
 beforeAll(async () => {
     database = await startTestDatabase();
     db = database.db;
-    exercises = new ExercisesService({ db, membership: new WorkspaceMembershipService({ db }) });
+    exercises = new ExercisesService({
+        db,
+        membership: new WorkspaceMembershipService({ db }),
+        recommendations: new RoutineRecommendationsService({ db }),
+    });
 
     userId = await seedUser(db, 'Member');
     workspaceId = await seedWorkspace(db, userId);
