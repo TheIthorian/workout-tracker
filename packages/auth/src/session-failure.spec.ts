@@ -23,6 +23,15 @@ describe('toSessionFailure', () => {
         expect(failure.statusCode).toBe(503);
     });
 
+    // `getSession` catches a database failure itself and rethrows it as a 500 `APIError`, which is
+    // exactly what a sleeping Postgres produces on its first connection after idling.
+    it('is service-unavailable when Better Auth wrapped a store failure', () => {
+        const failure = toSessionFailure(new APIError('INTERNAL_SERVER_ERROR', { message: 'Failed to get session' }));
+
+        expect(failure).toBeInstanceOf(SessionUnavailableError);
+        expect(failure.statusCode).toBe(503);
+    });
+
     it('never carries the store failure into the problem body', () => {
         const failure = toSessionFailure(new Error('connect ECONNREFUSED 10.0.0.4:5432'));
 
