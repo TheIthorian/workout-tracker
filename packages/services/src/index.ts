@@ -16,6 +16,11 @@ export {
 } from './exercises.service.js';
 export * from './oauth/index.js';
 export {
+    RECOMMENDATION_SCORE_MAX_AGE_HOURS,
+    recalculateRoutineRecommendations,
+    recalculateStaleRoutineRecommendations,
+} from './routine-recommendations.js';
+export {
     RoutinesService,
     type PaginatedRoutines,
     type RoutineListItem,

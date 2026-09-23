@@ -13,7 +13,9 @@ import { EntityNotFoundError, SetShapeMismatchError } from '@app/errors';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ExercisesService } from './exercises.service.js';
+import { recalculateRoutineRecommendations } from './routine-recommendations.js';
 import { RoutinesService, type RoutineListItem } from './routines.service.js';
+import { WorkoutSessionsService } from './workout-sessions.service.js';
 import { seedCatalogExercise, seedUser, seedWorkspace } from './testing.js';
 import { WorkspaceMembershipService } from './workspace-membership.service.js';
 
@@ -736,7 +738,10 @@ describe('recommendations', () => {
         return routine.id;
     }
 
-    /** Records a completed workout in which `exerciseId` had one set logged. */
+    /**
+     * Records a completed workout in which `exerciseId` had one set logged, then recalculates as
+     * completing it through `WorkoutSessionsService` would.
+     */
     async function logWorkout({
         sessionWorkspaceId,
         routineId = null,
@@ -781,6 +786,7 @@ describe('recommendations', () => {
             weightKg: 50,
             reps: 5,
         });
+        await recalculateRoutineRecommendations({ db, workspaceId: sessionWorkspaceId });
     }
 
     async function listRecommended(f: Fixture, paging = page): Promise<RoutineListItem[]> {
@@ -893,6 +899,46 @@ describe('recommendations', () => {
         const listed = await listRecommended(f);
 
         expect(listed.map((routine) => [routine.id, routine.recommendationScore])).toEqual([[legs, 70]]);
+    });
+
+    it('recalculates when a workout is completed through the sessions service', async () => {
+        const f = await fixture();
+        const sessions = new WorkoutSessionsService({ db, membership: new WorkspaceMembershipService({ db }) });
+        const squat = await f.exercise({ primary: [MuscleGroup.Quads] });
+        const legs = await routineWith({ f, name: 'Legs', exerciseIds: [squat] });
+        expect((await listRecommended(f))[0]?.recommendationScore).toBe(70);
+
+        const started = await sessions.start({ userId: f.ownerId, workspaceId: f.ownWorkspaceId, routineId: legs });
+        await sessions.logSet({
+            userId: f.ownerId,
+            workspaceId: f.ownWorkspaceId,
+            sessionId: started.id,
+            sessionExerciseId: started.exercises[0]?.id as string,
+            weightKg: 100,
+            reps: 5,
+        });
+        await sessions.complete({ userId: f.ownerId, workspaceId: f.ownWorkspaceId, sessionId: started.id });
+
+        // Quads just trained, and the only routine done is the most done: 0 rest + 30 frequency.
+        expect((await listRecommended(f))[0]?.recommendationScore).toBe(30);
+    });
+
+    it('reads the stored score, and recalculates on read once it is a day old', async () => {
+        const f = await fixture();
+        const squat = await f.exercise({ primary: [MuscleGroup.Quads] });
+        const legs = await routineWith({ f, name: 'Legs', exerciseIds: [squat] });
+        const setStored = async (scoredAt: Date): Promise<void> => {
+            await db
+                .update(schema.routines)
+                .set({ recommendationScore: 12, recommendationScoredAt: scoredAt.toISOString() })
+                .where(eq(schema.routines.id, legs));
+        };
+
+        await setStored(new Date());
+        expect((await listRecommended(f))[0]?.recommendationScore).toBe(12);
+
+        await setStored(new Date(Date.now() - 25 * 60 * 60 * 1000));
+        expect((await listRecommended(f))[0]?.recommendationScore).toBe(70);
     });
 
     it("refuses to change another workspace's routine", async () => {

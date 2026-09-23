@@ -185,6 +185,11 @@ database session's `TimeZone` and every browser can parse it. Servers stamp inst
 `Date` getters so a workout reads in the user's own zone. Better Auth's naive `timestamp` columns
 are the deliberate exception - see Auth above.
 
+**`routines.recommendation_score` is denormalised**, so the routine list can sort and page on it.
+Any write that changes a scoring input (a completed workout, a routine's exercises, archiving or
+exclusion, an exercise's muscles) calls `recalculateRoutineRecommendations` from `@app/services`
+once it commits. Callers know nothing else about it, so it can move behind a queue later.
+
 Naming is **snake_case** throughout, matching Postgres convention.
 
 `packages/db` is the only package allowed to import `drizzle-orm` directly outside of schema files.

@@ -1,20 +1,21 @@
 import { schema, scopedToWorkspace, scopedToWorkspaceOrGlobal, withTransaction, type Db, type Tx } from '@app/db';
 import {
-    MUSCLE_RECOVERY_DAYS,
-    ROUTINE_FREQUENCY_WINDOW_DAYS,
     RoutineOrder,
     estimateRoutineSeconds,
-    scoreRoutineRecommendations,
     validateSetMeasurements,
     type Equipment,
     type RoutineSlotLike,
     type TrackingType,
 } from '@app/domain';
 import { EntityNotFoundError, SetShapeMismatchError } from '@app/errors';
-import { asc, count, eq, gte, ilike, inArray, isNotNull, isNull, max, or, sql } from 'drizzle-orm';
+import { asc, count, eq, ilike, inArray, isNotNull, isNull, max, or, sql } from 'drizzle-orm';
+import {
+    recalculateRoutineRecommendations,
+    recalculateStaleRoutineRecommendations,
+} from './routine-recommendations.js';
 import type { WorkspaceMembershipService } from './workspace-membership.service.js';
 
-const { exercises, routineExercises, routines, sessionExercises, setEntries, workoutSessions } = schema;
+const { exercises, routineExercises, routines, workoutSessions } = schema;
 
 export type RoutineSummary = {
     id: string;
@@ -124,33 +125,24 @@ export class RoutinesService {
             search === undefined || search === '' ? undefined : ilike(routines.name, `%${search}%`),
             includeArchived === true ? undefined : isNull(routines.archivedAt),
         );
-        const offset = (page - 1) * pageSize;
-        const byName = [asc(routines.name), asc(routines.createdAt)];
+        await recalculateStaleRoutineRecommendations({ db: this.db, workspaceId });
 
-        const [scores, [totals]] = await Promise.all([
-            this.recommendationScores({ workspaceId }),
+        const byName = [asc(routines.name), asc(routines.createdAt)];
+        const orderBy =
+            order === RoutineOrder.Recommended
+                ? [sql`${routines.recommendationScore} desc nulls last`, ...byName]
+                : byName;
+
+        const [data, [totals]] = await Promise.all([
+            this.db
+                .select({ ...ROUTINE_SUMMARY_COLUMNS, recommendationScore: routines.recommendationScore })
+                .from(routines)
+                .where(where)
+                .orderBy(...orderBy)
+                .limit(pageSize)
+                .offset((page - 1) * pageSize),
             this.db.select({ totalCount: count() }).from(routines).where(where),
         ]);
-
-        // A score depends on every routine in the workspace, so recommended order can only be
-        // applied once all of them are loaded; a workspace holds few enough for that to be cheap.
-        const data =
-            order === RoutineOrder.Recommended
-                ? sortByRecommendation({
-                      routines: await this.db
-                          .select(ROUTINE_SUMMARY_COLUMNS)
-                          .from(routines)
-                          .where(where)
-                          .orderBy(...byName),
-                      scores,
-                  }).slice(offset, offset + pageSize)
-                : await this.db
-                      .select(ROUTINE_SUMMARY_COLUMNS)
-                      .from(routines)
-                      .where(where)
-                      .orderBy(...byName)
-                      .limit(pageSize)
-                      .offset(offset);
 
         const totalCount = totals?.totalCount ?? 0;
         const routineIds = data.map((routine) => routine.id);
@@ -164,7 +156,6 @@ export class RoutinesService {
                 ...routine,
                 estimatedDurationSeconds: estimates.get(routine.id) ?? 0,
                 lastCompletedAt: lastCompleted.get(routine.id) ?? null,
-                recommendationScore: scores.get(routine.id) ?? null,
             })),
             page,
             pageSize,
@@ -213,7 +204,14 @@ export class RoutinesService {
 
         const [row] = await this.db
             .insert(routines)
-            .values({ workspaceId, createdByUserId: userId, name, description: description ?? null })
+            // Empty, so unscored, and it changes no other routine's score: stamp it as fresh.
+            .values({
+                workspaceId,
+                createdByUserId: userId,
+                name,
+                description: description ?? null,
+                recommendationScoredAt: new Date().toISOString(),
+            })
             .returning({ id: routines.id });
 
         return this.loadDetail({ db: this.db, workspaceId, routineId: row.id });
@@ -248,21 +246,29 @@ export class RoutinesService {
 
         const now = new Date().toISOString();
 
-        const [row] = await this.db
-            .update(routines)
-            .set({
-                ...(name === undefined ? {} : { name }),
-                ...(description === undefined ? {} : { description }),
-                ...(archived === undefined ? {} : { archivedAt: archived ? now : null }),
-                ...(excludedFromRecommendations === undefined ? {} : { excludedFromRecommendations }),
-                updatedAt: now,
-            })
-            .where(scopedToWorkspace(routines, workspaceId, eq(routines.id, routineId)))
-            .returning({ id: routines.id });
+        const detail = await withTransaction(this.db, async (tx) => {
+            const [row] = await tx
+                .update(routines)
+                .set({
+                    ...(name === undefined ? {} : { name }),
+                    ...(description === undefined ? {} : { description }),
+                    ...(archived === undefined ? {} : { archivedAt: archived ? now : null }),
+                    ...(excludedFromRecommendations === undefined ? {} : { excludedFromRecommendations }),
+                    updatedAt: now,
+                })
+                .where(scopedToWorkspace(routines, workspaceId, eq(routines.id, routineId)))
+                .returning({ id: routines.id });
 
-        if (!row) throw new EntityNotFoundError('Routine not found');
+            if (!row) throw new EntityNotFoundError('Routine not found');
 
-        return this.loadDetail({ db: this.db, workspaceId, routineId });
+            return this.loadDetail({ db: tx, workspaceId, routineId });
+        });
+
+        if (archived !== undefined || excludedFromRecommendations !== undefined) {
+            await recalculateRoutineRecommendations({ db: this.db, workspaceId });
+        }
+
+        return detail;
     }
 
     /**
@@ -284,7 +290,7 @@ export class RoutinesService {
     } & RoutineExerciseInput): Promise<RoutineDetail> {
         await this.membership.require({ userId, workspaceId });
 
-        return withTransaction(this.db, async (tx) => {
+        const detail = await withTransaction(this.db, async (tx) => {
             await this.requireRoutine({ db: tx, workspaceId, routineId });
             const trackingTypes = await this.requireAssignableExercises({
                 db: tx,
@@ -302,6 +308,10 @@ export class RoutinesService {
 
             return this.loadDetail({ db: tx, workspaceId, routineId });
         });
+
+        await recalculateRoutineRecommendations({ db: this.db, workspaceId });
+
+        return detail;
     }
 
     /**
@@ -398,7 +408,7 @@ export class RoutinesService {
     }): Promise<RoutineDetail> {
         await this.membership.require({ userId, workspaceId });
 
-        return withTransaction(this.db, async (tx) => {
+        const detail = await withTransaction(this.db, async (tx) => {
             const deleted = await tx
                 .delete(routineExercises)
                 .where(
@@ -430,6 +440,10 @@ export class RoutinesService {
 
             return this.loadDetail({ db: tx, workspaceId, routineId });
         });
+
+        await recalculateRoutineRecommendations({ db: this.db, workspaceId });
+
+        return detail;
     }
 
     /**
@@ -453,7 +467,7 @@ export class RoutinesService {
     }): Promise<RoutineDetail> {
         await this.membership.require({ userId, workspaceId });
 
-        return withTransaction(this.db, async (tx) => {
+        const detail = await withTransaction(this.db, async (tx) => {
             await this.requireRoutine({ db: tx, workspaceId, routineId });
 
             const current = await tx
@@ -492,6 +506,10 @@ export class RoutinesService {
 
             return this.loadDetail({ db: tx, workspaceId, routineId });
         });
+
+        await recalculateRoutineRecommendations({ db: this.db, workspaceId });
+
+        return detail;
     }
 
     private async requireRoutine({
@@ -602,94 +620,6 @@ export class RoutinesService {
     }
 
     /**
-     * Every active routine's recommendation score, from what each trains, how rested those muscles
-     * are, and how often each routine was done lately. Archived routines are absent.
-     */
-    private async recommendationScores({ workspaceId }: { workspaceId: string }): Promise<Map<string, number | null>> {
-        const now = new Date();
-        const recoverySince = new Date(now.getTime() - MUSCLE_RECOVERY_DAYS * MS_PER_DAY).toISOString();
-        const frequencySince = new Date(now.getTime() - ROUTINE_FREQUENCY_WINDOW_DAYS * MS_PER_DAY).toISOString();
-
-        const [active, slots, completions, history] = await Promise.all([
-            this.db
-                .select({ id: routines.id, excludedFromRecommendations: routines.excludedFromRecommendations })
-                .from(routines)
-                .where(scopedToWorkspace(routines, workspaceId, isNull(routines.archivedAt))),
-            // The tenant filter sits on `routine_exercises`; the joined exercise may be catalog content.
-            this.db
-                .select({
-                    routineId: routineExercises.routineId,
-                    primaryMuscles: exercises.primaryMuscles,
-                    secondaryMuscles: exercises.secondaryMuscles,
-                })
-                .from(routineExercises)
-                .innerJoin(exercises, eq(exercises.id, routineExercises.exerciseId))
-                .where(scopedToWorkspace(routineExercises, workspaceId)),
-            this.db
-                .select({ routineId: workoutSessions.routineId, completions: count() })
-                .from(workoutSessions)
-                .where(
-                    scopedToWorkspace(
-                        workoutSessions,
-                        workspaceId,
-                        isNotNull(workoutSessions.routineId),
-                        gte(workoutSessions.completedAt, frequencySince),
-                    ),
-                )
-                .groupBy(workoutSessions.routineId),
-            // Only exercises with a working set logged count as training the muscle; a warm-up, or
-            // an exercise added and skipped, leaves it rested.
-            this.db
-                .selectDistinct({
-                    primaryMuscles: exercises.primaryMuscles,
-                    secondaryMuscles: exercises.secondaryMuscles,
-                    completedAt: workoutSessions.completedAt,
-                })
-                .from(sessionExercises)
-                .innerJoin(workoutSessions, eq(workoutSessions.id, sessionExercises.sessionId))
-                .innerJoin(exercises, eq(exercises.id, sessionExercises.exerciseId))
-                .innerJoin(
-                    setEntries,
-                    scopedToWorkspace(
-                        setEntries,
-                        workspaceId,
-                        eq(setEntries.sessionExerciseId, sessionExercises.id),
-                        eq(setEntries.isWarmup, false),
-                    ),
-                )
-                .where(
-                    scopedToWorkspace(sessionExercises, workspaceId, gte(workoutSessions.completedAt, recoverySince)),
-                ),
-        ]);
-
-        const slotsByRoutine = new Map<string, typeof slots>();
-        for (const slot of slots) {
-            slotsByRoutine.set(slot.routineId, [...(slotsByRoutine.get(slot.routineId) ?? []), slot]);
-        }
-
-        const completionsByRoutine = new Map(completions.map((row) => [row.routineId, row.completions]));
-
-        return scoreRoutineRecommendations({
-            candidates: active.map((routine) => {
-                const routineSlots = slotsByRoutine.get(routine.id) ?? [];
-
-                return {
-                    id: routine.id,
-                    excludedFromRecommendations: routine.excludedFromRecommendations,
-                    exerciseCount: routineSlots.length,
-                    primaryMuscles: routineSlots.flatMap((slot) => slot.primaryMuscles),
-                    secondaryMuscles: routineSlots.flatMap((slot) => slot.secondaryMuscles),
-                    recentCompletions: completionsByRoutine.get(routine.id) ?? 0,
-                };
-            }),
-            history: history.flatMap((row) =>
-                row.completedAt === null ? [] : [{ ...row, completedAt: new Date(row.completedAt) }],
-            ),
-            now,
-        });
-    }
-
-    /**
      * The most recent completion of a workout started from each of `routineIds`, in one query
      * rather than one per routine. Routines never completed are absent from the map.
      */
@@ -761,24 +691,6 @@ export class RoutinesService {
         return new Map([...slotsByRoutine].map(([id, slots]) => [id, estimateRoutineSeconds(slots)]));
     }
 }
-
-/**
- * Highest score first; routines with no score keep their incoming (name) order after the rest,
- * as do routines that tie.
- */
-function sortByRecommendation<T extends { id: string }>({
-    routines: rows,
-    scores,
-}: {
-    routines: T[];
-    scores: Map<string, number | null>;
-}): T[] {
-    const scoreOf = (row: T): number => scores.get(row.id) ?? -1;
-
-    return [...rows].sort((a, b) => scoreOf(b) - scoreOf(a));
-}
-
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 /** A detail slot reduced to the flat shape the shared estimator reads. */
 function toSlotLike(slot: {

@@ -1,5 +1,5 @@
 {
-    "id": "4210fb85-d657-48c4-a0d7-84ce73a1f900",
+    "id": "50d98e91-3374-415f-9994-280cfa3ba6c4",
     "prevId": "95e8ed9b-c75e-4b09-9775-7f4e301f24c3",
     "version": "7",
     "dialect": "postgresql",
@@ -2214,6 +2214,18 @@
                     "notNull": true,
                     "default": false
                 },
+                "recommendation_score": {
+                    "name": "recommendation_score",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "recommendation_scored_at": {
+                    "name": "recommendation_scored_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
                 "created_at": {
                     "name": "created_at",
                     "type": "timestamp with time zone",
@@ -2270,7 +2282,12 @@
             "compositePrimaryKeys": {},
             "uniqueConstraints": {},
             "policies": {},
-            "checkConstraints": {},
+            "checkConstraints": {
+                "routines_recommendation_score_check": {
+                    "name": "routines_recommendation_score_check",
+                    "value": "\"routines\".\"recommendation_score\" is null or \"routines\".\"recommendation_score\" between 0 and 100"
+                }
+            },
             "isRLSEnabled": false
         },
         "public.session_exercises": {

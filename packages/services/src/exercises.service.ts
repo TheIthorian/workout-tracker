@@ -2,6 +2,7 @@ import { schema, scopedToWorkspace, scopedToWorkspaceOrGlobal, type Db } from '@
 import type { Equipment, MuscleGroup, TrackingType } from '@app/domain';
 import { EntityNotFoundError } from '@app/errors';
 import { asc, count, desc, eq, ilike, isNull, sql, type SQL } from 'drizzle-orm';
+import { recalculateRoutineRecommendations } from './routine-recommendations.js';
 import type { WorkspaceMembershipService } from './workspace-membership.service.js';
 
 const { exerciseGuideImages, exerciseLinks, exercisePreferences, exercises } = schema;
@@ -265,6 +266,10 @@ export class ExercisesService {
             .returning({ id: exercises.id });
 
         if (!row) throw new EntityNotFoundError('Exercise not found');
+
+        if (primaryMuscles !== undefined || secondaryMuscles !== undefined) {
+            await recalculateRoutineRecommendations({ db: this.db, workspaceId });
+        }
 
         return this.loadDetail({ workspaceId, exerciseId });
     }

@@ -20,6 +20,13 @@ export const routines = pgTable(
         description: text('description'),
         archivedAt: timestamptz('archived_at'),
         excludedFromRecommendations: boolean('excluded_from_recommendations').default(false).notNull(),
+        /**
+         * Denormalised from workout history so the list can sort and page on it; null when the
+         * routine is excluded, archived, or empty. Refreshed by the services, never written here.
+         */
+        recommendationScore: integer('recommendation_score'),
+        /** When `recommendation_score` was last computed; null until it first has been. */
+        recommendationScoredAt: timestamptz('recommendation_scored_at'),
         createdAt: timestamptz('created_at')
             .default(sql`now()`)
             .notNull(),
@@ -29,6 +36,10 @@ export const routines = pgTable(
     },
     (table) => [
         index('routines_workspace_id_idx').using('btree', table.workspaceId.asc().nullsLast().op('uuid_ops')),
+        check(
+            'routines_recommendation_score_check',
+            sql`${table.recommendationScore} is null or ${table.recommendationScore} between 0 and 100`,
+        ),
         foreignKey({
             columns: [table.workspaceId],
             foreignColumns: [workspaces.id],

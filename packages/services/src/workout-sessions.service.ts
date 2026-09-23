@@ -15,6 +15,7 @@ import {
     SetShapeMismatchError,
 } from '@app/errors';
 import { asc, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { recalculateRoutineRecommendations } from './routine-recommendations.js';
 import type { WorkspaceMembershipService } from './workspace-membership.service.js';
 
 const { exercisePreferences, exercises, routineExercises, routines, sessionExercises, setEntries, workoutSessions } =
@@ -205,7 +206,7 @@ export class WorkoutSessionsService {
         notes?: string | null;
     }): Promise<SessionDetail> {
         await this.membership.require({ userId, workspaceId });
-        return withTransaction(this.db, async (tx) => {
+        const detail = await withTransaction(this.db, async (tx) => {
             await this.requireSession({ db: tx, workspaceId, sessionId, active: true });
             const [working] = await tx
                 .select({ id: setEntries.id })
@@ -232,6 +233,10 @@ export class WorkoutSessionsService {
                 .where(scopedToWorkspace(workoutSessions, workspaceId, eq(workoutSessions.id, sessionId)));
             return this.loadDetail({ db: tx, workspaceId, sessionId });
         });
+
+        await recalculateRoutineRecommendations({ db: this.db, workspaceId });
+
+        return detail;
     }
 
     /** Permanently abandons an active session. */
