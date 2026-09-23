@@ -1,0 +1,35 @@
+{
+  "name": "Dumbbell Romanian deadlift",
+  "trackingType": "weight_reps",
+  "equipment": [
+    "dumbbell"
+  ],
+  "notes": "Record the dumbbell romanian deadlift as one movement.",
+  "muscles": {
+    "primary": [
+      "hamstrings"
+    ],
+    "secondary": [
+      "glutes",
+      "lower_back"
+    ]
+  },
+  "guide": {
+    "setup": "Set up the dumbbell romanian deadlift with a stable base and a comfortable range of motion. Use a load and setup appropriate for your experience.",
+    "execution": "Perform each repetition of the dumbbell romanian deadlift smoothly, then return to the starting position under control.",
+    "cues": "Keep the ribs and pelvis controlled, move deliberately, and stop if you cannot maintain the intended position.",
+    "mistakes": "Using momentum, shortening the range, or choosing more load than you can control."
+  },
+  "links": [
+    {
+      "url": "https://www.strengthlog.com/?s=Dumbbell%20Romanian%20deadlift",
+      "label": "StrengthLog exercise guide"
+    }
+  ],
+  "images": [
+    {
+      "file": "dumbbell-romanian-deadlift.png",
+      "caption": "Two-panel illustration showing the setup and execution of the Dumbbell Romanian deadlift."
+    }
+  ]
+}

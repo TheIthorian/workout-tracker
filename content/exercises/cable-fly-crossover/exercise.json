@@ -1,0 +1,35 @@
+{
+  "name": "Cable fly / crossover",
+  "trackingType": "weight_reps",
+  "equipment": [
+    "cable"
+  ],
+  "notes": "Record the cable fly / crossover as one movement.",
+  "muscles": {
+    "primary": [
+      "chest"
+    ],
+    "secondary": [
+      "front_delts",
+      "triceps"
+    ]
+  },
+  "guide": {
+    "setup": "Set up the cable fly / crossover with a stable base and a comfortable range of motion. Use a load and setup appropriate for your experience.",
+    "execution": "Perform each repetition of the cable fly / crossover smoothly, then return to the starting position under control.",
+    "cues": "Keep the ribs and pelvis controlled, move deliberately, and stop if you cannot maintain the intended position.",
+    "mistakes": "Using momentum, shortening the range, or choosing more load than you can control."
+  },
+  "links": [
+    {
+      "url": "https://www.strengthlog.com/?s=Cable%20fly%20%2F%20crossover",
+      "label": "StrengthLog exercise guide"
+    }
+  ],
+  "images": [
+    {
+      "file": "cable-fly-crossover.png",
+      "caption": "Two-panel illustration showing the setup and execution of the Cable fly / crossover."
+    }
+  ]
+}

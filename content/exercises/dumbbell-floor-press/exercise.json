@@ -1,0 +1,36 @@
+{
+  "name": "Dumbbell floor press",
+  "trackingType": "weight_reps",
+  "equipment": [
+    "dumbbell",
+    "bench"
+  ],
+  "notes": "Record the dumbbell floor press as one movement.",
+  "muscles": {
+    "primary": [
+      "chest"
+    ],
+    "secondary": [
+      "front_delts",
+      "triceps"
+    ]
+  },
+  "guide": {
+    "setup": "Set up the dumbbell floor press with a stable base and a comfortable range of motion. Use a load and setup appropriate for your experience.",
+    "execution": "Perform each repetition of the dumbbell floor press smoothly, then return to the starting position under control.",
+    "cues": "Keep the ribs and pelvis controlled, move deliberately, and stop if you cannot maintain the intended position.",
+    "mistakes": "Using momentum, shortening the range, or choosing more load than you can control."
+  },
+  "links": [
+    {
+      "url": "https://www.strengthlog.com/?s=Dumbbell%20floor%20press",
+      "label": "StrengthLog exercise guide"
+    }
+  ],
+  "images": [
+    {
+      "file": "dumbbell-floor-press.png",
+      "caption": "Two-panel illustration showing the setup and execution of the Dumbbell floor press."
+    }
+  ]
+}

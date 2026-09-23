@@ -1,0 +1,33 @@
+{
+    "name": "Diamond push-up",
+    "trackingType": "weight_reps",
+    "equipment": [],
+    "notes": "Record the diamond push-up as one movement.",
+    "muscles": {
+        "primary": [
+            "triceps"
+        ],
+        "secondary": [
+            "chest",
+            "front_delts"
+        ]
+    },
+    "guide": {
+        "setup": "Set up the diamond push-up with a stable base and a comfortable range of motion.",
+        "execution": "Perform each repetition of the diamond push-up smoothly, then return to the starting position under control.",
+        "cues": "Keep the ribs and pelvis controlled, move deliberately, and stop if you cannot maintain the intended position.",
+        "mistakes": "Using momentum, shortening the range, or choosing more load than you can control."
+    },
+    "links": [
+        {
+            "url": "https://www.strengthlog.com/?s=Diamond%20push-up",
+            "label": "StrengthLog exercise guide"
+        }
+    ],
+    "images": [
+        {
+            "file": "diamond-push-up.png",
+            "caption": "Diamond push-up starting and finishing positions."
+        }
+    ]
+}

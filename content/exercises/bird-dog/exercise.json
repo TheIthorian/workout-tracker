@@ -1,0 +1,32 @@
+{
+    "name": "Bird dog",
+    "trackingType": "weight_reps",
+    "equipment": [],
+    "notes": "Record the bird dog as one movement.",
+    "muscles": {
+        "primary": [
+            "abs"
+        ],
+        "secondary": [
+            "obliques"
+        ]
+    },
+    "guide": {
+        "setup": "Set up the bird dog with a stable base and a comfortable range of motion.",
+        "execution": "Perform each repetition of the bird dog smoothly, then return to the starting position under control.",
+        "cues": "Keep the ribs and pelvis controlled, move deliberately, and stop if you cannot maintain the intended position.",
+        "mistakes": "Using momentum, shortening the range, or choosing more load than you can control."
+    },
+    "links": [
+        {
+            "url": "https://www.strengthlog.com/?s=Bird%20dog",
+            "label": "StrengthLog exercise guide"
+        }
+    ],
+    "images": [
+        {
+            "file": "bird-dog.png",
+            "caption": "Bird dog starting and finishing positions."
+        }
+    ]
+}

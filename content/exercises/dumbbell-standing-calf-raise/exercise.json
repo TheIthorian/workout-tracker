@@ -1,0 +1,32 @@
+{
+    "name": "Dumbbell standing calf raise",
+    "trackingType": "weight_reps",
+    "equipment": [
+        "dumbbell"
+    ],
+    "notes": "Record the dumbbell standing calf raise as one movement.",
+    "muscles": {
+        "primary": [
+            "calves"
+        ],
+        "secondary": []
+    },
+    "guide": {
+        "setup": "Set up the dumbbell standing calf raise with a stable base and a comfortable range of motion. Use a load and setup appropriate for your experience.",
+        "execution": "Perform each repetition of the dumbbell standing calf raise smoothly, then return to the starting position under control.",
+        "cues": "Keep the ribs and pelvis controlled, move deliberately, and stop if you cannot maintain the intended position.",
+        "mistakes": "Using momentum, shortening the range, or choosing more load than you can control."
+    },
+    "links": [
+        {
+            "url": "https://www.strengthlog.com/?s=Dumbbell%20standing%20calf%20raise",
+            "label": "StrengthLog exercise guide"
+        }
+    ],
+    "images": [
+        {
+            "file": "dumbbell-standing-calf-raise.png",
+            "caption": "Dumbbell standing calf raise starting and finishing positions."
+        }
+    ]
+}

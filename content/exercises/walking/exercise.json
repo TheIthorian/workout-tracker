@@ -1,0 +1,28 @@
+{
+    "name": "Walking",
+    "trackingType": "distance_time",
+    "equipment": [],
+    "notes": "Record the walking as one movement.",
+    "muscles": {
+        "primary": [],
+        "secondary": []
+    },
+    "guide": {
+        "setup": "Set up the walking with a stable base and a comfortable range of motion.",
+        "execution": "Perform each repetition of the walking smoothly, then return to the starting position under control.",
+        "cues": "Keep the ribs and pelvis controlled, move deliberately, and stop if you cannot maintain the intended position.",
+        "mistakes": "Using momentum, shortening the range, or choosing more load than you can control."
+    },
+    "links": [
+        {
+            "url": "https://www.strengthlog.com/?s=Walking",
+            "label": "StrengthLog exercise guide"
+        }
+    ],
+    "images": [
+        {
+            "file": "walking.png",
+            "caption": "Walking starting and finishing positions."
+        }
+    ]
+}

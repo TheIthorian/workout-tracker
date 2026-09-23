@@ -1,0 +1,34 @@
+{
+    "name": "Hanging leg raise",
+    "trackingType": "weight_reps",
+    "equipment": [
+        "pull_up_bar"
+    ],
+    "notes": "Record the hanging leg raise as one movement.",
+    "muscles": {
+        "primary": [
+            "abs"
+        ],
+        "secondary": [
+            "obliques"
+        ]
+    },
+    "guide": {
+        "setup": "Set up the hanging leg raise with a stable base and a comfortable range of motion. Use a load and setup appropriate for your experience.",
+        "execution": "Perform each repetition of the hanging leg raise smoothly, then return to the starting position under control.",
+        "cues": "Keep the ribs and pelvis controlled, move deliberately, and stop if you cannot maintain the intended position.",
+        "mistakes": "Using momentum, shortening the range, or choosing more load than you can control."
+    },
+    "links": [
+        {
+            "url": "https://www.strengthlog.com/?s=Hanging%20leg%20raise",
+            "label": "StrengthLog exercise guide"
+        }
+    ],
+    "images": [
+        {
+            "file": "hanging-leg-raise.png",
+            "caption": "Hanging leg raise starting and finishing positions."
+        }
+    ]
+}

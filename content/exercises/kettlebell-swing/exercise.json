@@ -1,0 +1,35 @@
+{
+    "name": "Kettlebell swing",
+    "trackingType": "weight_reps",
+    "equipment": [
+        "kettlebell"
+    ],
+    "notes": "Record the kettlebell swing as one movement.",
+    "muscles": {
+        "primary": [
+            "hamstrings"
+        ],
+        "secondary": [
+            "glutes",
+            "lower_back"
+        ]
+    },
+    "guide": {
+        "setup": "Set up the kettlebell swing with a stable base and a comfortable range of motion. Use a load and setup appropriate for your experience.",
+        "execution": "Perform each repetition of the kettlebell swing smoothly, then return to the starting position under control.",
+        "cues": "Keep the ribs and pelvis controlled, move deliberately, and stop if you cannot maintain the intended position.",
+        "mistakes": "Using momentum, shortening the range, or choosing more load than you can control."
+    },
+    "links": [
+        {
+            "url": "https://www.strengthlog.com/?s=Kettlebell%20swing",
+            "label": "StrengthLog exercise guide"
+        }
+    ],
+    "images": [
+        {
+            "file": "kettlebell-swing.png",
+            "caption": "Kettlebell swing starting and finishing positions."
+        }
+    ]
+}

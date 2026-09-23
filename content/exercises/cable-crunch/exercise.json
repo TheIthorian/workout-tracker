@@ -1,0 +1,34 @@
+{
+    "name": "Cable crunch",
+    "trackingType": "weight_reps",
+    "equipment": [
+        "cable"
+    ],
+    "notes": "Record the cable crunch as one movement.",
+    "muscles": {
+        "primary": [
+            "abs"
+        ],
+        "secondary": [
+            "obliques"
+        ]
+    },
+    "guide": {
+        "setup": "Set up the cable crunch with a stable base and a comfortable range of motion. Use a load and setup appropriate for your experience.",
+        "execution": "Perform each repetition of the cable crunch smoothly, then return to the starting position under control.",
+        "cues": "Keep the ribs and pelvis controlled, move deliberately, and stop if you cannot maintain the intended position.",
+        "mistakes": "Using momentum, shortening the range, or choosing more load than you can control."
+    },
+    "links": [
+        {
+            "url": "https://www.strengthlog.com/?s=Cable%20crunch",
+            "label": "StrengthLog exercise guide"
+        }
+    ],
+    "images": [
+        {
+            "file": "cable-crunch.png",
+            "caption": "Cable crunch starting and finishing positions."
+        }
+    ]
+}

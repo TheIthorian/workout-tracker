@@ -1,0 +1,34 @@
+{
+  "name": "Rack pull",
+  "trackingType": "weight_reps",
+  "equipment": [],
+  "notes": "Record the rack pull as one movement.",
+  "muscles": {
+    "primary": [
+      "lats"
+    ],
+    "secondary": [
+      "upper_back",
+      "biceps",
+      "rear_delts"
+    ]
+  },
+  "guide": {
+    "setup": "Set up the rack pull with a stable base and a comfortable range of motion.",
+    "execution": "Perform each repetition of the rack pull smoothly, then return to the starting position under control.",
+    "cues": "Keep the ribs and pelvis controlled, move deliberately, and stop if you cannot maintain the intended position.",
+    "mistakes": "Using momentum, shortening the range, or choosing more load than you can control."
+  },
+  "links": [
+    {
+      "url": "https://www.strengthlog.com/?s=Rack%20pull",
+      "label": "StrengthLog exercise guide"
+    }
+  ],
+  "images": [
+    {
+      "file": "rack-pull.png",
+      "caption": "Two-panel illustration showing the setup and execution of the Rack pull."
+    }
+  ]
+}
