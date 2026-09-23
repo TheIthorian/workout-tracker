@@ -1,0 +1,32 @@
+{
+    "name": "Hollow hold",
+    "trackingType": "duration",
+    "equipment": [],
+    "notes": "Record the hollow hold as one movement.",
+    "muscles": {
+        "primary": [
+            "abs"
+        ],
+        "secondary": [
+            "obliques"
+        ]
+    },
+    "guide": {
+        "setup": "Set up the hollow hold with a stable base and a comfortable range of motion.",
+        "execution": "Perform each repetition of the hollow hold smoothly, then return to the starting position under control.",
+        "cues": "Keep the ribs and pelvis controlled, move deliberately, and stop if you cannot maintain the intended position.",
+        "mistakes": "Using momentum, shortening the range, or choosing more load than you can control."
+    },
+    "links": [
+        {
+            "url": "https://www.strengthlog.com/?s=Hollow%20hold",
+            "label": "StrengthLog exercise guide"
+        }
+    ],
+    "images": [
+        {
+            "file": "hollow-hold.png",
+            "caption": "Hollow hold starting and finishing positions."
+        }
+    ]
+}

@@ -1,0 +1,35 @@
+{
+  "name": "Single-leg hip thrust",
+  "trackingType": "weight_reps",
+  "equipment": [
+    "bench"
+  ],
+  "notes": "Record the single-leg hip thrust as one movement.",
+  "muscles": {
+    "primary": [
+      "quads"
+    ],
+    "secondary": [
+      "glutes",
+      "hamstrings"
+    ]
+  },
+  "guide": {
+    "setup": "Set up the single-leg hip thrust with a stable base and a comfortable range of motion. Use a load and setup appropriate for your experience.",
+    "execution": "Perform each repetition of the single-leg hip thrust smoothly, then return to the starting position under control.",
+    "cues": "Keep the ribs and pelvis controlled, move deliberately, and stop if you cannot maintain the intended position.",
+    "mistakes": "Using momentum, shortening the range, or choosing more load than you can control."
+  },
+  "links": [
+    {
+      "url": "https://www.strengthlog.com/?s=Single-leg%20hip%20thrust",
+      "label": "StrengthLog exercise guide"
+    }
+  ],
+  "images": [
+    {
+      "file": "single-leg-hip-thrust.png",
+      "caption": "Two-panel illustration showing the setup and execution of the Single-leg hip thrust."
+    }
+  ]
+}

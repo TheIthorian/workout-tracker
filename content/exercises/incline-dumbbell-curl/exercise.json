@@ -1,0 +1,34 @@
+{
+  "name": "Incline dumbbell curl",
+  "trackingType": "weight_reps",
+  "equipment": [
+    "dumbbell"
+  ],
+  "notes": "Record the incline dumbbell curl as one movement.",
+  "muscles": {
+    "primary": [
+      "biceps"
+    ],
+    "secondary": [
+      "forearms"
+    ]
+  },
+  "guide": {
+    "setup": "Set up the incline dumbbell curl with a stable base and a comfortable range of motion. Use a load and setup appropriate for your experience.",
+    "execution": "Perform each repetition of the incline dumbbell curl smoothly, then return to the starting position under control.",
+    "cues": "Keep the ribs and pelvis controlled, move deliberately, and stop if you cannot maintain the intended position.",
+    "mistakes": "Using momentum, shortening the range, or choosing more load than you can control."
+  },
+  "links": [
+    {
+      "url": "https://www.strengthlog.com/?s=Incline%20dumbbell%20curl",
+      "label": "StrengthLog exercise guide"
+    }
+  ],
+  "images": [
+    {
+      "file": "incline-dumbbell-curl.png",
+      "caption": "Two-panel illustration showing the setup and execution of the Incline dumbbell curl."
+    }
+  ]
+}

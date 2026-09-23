@@ -1,0 +1,36 @@
+{
+  "name": "Chin-up",
+  "trackingType": "weight_reps",
+  "equipment": [
+    "pull_up_bar"
+  ],
+  "notes": "Record the chin-up as one movement.",
+  "muscles": {
+    "primary": [
+      "lats"
+    ],
+    "secondary": [
+      "upper_back",
+      "biceps",
+      "rear_delts"
+    ]
+  },
+  "guide": {
+    "setup": "Set up the chin-up with a stable base and a comfortable range of motion. Use a load and setup appropriate for your experience.",
+    "execution": "Perform each repetition of the chin-up smoothly, then return to the starting position under control.",
+    "cues": "Keep the ribs and pelvis controlled, move deliberately, and stop if you cannot maintain the intended position.",
+    "mistakes": "Using momentum, shortening the range, or choosing more load than you can control."
+  },
+  "links": [
+    {
+      "url": "https://www.strengthlog.com/?s=Chin-up",
+      "label": "StrengthLog exercise guide"
+    }
+  ],
+  "images": [
+    {
+      "file": "chin-up.png",
+      "caption": "Two-panel illustration showing the setup and execution of the Chin-up."
+    }
+  ]
+}

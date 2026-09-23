@@ -1,0 +1,36 @@
+{
+  "name": "Barbell shrug",
+  "trackingType": "weight_reps",
+  "equipment": [
+    "barbell"
+  ],
+  "notes": "Record the barbell shrug as one movement.",
+  "muscles": {
+    "primary": [
+      "lats"
+    ],
+    "secondary": [
+      "upper_back",
+      "biceps",
+      "rear_delts"
+    ]
+  },
+  "guide": {
+    "setup": "Set up the barbell shrug with a stable base and a comfortable range of motion. Use a load and setup appropriate for your experience.",
+    "execution": "Perform each repetition of the barbell shrug smoothly, then return to the starting position under control.",
+    "cues": "Keep the ribs and pelvis controlled, move deliberately, and stop if you cannot maintain the intended position.",
+    "mistakes": "Using momentum, shortening the range, or choosing more load than you can control."
+  },
+  "links": [
+    {
+      "url": "https://www.strengthlog.com/?s=Barbell%20shrug",
+      "label": "StrengthLog exercise guide"
+    }
+  ],
+  "images": [
+    {
+      "file": "barbell-shrug.png",
+      "caption": "Two-panel illustration showing the setup and execution of the Barbell shrug."
+    }
+  ]
+}

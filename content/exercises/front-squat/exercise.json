@@ -1,0 +1,33 @@
+{
+  "name": "Front squat",
+  "trackingType": "weight_reps",
+  "equipment": [],
+  "notes": "Record the front squat as one movement.",
+  "muscles": {
+    "primary": [
+      "quads"
+    ],
+    "secondary": [
+      "glutes",
+      "hamstrings"
+    ]
+  },
+  "guide": {
+    "setup": "Set up the front squat with a stable base and a comfortable range of motion.",
+    "execution": "Perform each repetition of the front squat smoothly, then return to the starting position under control.",
+    "cues": "Keep the ribs and pelvis controlled, move deliberately, and stop if you cannot maintain the intended position.",
+    "mistakes": "Using momentum, shortening the range, or choosing more load than you can control."
+  },
+  "links": [
+    {
+      "url": "https://www.strengthlog.com/?s=Front%20squat",
+      "label": "StrengthLog exercise guide"
+    }
+  ],
+  "images": [
+    {
+      "file": "front-squat.png",
+      "caption": "Two-panel illustration showing the setup and execution of the Front squat."
+    }
+  ]
+}

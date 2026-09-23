@@ -1,0 +1,33 @@
+{
+  "name": "Push press",
+  "trackingType": "weight_reps",
+  "equipment": [],
+  "notes": "Record the push press as one movement.",
+  "muscles": {
+    "primary": [
+      "front_delts"
+    ],
+    "secondary": [
+      "side_delts",
+      "triceps"
+    ]
+  },
+  "guide": {
+    "setup": "Set up the push press with a stable base and a comfortable range of motion.",
+    "execution": "Perform each repetition of the push press smoothly, then return to the starting position under control.",
+    "cues": "Keep the ribs and pelvis controlled, move deliberately, and stop if you cannot maintain the intended position.",
+    "mistakes": "Using momentum, shortening the range, or choosing more load than you can control."
+  },
+  "links": [
+    {
+      "url": "https://www.strengthlog.com/?s=Push%20press",
+      "label": "StrengthLog exercise guide"
+    }
+  ],
+  "images": [
+    {
+      "file": "push-press.png",
+      "caption": "Two-panel illustration showing the setup and execution of the Push press."
+    }
+  ]
+}

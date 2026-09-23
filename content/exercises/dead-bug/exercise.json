@@ -1,0 +1,32 @@
+{
+    "name": "Dead bug",
+    "trackingType": "weight_reps",
+    "equipment": [],
+    "notes": "Record the dead bug as one movement.",
+    "muscles": {
+        "primary": [
+            "abs"
+        ],
+        "secondary": [
+            "obliques"
+        ]
+    },
+    "guide": {
+        "setup": "Set up the dead bug with a stable base and a comfortable range of motion.",
+        "execution": "Perform each repetition of the dead bug smoothly, then return to the starting position under control.",
+        "cues": "Keep the ribs and pelvis controlled, move deliberately, and stop if you cannot maintain the intended position.",
+        "mistakes": "Using momentum, shortening the range, or choosing more load than you can control."
+    },
+    "links": [
+        {
+            "url": "https://www.strengthlog.com/?s=Dead%20bug",
+            "label": "StrengthLog exercise guide"
+        }
+    ],
+    "images": [
+        {
+            "file": "dead-bug.png",
+            "caption": "Dead bug starting and finishing positions."
+        }
+    ]
+}

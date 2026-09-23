@@ -1,0 +1,30 @@
+{
+    "name": "Elliptical",
+    "trackingType": "distance_time",
+    "equipment": [
+        "machine"
+    ],
+    "notes": "Record the elliptical as one movement.",
+    "muscles": {
+        "primary": [],
+        "secondary": []
+    },
+    "guide": {
+        "setup": "Set up the elliptical with a stable base and a comfortable range of motion. Use a load and setup appropriate for your experience.",
+        "execution": "Perform each repetition of the elliptical smoothly, then return to the starting position under control.",
+        "cues": "Keep the ribs and pelvis controlled, move deliberately, and stop if you cannot maintain the intended position.",
+        "mistakes": "Using momentum, shortening the range, or choosing more load than you can control."
+    },
+    "links": [
+        {
+            "url": "https://www.strengthlog.com/?s=Elliptical",
+            "label": "StrengthLog exercise guide"
+        }
+    ],
+    "images": [
+        {
+            "file": "elliptical.png",
+            "caption": "Elliptical starting and finishing positions."
+        }
+    ]
+}

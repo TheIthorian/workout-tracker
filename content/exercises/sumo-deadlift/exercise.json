@@ -1,0 +1,33 @@
+{
+    "name": "Sumo deadlift",
+    "trackingType": "weight_reps",
+    "equipment": [],
+    "notes": "Record the sumo deadlift as one movement.",
+    "muscles": {
+        "primary": [
+            "hamstrings"
+        ],
+        "secondary": [
+            "glutes",
+            "lower_back"
+        ]
+    },
+    "guide": {
+        "setup": "Set up the sumo deadlift with a stable base and a comfortable range of motion.",
+        "execution": "Perform each repetition of the sumo deadlift smoothly, then return to the starting position under control.",
+        "cues": "Keep the ribs and pelvis controlled, move deliberately, and stop if you cannot maintain the intended position.",
+        "mistakes": "Using momentum, shortening the range, or choosing more load than you can control."
+    },
+    "links": [
+        {
+            "url": "https://www.strengthlog.com/?s=Sumo%20deadlift",
+            "label": "StrengthLog exercise guide"
+        }
+    ],
+    "images": [
+        {
+            "file": "sumo-deadlift.png",
+            "caption": "Sumo deadlift starting and finishing positions."
+        }
+    ]
+}

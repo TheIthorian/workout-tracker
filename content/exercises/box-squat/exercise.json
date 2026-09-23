@@ -1,0 +1,35 @@
+{
+  "name": "Box squat",
+  "trackingType": "weight_reps",
+  "equipment": [
+    "bench"
+  ],
+  "notes": "Record the box squat as one movement.",
+  "muscles": {
+    "primary": [
+      "quads"
+    ],
+    "secondary": [
+      "glutes",
+      "hamstrings"
+    ]
+  },
+  "guide": {
+    "setup": "Set up the box squat with a stable base and a comfortable range of motion. Use a load and setup appropriate for your experience.",
+    "execution": "Perform each repetition of the box squat smoothly, then return to the starting position under control.",
+    "cues": "Keep the ribs and pelvis controlled, move deliberately, and stop if you cannot maintain the intended position.",
+    "mistakes": "Using momentum, shortening the range, or choosing more load than you can control."
+  },
+  "links": [
+    {
+      "url": "https://www.strengthlog.com/?s=Box%20squat",
+      "label": "StrengthLog exercise guide"
+    }
+  ],
+  "images": [
+    {
+      "file": "box-squat.png",
+      "caption": "Two-panel illustration showing the setup and execution of the Box squat."
+    }
+  ]
+}

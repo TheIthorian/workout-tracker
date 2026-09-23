@@ -1,0 +1,32 @@
+{
+  "name": "Farmer's carry",
+  "trackingType": "duration",
+  "equipment": [],
+  "notes": "Record the farmer's carry as one movement.",
+  "muscles": {
+    "primary": [
+      "forearms"
+    ],
+    "secondary": [
+      "traps"
+    ]
+  },
+  "guide": {
+    "setup": "Set up the farmer's carry with a stable base and a comfortable range of motion.",
+    "execution": "Perform each repetition of the farmer's carry smoothly, then return to the starting position under control.",
+    "cues": "Keep the ribs and pelvis controlled, move deliberately, and stop if you cannot maintain the intended position.",
+    "mistakes": "Using momentum, shortening the range, or choosing more load than you can control."
+  },
+  "links": [
+    {
+      "url": "https://www.strengthlog.com/?s=Farmer's%20carry",
+      "label": "StrengthLog exercise guide"
+    }
+  ],
+  "images": [
+    {
+      "file": "farmers-carry.png",
+      "caption": "Two-panel illustration showing the setup and execution of the Farmer's carry."
+    }
+  ]
+}
