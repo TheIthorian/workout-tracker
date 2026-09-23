@@ -1,0 +1,1 @@
+ALTER TABLE "routines" ADD COLUMN "excluded_from_recommendations" boolean DEFAULT false NOT NULL;

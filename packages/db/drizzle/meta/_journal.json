@@ -92,6 +92,13 @@
             "when": 1789893239037,
             "tag": "0012_add_oauth_tables",
             "breakpoints": true
+        },
+        {
+            "idx": 13,
+            "version": "7",
+            "when": 1790180180210,
+            "tag": "0013_add_routine_recommendation_exclusion",
+            "breakpoints": true
         }
     ]
 }

@@ -18,6 +18,7 @@ export * from './oauth/index.js';
 export {
     RoutinesService,
     type PaginatedRoutines,
+    type RoutineListItem,
     type RoutineDetail,
     type RoutineExercise,
     type RoutineExerciseInput,

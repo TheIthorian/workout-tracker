@@ -1,22 +1,27 @@
 import { schema, scopedToWorkspace, scopedToWorkspaceOrGlobal, withTransaction, type Db, type Tx } from '@app/db';
 import {
+    MUSCLE_RECOVERY_DAYS,
+    ROUTINE_FREQUENCY_WINDOW_DAYS,
+    RoutineOrder,
     estimateRoutineSeconds,
+    scoreRoutineRecommendations,
     validateSetMeasurements,
     type Equipment,
     type RoutineSlotLike,
     type TrackingType,
 } from '@app/domain';
 import { EntityNotFoundError, SetShapeMismatchError } from '@app/errors';
-import { asc, count, eq, ilike, inArray, isNotNull, isNull, max, or, sql } from 'drizzle-orm';
+import { asc, count, eq, gte, ilike, inArray, isNotNull, isNull, max, or, sql } from 'drizzle-orm';
 import type { WorkspaceMembershipService } from './workspace-membership.service.js';
 
-const { exercises, routineExercises, routines, workoutSessions } = schema;
+const { exercises, routineExercises, routines, sessionExercises, setEntries, workoutSessions } = schema;
 
 export type RoutineSummary = {
     id: string;
     name: string;
     description: string | null;
     archivedAt: string | null;
+    excludedFromRecommendations: boolean;
     exerciseCount: number;
     /** Estimated seconds to work through the routine; 0 when nothing in it has a usable target. */
     estimatedDurationSeconds: number;
@@ -56,8 +61,14 @@ export type RoutineExerciseInput = { exerciseId: string; targetSets: number } & 
     Omit<RoutineExerciseTargets, 'targetSets'>
 >;
 
+/** A routine as listed, with how strongly it is recommended as the next workout. */
+export type RoutineListItem = RoutineSummary & {
+    /** 0-100, higher is a better pick now; null when excluded, archived, or empty. */
+    recommendationScore: number | null;
+};
+
 export type PaginatedRoutines = {
-    data: RoutineSummary[];
+    data: RoutineListItem[];
     page: number;
     pageSize: number;
     totalCount: number;
@@ -81,9 +92,11 @@ export class RoutinesService {
     }
 
     /**
-     * A page of the workspace's routines by name, each with its slot count.
+     * A page of the workspace's routines, each with its slot count and recommendation score.
      *
      * @param search matches anywhere in the name, case-insensitively.
+     * @param order by name (the default), or highest recommendation score first with unscored
+     * routines after, by name.
      * @throws EntityNotFoundError when the caller is not a member of the workspace.
      */
     async list({
@@ -93,6 +106,7 @@ export class RoutinesService {
         pageSize,
         search,
         includeArchived,
+        order = RoutineOrder.Name,
     }: {
         userId: string;
         workspaceId: string;
@@ -100,6 +114,7 @@ export class RoutinesService {
         pageSize: number;
         search?: string;
         includeArchived?: boolean;
+        order?: RoutineOrder;
     }): Promise<PaginatedRoutines> {
         await this.membership.require({ userId, workspaceId });
 
@@ -109,17 +124,33 @@ export class RoutinesService {
             search === undefined || search === '' ? undefined : ilike(routines.name, `%${search}%`),
             includeArchived === true ? undefined : isNull(routines.archivedAt),
         );
+        const offset = (page - 1) * pageSize;
+        const byName = [asc(routines.name), asc(routines.createdAt)];
 
-        const [data, [totals]] = await Promise.all([
-            this.db
-                .select(ROUTINE_SUMMARY_COLUMNS)
-                .from(routines)
-                .where(where)
-                .orderBy(asc(routines.name), asc(routines.createdAt))
-                .limit(pageSize)
-                .offset((page - 1) * pageSize),
+        const [scores, [totals]] = await Promise.all([
+            this.recommendationScores({ workspaceId }),
             this.db.select({ totalCount: count() }).from(routines).where(where),
         ]);
+
+        // A score depends on every routine in the workspace, so recommended order can only be
+        // applied once all of them are loaded; a workspace holds few enough for that to be cheap.
+        const data =
+            order === RoutineOrder.Recommended
+                ? sortByRecommendation({
+                      routines: await this.db
+                          .select(ROUTINE_SUMMARY_COLUMNS)
+                          .from(routines)
+                          .where(where)
+                          .orderBy(...byName),
+                      scores,
+                  }).slice(offset, offset + pageSize)
+                : await this.db
+                      .select(ROUTINE_SUMMARY_COLUMNS)
+                      .from(routines)
+                      .where(where)
+                      .orderBy(...byName)
+                      .limit(pageSize)
+                      .offset(offset);
 
         const totalCount = totals?.totalCount ?? 0;
         const routineIds = data.map((routine) => routine.id);
@@ -133,6 +164,7 @@ export class RoutinesService {
                 ...routine,
                 estimatedDurationSeconds: estimates.get(routine.id) ?? 0,
                 lastCompletedAt: lastCompleted.get(routine.id) ?? null,
+                recommendationScore: scores.get(routine.id) ?? null,
             })),
             page,
             pageSize,
@@ -191,6 +223,7 @@ export class RoutinesService {
      * Updates a routine's own fields. Only the fields present are written.
      *
      * @param archived true archives the routine, false restores it.
+     * @param excludedFromRecommendations true keeps the routine out of recommendations.
      * @throws EntityNotFoundError when the caller is not a member, or the routine is not in this
      * workspace.
      */
@@ -201,6 +234,7 @@ export class RoutinesService {
         name,
         description,
         archived,
+        excludedFromRecommendations,
     }: {
         userId: string;
         workspaceId: string;
@@ -208,6 +242,7 @@ export class RoutinesService {
         name?: string;
         description?: string | null;
         archived?: boolean;
+        excludedFromRecommendations?: boolean;
     }): Promise<RoutineDetail> {
         await this.membership.require({ userId, workspaceId });
 
@@ -219,6 +254,7 @@ export class RoutinesService {
                 ...(name === undefined ? {} : { name }),
                 ...(description === undefined ? {} : { description }),
                 ...(archived === undefined ? {} : { archivedAt: archived ? now : null }),
+                ...(excludedFromRecommendations === undefined ? {} : { excludedFromRecommendations }),
                 updatedAt: now,
             })
             .where(scopedToWorkspace(routines, workspaceId, eq(routines.id, routineId)))
@@ -566,6 +602,94 @@ export class RoutinesService {
     }
 
     /**
+     * Every active routine's recommendation score, from what each trains, how rested those muscles
+     * are, and how often each routine was done lately. Archived routines are absent.
+     */
+    private async recommendationScores({ workspaceId }: { workspaceId: string }): Promise<Map<string, number | null>> {
+        const now = new Date();
+        const recoverySince = new Date(now.getTime() - MUSCLE_RECOVERY_DAYS * MS_PER_DAY).toISOString();
+        const frequencySince = new Date(now.getTime() - ROUTINE_FREQUENCY_WINDOW_DAYS * MS_PER_DAY).toISOString();
+
+        const [active, slots, completions, history] = await Promise.all([
+            this.db
+                .select({ id: routines.id, excludedFromRecommendations: routines.excludedFromRecommendations })
+                .from(routines)
+                .where(scopedToWorkspace(routines, workspaceId, isNull(routines.archivedAt))),
+            // The tenant filter sits on `routine_exercises`; the joined exercise may be catalog content.
+            this.db
+                .select({
+                    routineId: routineExercises.routineId,
+                    primaryMuscles: exercises.primaryMuscles,
+                    secondaryMuscles: exercises.secondaryMuscles,
+                })
+                .from(routineExercises)
+                .innerJoin(exercises, eq(exercises.id, routineExercises.exerciseId))
+                .where(scopedToWorkspace(routineExercises, workspaceId)),
+            this.db
+                .select({ routineId: workoutSessions.routineId, completions: count() })
+                .from(workoutSessions)
+                .where(
+                    scopedToWorkspace(
+                        workoutSessions,
+                        workspaceId,
+                        isNotNull(workoutSessions.routineId),
+                        gte(workoutSessions.completedAt, frequencySince),
+                    ),
+                )
+                .groupBy(workoutSessions.routineId),
+            // Only exercises with a working set logged count as training the muscle; a warm-up, or
+            // an exercise added and skipped, leaves it rested.
+            this.db
+                .selectDistinct({
+                    primaryMuscles: exercises.primaryMuscles,
+                    secondaryMuscles: exercises.secondaryMuscles,
+                    completedAt: workoutSessions.completedAt,
+                })
+                .from(sessionExercises)
+                .innerJoin(workoutSessions, eq(workoutSessions.id, sessionExercises.sessionId))
+                .innerJoin(exercises, eq(exercises.id, sessionExercises.exerciseId))
+                .innerJoin(
+                    setEntries,
+                    scopedToWorkspace(
+                        setEntries,
+                        workspaceId,
+                        eq(setEntries.sessionExerciseId, sessionExercises.id),
+                        eq(setEntries.isWarmup, false),
+                    ),
+                )
+                .where(
+                    scopedToWorkspace(sessionExercises, workspaceId, gte(workoutSessions.completedAt, recoverySince)),
+                ),
+        ]);
+
+        const slotsByRoutine = new Map<string, typeof slots>();
+        for (const slot of slots) {
+            slotsByRoutine.set(slot.routineId, [...(slotsByRoutine.get(slot.routineId) ?? []), slot]);
+        }
+
+        const completionsByRoutine = new Map(completions.map((row) => [row.routineId, row.completions]));
+
+        return scoreRoutineRecommendations({
+            candidates: active.map((routine) => {
+                const routineSlots = slotsByRoutine.get(routine.id) ?? [];
+
+                return {
+                    id: routine.id,
+                    excludedFromRecommendations: routine.excludedFromRecommendations,
+                    exerciseCount: routineSlots.length,
+                    primaryMuscles: routineSlots.flatMap((slot) => slot.primaryMuscles),
+                    secondaryMuscles: routineSlots.flatMap((slot) => slot.secondaryMuscles),
+                    recentCompletions: completionsByRoutine.get(routine.id) ?? 0,
+                };
+            }),
+            history: history.flatMap((row) =>
+                row.completedAt === null ? [] : [{ ...row, completedAt: new Date(row.completedAt) }],
+            ),
+            now,
+        });
+    }
+
+    /**
      * The most recent completion of a workout started from each of `routineIds`, in one query
      * rather than one per routine. Routines never completed are absent from the map.
      */
@@ -638,6 +762,24 @@ export class RoutinesService {
     }
 }
 
+/**
+ * Highest score first; routines with no score keep their incoming (name) order after the rest,
+ * as do routines that tie.
+ */
+function sortByRecommendation<T extends { id: string }>({
+    routines: rows,
+    scores,
+}: {
+    routines: T[];
+    scores: Map<string, number | null>;
+}): T[] {
+    const scoreOf = (row: T): number => scores.get(row.id) ?? -1;
+
+    return [...rows].sort((a, b) => scoreOf(b) - scoreOf(a));
+}
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
 /** A detail slot reduced to the flat shape the shared estimator reads. */
 function toSlotLike(slot: {
     targetSets: number;
@@ -660,6 +802,7 @@ const ROUTINE_SUMMARY_COLUMNS = {
     name: routines.name,
     description: routines.description,
     archivedAt: routines.archivedAt,
+    excludedFromRecommendations: routines.excludedFromRecommendations,
     // The comparison must stay inside a nested `SQL` so the single-table rewrite (which strips
     // top-level `PgColumn` qualifiers) does not strip `routines.id`'s.
     exerciseCount: sql<number>`(select count(*) from ${routineExercises} where ${eq(

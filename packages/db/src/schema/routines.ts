@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { check, foreignKey, index, integer, numeric, pgTable, text, uuid } from 'drizzle-orm/pg-core';
+import { boolean, check, foreignKey, index, integer, numeric, pgTable, text, uuid } from 'drizzle-orm/pg-core';
 import { timestamptz } from './timestamptz.js';
 import { user } from './auth.js';
 import { exercises } from './exercises.js';
@@ -19,6 +19,7 @@ export const routines = pgTable(
         name: text('name').notNull(),
         description: text('description'),
         archivedAt: timestamptz('archived_at'),
+        excludedFromRecommendations: boolean('excluded_from_recommendations').default(false).notNull(),
         createdAt: timestamptz('created_at')
             .default(sql`now()`)
             .notNull(),

@@ -7,6 +7,8 @@ export type Routine = {
     name: string;
     description: string | null;
     archivedAt: string | null;
+    /** Set when the user wants this routine kept out of recommendations. */
+    excludedFromRecommendations: boolean;
     exerciseCount: number;
     /** Estimated seconds to work through the routine; 0 when nothing in it has a usable target. */
     estimatedDurationSeconds: number;
@@ -15,6 +17,18 @@ export type Routine = {
     createdAt: string;
     updatedAt: string;
 };
+
+/** A routine as the list returns it, with how strongly it is recommended as the next workout. */
+export type RoutineListItem = Routine & {
+    /** 0-100, higher is a better pick now; null when excluded, archived, or empty. */
+    recommendationScore: number | null;
+};
+
+/** The order a routine list is read in. */
+export enum RoutineOrder {
+    Name = 'name',
+    Recommended = 'recommended',
+}
 
 /** The exercise a slot points at — enough to render the row and pick an input widget. */
 export type RoutineExerciseSummary = {
@@ -50,7 +64,12 @@ export type RoutineDetail = Routine & { exercises: RoutineExercise[] };
 
 export type SaveRoutineRequest = { name: string; description?: string | null };
 
-export type PatchRoutineRequest = { name?: string; description?: string | null; archived?: boolean };
+export type PatchRoutineRequest = {
+    name?: string;
+    description?: string | null;
+    archived?: boolean;
+    excludedFromRecommendations?: boolean;
+};
 
 export type SaveRoutineExerciseRequest = Partial<RoutineExerciseTargets> & { exerciseId: string };
 

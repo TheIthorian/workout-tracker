@@ -39,7 +39,7 @@ export class RoutinesController {
         @Inject(RESOURCE_URL_GENERATOR) private readonly urls: ResourceUrlGenerator,
     ) {}
 
-    /** A page of the workspace's routines, by name. */
+    /** A page of the workspace's routines, by name or by recommendation. */
     @Get()
     async listRoutines(
         @CurrentUser() currentUser: CurrentUserContext,
@@ -53,6 +53,7 @@ export class RoutinesController {
             pageSize: query.pageSize,
             search: query.search,
             includeArchived: query.includeArchived,
+            order: query.sort,
         });
     }
 

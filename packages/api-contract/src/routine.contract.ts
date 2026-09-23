@@ -1,4 +1,4 @@
-import { Equipment, TrackingType } from '@app/domain';
+import { Equipment, RoutineOrder, TrackingType } from '@app/domain';
 import { z } from 'zod';
 import { guidSchema, paginatedResponseSchema, paginationQuerySchema } from './primitives.js';
 
@@ -32,6 +32,8 @@ export const routineResponseSchema = z.object({
     name: z.string(),
     description: z.string().nullable(),
     archivedAt: z.string().nullable(),
+    /** Set when the user wants this routine kept out of what the app suggests they do next. */
+    excludedFromRecommendations: z.boolean(),
     exerciseCount: z.number().int(),
     /** Estimated seconds to work through the routine; 0 when nothing in it has a usable target. */
     estimatedDurationSeconds: z.number().int().nonnegative(),
@@ -46,7 +48,16 @@ export const routineDetailResponseSchema = routineResponseSchema.extend({
     exercises: z.array(routineExerciseResponseSchema),
 });
 
-export const routineListResponseSchema = paginatedResponseSchema(routineResponseSchema);
+/** A routine as listed, with how strongly it is recommended as the next workout. */
+export const routineListItemSchema = routineResponseSchema.extend({
+    /**
+     * 0-100, higher is a better pick right now: mostly how rested its muscles are, partly how often
+     * it is done. Null when the routine is excluded from recommendations, archived, or empty.
+     */
+    recommendationScore: z.number().int().min(0).max(100).nullable(),
+});
+
+export const routineListResponseSchema = paginatedResponseSchema(routineListItemSchema);
 
 /** Query parameters for `GET /api/v1/workspaces/{workspaceId}/routines`. */
 export const routineListQuerySchema = paginationQuerySchema.extend({
@@ -55,6 +66,7 @@ export const routineListQuerySchema = paginationQuerySchema.extend({
         .enum(['true', 'false'])
         .optional()
         .transform((value) => value === 'true'),
+    sort: z.enum(RoutineOrder).default(RoutineOrder.Name),
 });
 
 /** The body of `POST /api/v1/workspaces/{workspaceId}/routines`. */
@@ -69,6 +81,7 @@ export const patchRoutineRequestSchema = z
         name: z.string().min(1).max(200).optional(),
         description: z.string().max(2000).nullable().optional(),
         archived: z.boolean().optional(),
+        excludedFromRecommendations: z.boolean().optional(),
     })
     .refine((body) => Object.keys(body).length > 0, { message: 'At least one field must be provided' });
 
@@ -110,6 +123,7 @@ export const putRoutineExercisesRequestSchema = z.object({
 export type RoutineExerciseSummary = z.infer<typeof routineExerciseSummarySchema>;
 export type RoutineExerciseResponse = z.infer<typeof routineExerciseResponseSchema>;
 export type RoutineResponse = z.infer<typeof routineResponseSchema>;
+export type RoutineListItem = z.infer<typeof routineListItemSchema>;
 export type RoutineDetailResponse = z.infer<typeof routineDetailResponseSchema>;
 export type RoutineListResponse = z.infer<typeof routineListResponseSchema>;
 export type RoutineListQuery = z.infer<typeof routineListQuerySchema>;

@@ -1,12 +1,19 @@
 import { randomUUID } from 'node:crypto';
 import { schema, type Db } from '@app/db';
 import { startTestDatabase } from '@app/db/testing';
-import { Equipment, estimateRoutineSeconds, TrackingType } from '@app/domain';
+import {
+    Equipment,
+    estimateRoutineSeconds,
+    MuscleGroup,
+    RoutineOrder,
+    SessionExerciseSource,
+    TrackingType,
+} from '@app/domain';
 import { EntityNotFoundError, SetShapeMismatchError } from '@app/errors';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ExercisesService } from './exercises.service.js';
-import { RoutinesService } from './routines.service.js';
+import { RoutinesService, type RoutineListItem } from './routines.service.js';
 import { seedCatalogExercise, seedUser, seedWorkspace } from './testing.js';
 import { WorkspaceMembershipService } from './workspace-membership.service.js';
 
@@ -679,5 +686,227 @@ describe('last completed', () => {
         });
 
         expect((await routines.get({ userId, workspaceId, routineId })).lastCompletedAt).toBeNull();
+    });
+});
+
+describe('recommendations', () => {
+    const DAY = 24 * 60 * 60 * 1000;
+
+    type Fixture = { ownerId: string; ownWorkspaceId: string; exercise: (muscles: MuscleSpec) => Promise<string> };
+    type MuscleSpec = { primary: MuscleGroup[]; secondary?: MuscleGroup[] };
+
+    async function fixture(): Promise<Fixture> {
+        const ownerId = await seedUser(db);
+        const ownWorkspaceId = await seedWorkspace(db, ownerId);
+
+        return {
+            ownerId,
+            ownWorkspaceId,
+            exercise: async ({ primary, secondary = [] }) =>
+                (
+                    await exercises.create({
+                        userId: ownerId,
+                        workspaceId: ownWorkspaceId,
+                        name: `Exercise ${randomUUID()}`,
+                        trackingType: TrackingType.WeightReps,
+                        primaryMuscles: primary,
+                        secondaryMuscles: secondary,
+                    })
+                ).id,
+        };
+    }
+
+    async function routineWith({
+        f,
+        name,
+        exerciseIds,
+    }: {
+        f: Fixture;
+        name: string;
+        exerciseIds: string[];
+    }): Promise<string> {
+        const routine = await routines.create({ userId: f.ownerId, workspaceId: f.ownWorkspaceId, name });
+        await routines.replaceExercises({
+            userId: f.ownerId,
+            workspaceId: f.ownWorkspaceId,
+            routineId: routine.id,
+            exercises: exerciseIds.map((exerciseId) => ({ exerciseId, targetSets: 3 })),
+        });
+
+        return routine.id;
+    }
+
+    /** Records a completed workout in which `exerciseId` had one set logged. */
+    async function logWorkout({
+        sessionWorkspaceId,
+        routineId = null,
+        exerciseId,
+        daysAgo,
+        isWarmup = false,
+    }: {
+        sessionWorkspaceId: string;
+        routineId?: string | null;
+        exerciseId: string;
+        daysAgo: number;
+        isWarmup?: boolean;
+    }): Promise<void> {
+        const completedAt = new Date(Date.now() - daysAgo * DAY).toISOString();
+        const [session] = await db
+            .insert(schema.workoutSessions)
+            .values({
+                workspaceId: sessionWorkspaceId,
+                routineId,
+                name: 'Session',
+                startedAt: completedAt,
+                completedAt,
+            })
+            .returning({ id: schema.workoutSessions.id });
+        const [slot] = await db
+            .insert(schema.sessionExercises)
+            .values({
+                workspaceId: sessionWorkspaceId,
+                sessionId: session.id,
+                exerciseId,
+                trackingType: TrackingType.WeightReps,
+                source: SessionExerciseSource.AddedAdHoc,
+                position: 0,
+                targetSets: 1,
+            })
+            .returning({ id: schema.sessionExercises.id });
+        await db.insert(schema.setEntries).values({
+            workspaceId: sessionWorkspaceId,
+            sessionExerciseId: slot.id,
+            setIndex: 1,
+            isWarmup,
+            weightKg: 50,
+            reps: 5,
+        });
+    }
+
+    async function listRecommended(f: Fixture, paging = page): Promise<RoutineListItem[]> {
+        return (
+            await routines.list({
+                userId: f.ownerId,
+                workspaceId: f.ownWorkspaceId,
+                ...paging,
+                order: RoutineOrder.Recommended,
+            })
+        ).data;
+    }
+
+    it('ranks rested muscles first, then how often a routine is done', async () => {
+        const f = await fixture();
+        const bench = await f.exercise({ primary: [MuscleGroup.Chest], secondary: [MuscleGroup.Triceps] });
+        const row = await f.exercise({ primary: [MuscleGroup.Lats] });
+        const squat = await f.exercise({ primary: [MuscleGroup.Quads] });
+        const push = await routineWith({ f, name: 'Push', exerciseIds: [bench] });
+        const pull = await routineWith({ f, name: 'Pull', exerciseIds: [row] });
+        const legs = await routineWith({ f, name: 'Legs', exerciseIds: [squat] });
+        await logWorkout({ sessionWorkspaceId: f.ownWorkspaceId, routineId: push, exerciseId: bench, daysAgo: 0 });
+        await logWorkout({ sessionWorkspaceId: f.ownWorkspaceId, routineId: pull, exerciseId: row, daysAgo: 3.5 });
+
+        const listed = await listRecommended(f);
+
+        // Legs: never trained, never done. Pull: half rested, done. Push: just trained, done.
+        expect(listed.map((routine) => [routine.id, routine.recommendationScore])).toEqual([
+            [legs, 70],
+            [pull, 65],
+            [push, 42],
+        ]);
+    });
+
+    it('scores the same routines on the name-ordered list', async () => {
+        const f = await fixture();
+        const squat = await f.exercise({ primary: [MuscleGroup.Quads] });
+        await routineWith({ f, name: 'B legs', exerciseIds: [squat] });
+        await routineWith({ f, name: 'A empty', exerciseIds: [] });
+
+        const listed = await routines.list({ userId: f.ownerId, workspaceId: f.ownWorkspaceId, ...page });
+
+        expect(listed.data.map((routine) => [routine.name, routine.recommendationScore])).toEqual([
+            ['A empty', null],
+            ['B legs', 70],
+        ]);
+    });
+
+    it('does not score an excluded or empty routine, and lists them last by name', async () => {
+        const f = await fixture();
+        const squat = await f.exercise({ primary: [MuscleGroup.Quads] });
+        const curl = await f.exercise({ primary: [MuscleGroup.Biceps] });
+        await logWorkout({ sessionWorkspaceId: f.ownWorkspaceId, exerciseId: squat, daysAgo: 0 });
+        const excluded = await routineWith({ f, name: 'Arms', exerciseIds: [curl] });
+        const empty = await routineWith({ f, name: 'Blank', exerciseIds: [] });
+        const legs = await routineWith({ f, name: 'Legs', exerciseIds: [squat] });
+
+        const updated = await routines.update({
+            userId: f.ownerId,
+            workspaceId: f.ownWorkspaceId,
+            routineId: excluded,
+            excludedFromRecommendations: true,
+        });
+        expect(updated.excludedFromRecommendations).toBe(true);
+
+        const listed = await listRecommended(f);
+
+        expect(listed.map((routine) => [routine.id, routine.recommendationScore])).toEqual([
+            [legs, 0],
+            [excluded, null],
+            [empty, null],
+        ]);
+    });
+
+    it('pages through the recommended order', async () => {
+        const f = await fixture();
+        const bench = await f.exercise({ primary: [MuscleGroup.Chest] });
+        const squat = await f.exercise({ primary: [MuscleGroup.Quads] });
+        await logWorkout({ sessionWorkspaceId: f.ownWorkspaceId, exerciseId: bench, daysAgo: 0 });
+        const push = await routineWith({ f, name: 'A push', exerciseIds: [bench] });
+        const legs = await routineWith({ f, name: 'B legs', exerciseIds: [squat] });
+
+        expect((await listRecommended(f, { page: 1, pageSize: 1 })).map((routine) => routine.id)).toEqual([legs]);
+        expect((await listRecommended(f, { page: 2, pageSize: 1 })).map((routine) => routine.id)).toEqual([push]);
+    });
+
+    it('does not count warm-up sets as training a muscle', async () => {
+        const f = await fixture();
+        const squat = await f.exercise({ primary: [MuscleGroup.Quads] });
+        await logWorkout({ sessionWorkspaceId: f.ownWorkspaceId, exerciseId: squat, daysAgo: 0, isWarmup: true });
+        const legs = await routineWith({ f, name: 'Legs', exerciseIds: [squat] });
+
+        expect((await listRecommended(f)).find((routine) => routine.id === legs)?.recommendationScore).toBe(70);
+    });
+
+    it("never reads another workspace's history", async () => {
+        const f = await fixture();
+        const other = await fixture();
+        const squat = await f.exercise({ primary: [MuscleGroup.Quads] });
+        const theirSquat = await other.exercise({ primary: [MuscleGroup.Quads] });
+        const legs = await routineWith({ f, name: 'Legs', exerciseIds: [squat] });
+        const theirLegs = await routineWith({ f: other, name: 'Legs', exerciseIds: [theirSquat] });
+        await logWorkout({
+            sessionWorkspaceId: other.ownWorkspaceId,
+            routineId: theirLegs,
+            exerciseId: theirSquat,
+            daysAgo: 0,
+        });
+
+        const listed = await listRecommended(f);
+
+        expect(listed.map((routine) => [routine.id, routine.recommendationScore])).toEqual([[legs, 70]]);
+    });
+
+    it("refuses to change another workspace's routine", async () => {
+        const f = await fixture();
+        const other = await fixture();
+        const theirs = await routineWith({ f: other, name: 'Theirs', exerciseIds: [] });
+
+        await expect(
+            routines.update({
+                userId: f.ownerId,
+                workspaceId: f.ownWorkspaceId,
+                routineId: theirs,
+                excludedFromRecommendations: true,
+            }),
+        ).rejects.toBeInstanceOf(EntityNotFoundError);
     });
 });
