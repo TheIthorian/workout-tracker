@@ -1,6 +1,6 @@
 import { lookup as resolveHostname } from 'node:dns/promises';
 import { isIP } from 'node:net';
-import { Agent } from 'undici';
+import { Agent, fetch as undiciFetch } from 'undici';
 import { isPublicUnicastAddress } from './ip-address.js';
 
 /** The subset of `fetch` this package uses, so a test supplies its own without a global stub. */
@@ -38,7 +38,12 @@ export function createSafeFetch(): FetchLike {
         const dispatcher = new Agent({ connect: { lookup: pinLookup(addresses) } });
 
         try {
-            return await globalThis.fetch(target, { ...init, dispatcher } as RequestInit);
+            // Node's bundled fetch and this package's `undici` are different major versions with
+            // incompatible dispatch handlers, so the Agent must be driven by the fetch it shipped with.
+            return (await undiciFetch(target, {
+                ...init,
+                dispatcher,
+            } as Parameters<typeof undiciFetch>[1])) as unknown as Response;
         } finally {
             await dispatcher.close();
         }
