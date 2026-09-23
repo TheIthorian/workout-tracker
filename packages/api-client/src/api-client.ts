@@ -1,20 +1,11 @@
 import { toAppError, type ProblemBody } from './problem.js';
+import { backoffDelay, DEFAULT_RETRY_POLICY, isRetryableStatus, type RetryPolicy } from './retry.js';
 
 /** The subset of `fetch` this client uses, so a test supplies its own without a global stub. */
 export type FetchLike = (url: string | URL, init?: RequestInit) => Promise<Response>;
 
 /** Waits out a backoff delay, so a test drives the retry loop without real time passing. */
 export type SleepLike = (ms: number) => Promise<void>;
-
-/** How often, and how patiently, a request is retried while the API is unreachable. */
-export type RetryPolicy = {
-    /** Attempts in total, including the first. `1` disables retrying. */
-    maxAttempts: number;
-    /** Delay before the second attempt; each later delay doubles the previous one. */
-    initialDelayMs: number;
-    /** Upper bound on a single delay, so the doubling cannot run away. */
-    maxDelayMs: number;
-};
 
 export type ApiClientConfig = {
     /** The API's origin, without the `/api/v1` prefix. Trailing slashes are tolerated. */
@@ -33,28 +24,6 @@ export type ApiClientConfig = {
 export type QueryValue = string | number | boolean | undefined;
 
 const API_PREFIX = '/api/v1';
-
-/**
- * Spends about 7.5s across four backoffs, which covers a scale-to-zero cold start while staying
- * inside the time an MCP client will wait for a tool result.
- */
-export const DEFAULT_RETRY_POLICY: RetryPolicy = {
-    maxAttempts: 5,
-    initialDelayMs: 500,
-    maxDelayMs: 8_000,
-};
-
-/**
- * Statuses an edge proxy emits when nothing is listening behind it yet. The app's own 500 is
- * deliberately absent: that one means the request WAS handled, and repeating it would only ask a
- * running server to fail the same way again.
- */
-enum RetryableStatus {
-    RequestTimeout = 408,
-    BadGateway = 502,
-    ServiceUnavailable = 503,
-    GatewayTimeout = 504,
-}
 
 /**
  * One typed `fetch` client for `apps/api`, holding the caller's token.
@@ -166,13 +135,8 @@ export class ApiClient {
                 if (isLastAttempt || isAbort(error)) throw error;
             }
 
-            await this.sleep(this.backoffFor({ attempt }));
+            await this.sleep(backoffDelay({ attempt, policy: this.retry }));
         }
-    }
-
-    /** The delay owed after `attempt`, doubling each time and clamped to the policy's ceiling. */
-    private backoffFor({ attempt }: { attempt: number }): number {
-        return Math.min(this.retry.initialDelayMs * 2 ** (attempt - 1), this.retry.maxDelayMs);
     }
 }
 
@@ -183,11 +147,6 @@ async function readProblem(response: Response): Promise<ProblemBody> {
     } catch {
         return { title: response.statusText };
     }
-}
-
-function isRetryableStatus(status: number): boolean {
-    // A numeric enum carries a reverse mapping, so its own values are exactly its numeric keys.
-    return status in RetryableStatus;
 }
 
 /** An abort is the caller's own decision, so it is the one transport failure not worth repeating. */

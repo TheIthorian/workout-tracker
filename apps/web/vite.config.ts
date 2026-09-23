@@ -51,6 +51,7 @@ export default defineConfig(({ mode }) => {
             alias: {
                 '@': path.resolve(__dirname, './src'),
                 '@app/domain': path.resolve(__dirname, '../../packages/domain/src/index.ts'),
+                '@app/api-client/retry': path.resolve(__dirname, '../../packages/api-client/src/retry.ts'),
             },
         },
     };

@@ -1,8 +1,16 @@
-import axios, { AxiosError, type AxiosInstance, type AxiosRequestConfig } from 'axios';
+import axios, { AxiosError, type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios';
 import { toast } from '@/hooks/use-toast';
 import type { ProblemDetails } from '@/models/error';
 import { getApiBaseUrl } from './api-base-url';
+import { retryDelayFor } from './request-retry';
 import { buildAuthPath } from './return-url';
+
+declare module 'axios' {
+    interface AxiosRequestConfig {
+        /** The 1-based attempt this request is, so a retry knows how many came before it. */
+        attempt?: number;
+    }
+}
 
 const API_BASE = getApiBaseUrl();
 
@@ -81,7 +89,10 @@ class AppHttpClient {
 
         this.axiosInstance.interceptors.response.use(
             (response) => response,
-            (error: AxiosError<ProblemDetails> | AxiosError<PlatformError>) => {
+            async (error: AxiosError<ProblemDetails> | AxiosError<PlatformError>) => {
+                const retried = await this.retryIfWaking(error);
+                if (retried) return retried;
+
                 if (error.response?.status === 401) {
                     this.handleUnauthorizedError(error);
                     return Promise.reject(error);
@@ -91,6 +102,23 @@ class AppHttpClient {
                 return Promise.reject(error);
             },
         );
+    }
+
+    /**
+     * Replays a request the API could not answer yet - it, or the database it wakes on first use,
+     * was asleep - so the visitor sees a slow tap rather than an error toast.
+     */
+    private async retryIfWaking(error: AxiosError): Promise<AxiosResponse | undefined> {
+        const config = error.config;
+        if (!config || axios.isCancel(error)) return undefined;
+
+        const attempt = config.attempt ?? 1;
+        const delay = retryDelayFor({ method: config.method, status: error.response?.status, attempt });
+        if (delay === null) return undefined;
+
+        await new Promise((resolve) => setTimeout(resolve, delay));
+
+        return this.axiosInstance.request({ ...config, attempt: attempt + 1 });
     }
 
     private handleUnauthorizedError(error: AxiosError<ProblemDetails> | AxiosError<PlatformError>): void {

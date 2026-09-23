@@ -58,7 +58,9 @@ it. Adding an endpoint starts with a schema in `api-contract`, not a controller 
 holds an MCP OAuth access token and forwards it as `Authorization: Bearer`, built for `apps/mcp`.
 `apps/web`'s browser client is a separate, cookie-session-based implementation
 (`apps/web/src/lib/http-client.ts`), not this package — if a future SPA client is derived from
-`api-contract`, it needs its own name; this one is taken.
+`api-contract`, it needs its own name; this one is taken. The one thing the two share is the retry policy,
+`@app/api-client/retry`: which statuses mean the API (or the database it wakes) is still asleep,
+and how long to back off - so a sleeping Railway service is retried the same way from both.
 
 ## Common Commands
 

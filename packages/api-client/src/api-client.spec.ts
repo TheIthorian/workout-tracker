@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { AppError } from '@app/errors';
-import { ApiClient, type RetryPolicy } from './api-client.js';
+import { ApiClient } from './api-client.js';
+import type { RetryPolicy } from './retry.js';
 
 function clientWith(handler: (url: string, init: RequestInit) => Response): ApiClient {
     return new ApiClient({
