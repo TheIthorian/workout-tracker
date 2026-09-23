@@ -87,7 +87,7 @@ export class OAuthController {
         }
 
         this.logger.warn(
-            { clientId: query.client_id ?? null, error: outcome.code },
+            { clientId: query.client_id ?? null, error: outcome.code, description: outcome.description },
             'OAuth authorization request from a client this deployment does not accept',
         );
 
