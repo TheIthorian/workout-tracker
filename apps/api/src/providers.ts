@@ -1,7 +1,7 @@
 import { AuthService, McpTokenService, UserProvisioningService, type AuthConfig } from '@app/auth';
 import { createDb, type Db } from '@app/db';
 import { createLogger, type Logger } from '@app/logger';
-import { WorkspaceMembershipService } from '@app/services';
+import { RoutineRecommendationsService, WorkspaceMembershipService } from '@app/services';
 import { StorageService } from '@app/storage';
 import {
     MCP_TOKEN_SERVICE,
@@ -38,6 +38,12 @@ export const USER_PROVISIONING_SERVICE = Symbol('USER_PROVISIONING_SERVICE');
  * workspace-scoped service depends on it, and they must all authorise against the same instance.
  */
 export const WORKSPACE_MEMBERSHIP_SERVICE = Symbol('WORKSPACE_MEMBERSHIP_SERVICE');
+
+/**
+ * DI token for `RoutineRecommendationsService`. Every service whose writes change a routine's
+ * recommendation score depends on it, so they share one instance.
+ */
+export const ROUTINE_RECOMMENDATIONS_SERVICE = Symbol('ROUTINE_RECOMMENDATIONS_SERVICE');
 
 /**
  * Reads the Better Auth config Nest-side providers share, out of validated environment. Split out
@@ -116,6 +122,11 @@ export const infrastructureProviders: Provider[] = [
     {
         provide: WORKSPACE_MEMBERSHIP_SERVICE,
         useFactory: (db: Db): WorkspaceMembershipService => new WorkspaceMembershipService({ db }),
+        inject: [DB],
+    },
+    {
+        provide: ROUTINE_RECOMMENDATIONS_SERVICE,
+        useFactory: (db: Db): RoutineRecommendationsService => new RoutineRecommendationsService({ db }),
         inject: [DB],
     },
     // Declared here rather than in a route slice: several modules attach links, and `apps/mcp`

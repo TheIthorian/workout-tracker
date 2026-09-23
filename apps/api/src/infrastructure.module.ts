@@ -13,6 +13,7 @@ import {
     CATALOG_IMAGE_BASE_URL,
     DB,
     infrastructureProviders,
+    ROUTINE_RECOMMENDATIONS_SERVICE,
     STORAGE_SERVICE,
     USER_PROVISIONING_SERVICE,
     WORKSPACE_MEMBERSHIP_SERVICE,
@@ -20,7 +21,7 @@ import {
 
 /**
  * Provides the application's infrastructure tokens - the logger, the pooled `Db` handle, the
- * configured `AuthService`, `WorkspaceMembershipService`, the configured `StorageService`,
+ * configured `AuthService`, `WorkspaceMembershipService`, `RoutineRecommendationsService`, the configured `StorageService`,
  * `SessionAuthGuard`'s `SESSION_AUTH_SERVICE` alias, `MCP_TOKEN_SERVICE`, and the session/token
  * guards themselves - to every feature module. `@Global()` plus `exports` makes these reachable
  * from every route-slice module without each one re-declaring or re-importing them.
@@ -44,6 +45,7 @@ import {
         AUTH_SERVICE,
         USER_PROVISIONING_SERVICE,
         WORKSPACE_MEMBERSHIP_SERVICE,
+        ROUTINE_RECOMMENDATIONS_SERVICE,
         SESSION_AUTH_SERVICE,
         RESOURCE_URL_GENERATOR,
         MCP_TOKEN_SERVICE,

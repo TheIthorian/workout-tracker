@@ -39,6 +39,7 @@ export {
     UNTAGGED_MUSCLE_REST,
     scoreRoutineRecommendations,
     type RecommendationCandidate,
+    type RoutineRecommendation,
     type TrainedExercise,
 } from './routine-recommendation.js';
 export { DEFAULT_REST_SECONDS, resolveRestSeconds, restTimer, sessionRestTimer, type RestTimer } from './rest-timer.js';

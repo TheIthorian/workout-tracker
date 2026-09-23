@@ -15,7 +15,7 @@ import {
     SetShapeMismatchError,
 } from '@app/errors';
 import { asc, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
-import { recalculateRoutineRecommendations } from './routine-recommendations.js';
+import type { RoutineRecommendationsService } from './routine-recommendations.service.js';
 import type { WorkspaceMembershipService } from './workspace-membership.service.js';
 
 const { exercisePreferences, exercises, routineExercises, routines, sessionExercises, setEntries, workoutSessions } =
@@ -83,10 +83,20 @@ export type PaginatedSessions = {
 export class WorkoutSessionsService {
     private readonly db: Db;
     private readonly membership: WorkspaceMembershipService;
+    private readonly recommendations: RoutineRecommendationsService;
 
-    constructor({ db, membership }: { db: Db; membership: WorkspaceMembershipService }) {
+    constructor({
+        db,
+        membership,
+        recommendations,
+    }: {
+        db: Db;
+        membership: WorkspaceMembershipService;
+        recommendations: RoutineRecommendationsService;
+    }) {
         this.db = db;
         this.membership = membership;
+        this.recommendations = recommendations;
     }
 
     /** Lists sessions newest first. */
@@ -234,7 +244,7 @@ export class WorkoutSessionsService {
             return this.loadDetail({ db: tx, workspaceId, sessionId });
         });
 
-        await recalculateRoutineRecommendations({ db: this.db, workspaceId });
+        await this.recommendations.recalculate({ workspaceId });
 
         return detail;
     }

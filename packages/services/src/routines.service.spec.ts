@@ -13,10 +13,10 @@ import { EntityNotFoundError, SetShapeMismatchError } from '@app/errors';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ExercisesService } from './exercises.service.js';
-import { recalculateRoutineRecommendations } from './routine-recommendations.js';
 import { RoutinesService, type RoutineListItem } from './routines.service.js';
 import { WorkoutSessionsService } from './workout-sessions.service.js';
 import { seedCatalogExercise, seedUser, seedWorkspace } from './testing.js';
+import { RoutineRecommendationsService } from './routine-recommendations.service.js';
 import { WorkspaceMembershipService } from './workspace-membership.service.js';
 
 let database: Awaited<ReturnType<typeof startTestDatabase>>;
@@ -37,8 +37,8 @@ beforeAll(async () => {
     database = await startTestDatabase();
     db = database.db;
     const membership = new WorkspaceMembershipService({ db });
-    routines = new RoutinesService({ db, membership });
-    exercises = new ExercisesService({ db, membership });
+    routines = new RoutinesService({ db, membership, recommendations: new RoutineRecommendationsService({ db }) });
+    exercises = new ExercisesService({ db, membership, recommendations: new RoutineRecommendationsService({ db }) });
 
     userId = await seedUser(db, 'Member');
     workspaceId = await seedWorkspace(db, userId);
@@ -786,7 +786,7 @@ describe('recommendations', () => {
             weightKg: 50,
             reps: 5,
         });
-        await recalculateRoutineRecommendations({ db, workspaceId: sessionWorkspaceId });
+        await new RoutineRecommendationsService({ db }).recalculate({ workspaceId: sessionWorkspaceId });
     }
 
     async function listRecommended(f: Fixture, paging = page): Promise<RoutineListItem[]> {
@@ -903,7 +903,11 @@ describe('recommendations', () => {
 
     it('recalculates when a workout is completed through the sessions service', async () => {
         const f = await fixture();
-        const sessions = new WorkoutSessionsService({ db, membership: new WorkspaceMembershipService({ db }) });
+        const sessions = new WorkoutSessionsService({
+            db,
+            membership: new WorkspaceMembershipService({ db }),
+            recommendations: new RoutineRecommendationsService({ db }),
+        });
         const squat = await f.exercise({ primary: [MuscleGroup.Quads] });
         const legs = await routineWith({ f, name: 'Legs', exerciseIds: [squat] });
         expect((await listRecommended(f))[0]?.recommendationScore).toBe(70);

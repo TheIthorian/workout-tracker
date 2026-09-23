@@ -9,10 +9,7 @@ import {
 } from '@app/domain';
 import { EntityNotFoundError, SetShapeMismatchError } from '@app/errors';
 import { asc, count, eq, ilike, inArray, isNotNull, isNull, max, or, sql } from 'drizzle-orm';
-import {
-    recalculateRoutineRecommendations,
-    recalculateStaleRoutineRecommendations,
-} from './routine-recommendations.js';
+import type { RoutineRecommendationsService } from './routine-recommendations.service.js';
 import type { WorkspaceMembershipService } from './workspace-membership.service.js';
 
 const { exercises, routineExercises, routines, workoutSessions } = schema;
@@ -86,10 +83,20 @@ export type PaginatedRoutines = {
 export class RoutinesService {
     private readonly db: Db;
     private readonly membership: WorkspaceMembershipService;
+    private readonly recommendations: RoutineRecommendationsService;
 
-    constructor({ db, membership }: { db: Db; membership: WorkspaceMembershipService }) {
+    constructor({
+        db,
+        membership,
+        recommendations,
+    }: {
+        db: Db;
+        membership: WorkspaceMembershipService;
+        recommendations: RoutineRecommendationsService;
+    }) {
         this.db = db;
         this.membership = membership;
+        this.recommendations = recommendations;
     }
 
     /**
@@ -125,7 +132,7 @@ export class RoutinesService {
             search === undefined || search === '' ? undefined : ilike(routines.name, `%${search}%`),
             includeArchived === true ? undefined : isNull(routines.archivedAt),
         );
-        await recalculateStaleRoutineRecommendations({ db: this.db, workspaceId });
+        await this.recommendations.recalculateIfStale({ workspaceId });
 
         const byName = [asc(routines.name), asc(routines.createdAt)];
         const orderBy =
@@ -265,7 +272,7 @@ export class RoutinesService {
         });
 
         if (archived !== undefined || excludedFromRecommendations !== undefined) {
-            await recalculateRoutineRecommendations({ db: this.db, workspaceId });
+            await this.recommendations.recalculate({ workspaceId });
         }
 
         return detail;
@@ -309,7 +316,7 @@ export class RoutinesService {
             return this.loadDetail({ db: tx, workspaceId, routineId });
         });
 
-        await recalculateRoutineRecommendations({ db: this.db, workspaceId });
+        await this.recommendations.recalculate({ workspaceId });
 
         return detail;
     }
@@ -441,7 +448,7 @@ export class RoutinesService {
             return this.loadDetail({ db: tx, workspaceId, routineId });
         });
 
-        await recalculateRoutineRecommendations({ db: this.db, workspaceId });
+        await this.recommendations.recalculate({ workspaceId });
 
         return detail;
     }
@@ -507,7 +514,7 @@ export class RoutinesService {
             return this.loadDetail({ db: tx, workspaceId, routineId });
         });
 
-        await recalculateRoutineRecommendations({ db: this.db, workspaceId });
+        await this.recommendations.recalculate({ workspaceId });
 
         return detail;
     }

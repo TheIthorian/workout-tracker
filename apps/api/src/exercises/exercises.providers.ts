@@ -5,11 +5,12 @@ import {
     ExerciseHistoryService,
     ExerciseTargetsService,
     ExercisesService,
+    type RoutineRecommendationsService,
     type WorkspaceMembershipService,
 } from '@app/services';
 import type { Provider } from '@nestjs/common';
 import type { StorageService } from '@app/storage';
-import { DB, STORAGE_SERVICE, WORKSPACE_MEMBERSHIP_SERVICE } from '../providers.js';
+import { DB, STORAGE_SERVICE, ROUTINE_RECOMMENDATIONS_SERVICE, WORKSPACE_MEMBERSHIP_SERVICE } from '../providers.js';
 
 /** DI token for private exercise-image storage. */
 export const EXERCISE_IMAGES_SERVICE = Symbol('EXERCISE_IMAGES_SERVICE');
@@ -36,9 +37,12 @@ export const exerciseServiceProviders: Provider[] = [
     },
     {
         provide: EXERCISES_SERVICE,
-        useFactory: (db: Db, membership: WorkspaceMembershipService): ExercisesService =>
-            new ExercisesService({ db, membership }),
-        inject: [DB, WORKSPACE_MEMBERSHIP_SERVICE],
+        useFactory: (
+            db: Db,
+            membership: WorkspaceMembershipService,
+            recommendations: RoutineRecommendationsService,
+        ): ExercisesService => new ExercisesService({ db, membership, recommendations }),
+        inject: [DB, WORKSPACE_MEMBERSHIP_SERVICE, ROUTINE_RECOMMENDATIONS_SERVICE],
     },
     {
         provide: EXERCISE_GUIDE_SERVICE,

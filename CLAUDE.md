@@ -187,7 +187,7 @@ are the deliberate exception - see Auth above.
 
 **`routines.recommendation_score` is denormalised**, so the routine list can sort and page on it.
 Any write that changes a scoring input (a completed workout, a routine's exercises, archiving or
-exclusion, an exercise's muscles) calls `recalculateRoutineRecommendations` from `@app/services`
+exclusion, an exercise's muscles) calls `RoutineRecommendationsService.recalculate({ workspaceId })`
 once it commits. Callers know nothing else about it, so it can move behind a queue later.
 
 Naming is **snake_case** throughout, matching Postgres convention.
@@ -329,6 +329,12 @@ Business logic. Depends on `db` and `domain`; knows nothing about HTTP.
   arrive through a single object argument in the constructor. An app wires one up with a factory
   provider, so the same service is callable from `apps/api`, `apps/admin`, or a script that never
   boots Nest.
+- **One service calling another takes it as a constructor dependency**, never a module function
+  that needs `db` passed in: a caller should not know what the callee needs to do its work.
+- **Keep calculation, persistence and orchestration apart.** The calculation is a pure function in
+  `packages/domain` that takes its inputs (an iterable or generator, e.g. workout history) and
+  returns its results (again possibly a generator). A store class here owns the queries that load
+  those inputs and save the results. The service only wires the two together.
 - **Never import `@nestjs/*` here.** That is the whole point of the package.
 - **Throw typed errors from `@app/errors`.** A shared exception filter maps them to HTTP; a service
   that throws a Nest `HttpException` has an opinion about a transport it should not know exists.

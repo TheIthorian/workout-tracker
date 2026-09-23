@@ -43,47 +43,58 @@ export type TrainedExercise = {
     completedAt: Date;
 };
 
+/** One routine's score: 0-100, or null when it should not be recommended at all. */
+export type RoutineRecommendation = {
+    routineId: string;
+    score: number | null;
+};
+
 type MuscleLastTrained = { primaryAt: Date | null; secondaryAt: Date | null };
 
 /**
  * Scores each candidate 0-100 for how good a pick it is right now: mostly how rested its muscles
  * are, and partly how often it gets done, since a routine done often is likely one the user enjoys.
  *
- * @returns each candidate's score by id; null for a routine that is excluded or has no exercises,
- * because starting one of those is never the right recommendation.
+ * `history` is read once, so it may be a generator. `candidates` are read in full before the first
+ * score is yielded, because frequency is relative to the most-done candidate.
+ *
+ * @returns one recommendation per candidate, in candidate order; the score is null for a routine
+ * that is excluded or has no exercises, because starting one of those is never the right pick.
  */
-export function scoreRoutineRecommendations({
+export function* scoreRoutineRecommendations({
     candidates,
     history,
     now,
 }: {
-    candidates: RecommendationCandidate[];
-    history: TrainedExercise[];
+    candidates: Iterable<RecommendationCandidate>;
+    history: Iterable<TrainedExercise>;
     now: Date;
-}): Map<string, number | null> {
+}): Generator<RoutineRecommendation> {
+    const allCandidates = [...candidates];
     const restByMuscle = new Map(
         [...lastTrainedByMuscle(history)].map(([muscle, entry]) => [muscle, muscleRest({ entry, now })]),
     );
-    const mostCompletions = Math.max(0, ...candidates.map((candidate) => candidate.recentCompletions));
+    const mostCompletions = Math.max(0, ...allCandidates.map((candidate) => candidate.recentCompletions));
 
-    return new Map(
-        candidates.map((candidate) => {
-            if (candidate.excludedFromRecommendations || candidate.exerciseCount === 0) return [candidate.id, null];
+    for (const candidate of allCandidates) {
+        if (candidate.excludedFromRecommendations || candidate.exerciseCount === 0) {
+            yield { routineId: candidate.id, score: null };
+            continue;
+        }
 
-            const rest = routineMuscleRest({ candidate, restByMuscle });
-            const frequency = mostCompletions === 0 ? 0 : candidate.recentCompletions / mostCompletions;
-            const score = rest * RECOMMENDATION_WEIGHTS.muscleRest + frequency * RECOMMENDATION_WEIGHTS.frequency;
+        const rest = routineMuscleRest({ candidate, restByMuscle });
+        const frequency = mostCompletions === 0 ? 0 : candidate.recentCompletions / mostCompletions;
+        const score = rest * RECOMMENDATION_WEIGHTS.muscleRest + frequency * RECOMMENDATION_WEIGHTS.frequency;
 
-            return [candidate.id, Math.round(score)];
-        }),
-    );
+        yield { routineId: candidate.id, score: Math.round(score) };
+    }
 }
 
 /**
  * The latest time each muscle was worked at each engagement. A muscle an exercise tags as both
  * counts as primary, matching how volume is credited.
  */
-function lastTrainedByMuscle(history: TrainedExercise[]): Map<MuscleGroup, MuscleLastTrained> {
+function lastTrainedByMuscle(history: Iterable<TrainedExercise>): Map<MuscleGroup, MuscleLastTrained> {
     const byMuscle = new Map<MuscleGroup, MuscleLastTrained>();
 
     for (const exercise of history) {

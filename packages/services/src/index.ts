@@ -17,9 +17,8 @@ export {
 export * from './oauth/index.js';
 export {
     RECOMMENDATION_SCORE_MAX_AGE_HOURS,
-    recalculateRoutineRecommendations,
-    recalculateStaleRoutineRecommendations,
-} from './routine-recommendations.js';
+    RoutineRecommendationsService,
+} from './routine-recommendations.service.js';
 export {
     RoutinesService,
     type PaginatedRoutines,

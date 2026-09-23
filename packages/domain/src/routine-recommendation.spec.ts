@@ -35,9 +35,13 @@ function candidate(overrides: Partial<RecommendationCandidate> & { id: string })
     };
 }
 
+function scoresById(input: Parameters<typeof scoreRoutineRecommendations>[0]): Map<string, number | null> {
+    return new Map([...scoreRoutineRecommendations(input)].map((entry) => [entry.routineId, entry.score]));
+}
+
 describe('scoreRoutineRecommendations', () => {
     it('gives the full rest share to a routine whose muscles have never been trained', () => {
-        const scores = scoreRoutineRecommendations({
+        const scores = scoresById({
             candidates: [candidate({ id: 'legs', primaryMuscles: [MuscleGroup.Quads] })],
             history: [],
             now: NOW,
@@ -47,7 +51,7 @@ describe('scoreRoutineRecommendations', () => {
     });
 
     it('recommends the routine whose muscles have rested longest', () => {
-        const scores = scoreRoutineRecommendations({
+        const scores = scoresById({
             candidates: [
                 candidate({ id: 'push', primaryMuscles: [MuscleGroup.Chest] }),
                 candidate({ id: 'legs', primaryMuscles: [MuscleGroup.Quads] }),
@@ -65,7 +69,7 @@ describe('scoreRoutineRecommendations', () => {
     });
 
     it('treats a muscle as fully rested once the recovery window has passed', () => {
-        const scores = scoreRoutineRecommendations({
+        const scores = scoresById({
             candidates: [candidate({ id: 'push', primaryMuscles: [MuscleGroup.Chest] })],
             history: [trained({ primary: [MuscleGroup.Chest], at: daysAgo(30) })],
             now: NOW,
@@ -75,7 +79,7 @@ describe('scoreRoutineRecommendations', () => {
     });
 
     it('tires a muscle worked as secondary only by half', () => {
-        const scores = scoreRoutineRecommendations({
+        const scores = scoresById({
             candidates: [candidate({ id: 'arms', primaryMuscles: [MuscleGroup.Triceps] })],
             history: [trained({ primary: [MuscleGroup.Chest], secondary: [MuscleGroup.Triceps], at: NOW })],
             now: NOW,
@@ -85,7 +89,7 @@ describe('scoreRoutineRecommendations', () => {
     });
 
     it('takes the less rested of a muscle’s primary and secondary work', () => {
-        const scores = scoreRoutineRecommendations({
+        const scores = scoresById({
             candidates: [candidate({ id: 'arms', primaryMuscles: [MuscleGroup.Triceps] })],
             history: [
                 trained({ primary: [MuscleGroup.Triceps], at: daysAgo(3.5) }),
@@ -101,7 +105,7 @@ describe('scoreRoutineRecommendations', () => {
     it('lets a routine’s secondary muscles weigh less than its primary ones', () => {
         const history = [trained({ primary: [MuscleGroup.Triceps], at: NOW })];
 
-        const scores = scoreRoutineRecommendations({
+        const scores = scoresById({
             candidates: [
                 candidate({
                     id: 'bench',
@@ -120,7 +124,7 @@ describe('scoreRoutineRecommendations', () => {
     });
 
     it('rewards the routines done most often, relative to the most-done one', () => {
-        const scores = scoreRoutineRecommendations({
+        const scores = scoresById({
             candidates: [
                 candidate({ id: 'favourite', primaryMuscles: [MuscleGroup.Chest], recentCompletions: 10 }),
                 candidate({ id: 'sometimes', primaryMuscles: [MuscleGroup.Lats], recentCompletions: 5 }),
@@ -136,13 +140,13 @@ describe('scoreRoutineRecommendations', () => {
     });
 
     it('scores a routine with untagged exercises in the middle of the rest range', () => {
-        const scores = scoreRoutineRecommendations({ candidates: [candidate({ id: 'misc' })], history: [], now: NOW });
+        const scores = scoresById({ candidates: [candidate({ id: 'misc' })], history: [], now: NOW });
 
         expect(scores.get('misc')).toBe(35);
     });
 
     it('does not score an excluded or empty routine', () => {
-        const scores = scoreRoutineRecommendations({
+        const scores = scoresById({
             candidates: [
                 candidate({ id: 'excluded', primaryMuscles: [MuscleGroup.Chest], excludedFromRecommendations: true }),
                 candidate({ id: 'empty', exerciseCount: 0 }),
@@ -153,5 +157,35 @@ describe('scoreRoutineRecommendations', () => {
 
         expect(scores.get('excluded')).toBeNull();
         expect(scores.get('empty')).toBeNull();
+    });
+
+    it('reads history from a generator, once', () => {
+        let reads = 0;
+        function* history(): Generator<TrainedExercise> {
+            reads += 1;
+            yield trained({ primary: [MuscleGroup.Chest], at: NOW });
+        }
+
+        const scores = scoresById({
+            candidates: [candidate({ id: 'push', primaryMuscles: [MuscleGroup.Chest] })],
+            history: history(),
+            now: NOW,
+        });
+
+        expect(scores.get('push')).toBe(0);
+        expect(reads).toBe(1);
+    });
+
+    it('yields one recommendation per candidate, in order', () => {
+        const recommendations = scoreRoutineRecommendations({
+            candidates: [candidate({ id: 'b' }), candidate({ id: 'a', exerciseCount: 0 })],
+            history: [],
+            now: NOW,
+        });
+
+        expect([...recommendations]).toEqual([
+            { routineId: 'b', score: 35 },
+            { routineId: 'a', score: null },
+        ]);
     });
 });
