@@ -1,5 +1,5 @@
 import { Inject, Injectable, type CanActivate, type ExecutionContext } from '@nestjs/common';
-import { AppError, EntityNotFoundError, UnauthorizedError } from '@app/errors';
+import { AppError, EntityNotFoundError, SessionUnavailableError, UnauthorizedError } from '@app/errors';
 import type { McpTokenService, McpTokenValidationResult } from '@app/auth';
 import type { FastifyRequest } from 'fastify';
 import type { AuthenticatedRequest } from './session-auth.guard.js';
@@ -82,9 +82,9 @@ export class McpBearerAuthGuard implements CanActivate {
     }
 
     /**
-     * A store failure must not escape as a 500 - this guard promises 401 on every failure path,
-     * for the same reason `SessionAuthGuard.resolveSession` does. A typed `AppError` is passed
-     * through rather than downgraded.
+     * A store that did not answer is a 503, never a 401: the token may be perfectly valid, and a 401
+     * tells an MCP client to discard it. A 503 is what `@app/api-client` retries while a sleeping
+     * database wakes. A typed `AppError` is passed through rather than downgraded.
      */
     private async validate(token: string): Promise<McpTokenValidationResult | null> {
         try {
@@ -92,7 +92,7 @@ export class McpBearerAuthGuard implements CanActivate {
         } catch (error) {
             if (error instanceof AppError) throw error;
 
-            throw new UnauthorizedError();
+            throw new SessionUnavailableError();
         }
     }
 }

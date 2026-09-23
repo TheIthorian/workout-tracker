@@ -302,6 +302,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@app/api-client':
+        specifier: workspace:*
+        version: link:../../packages/api-client
       '@app/domain':
         specifier: workspace:*
         version: link:../../packages/domain

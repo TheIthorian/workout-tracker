@@ -14,6 +14,7 @@
         "format": "oxfmt --config ../../.oxfmtrc.json ."
     },
     "dependencies": {
+        "@app/api-client": "workspace:*",
         "@app/domain": "workspace:*",
         "@hookform/resolvers": "3.10.0",
         "@posthog/react": "1.8.1",

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { EntityNotFoundError, TooManyRequestsError, UnauthorizedError } from '@app/errors';
+import { EntityNotFoundError, SessionUnavailableError, TooManyRequestsError, UnauthorizedError } from '@app/errors';
 import { McpBearerAuthGuard } from './mcp-bearer-auth.guard.js';
 
 const validated = { userId: 'user-1', workspaceId: 'ws-1' };
@@ -56,14 +56,14 @@ describe('McpBearerAuthGuard', () => {
         await expect(guard.canActivate(context as never)).rejects.toThrow(UnauthorizedError);
     });
 
-    // A store failure must not escape as an unhandled 500 - this guard promises 401 on every
-    // failure path, matching SessionAuthGuard's own contract.
-    it('throws UnauthorizedError, not the original error, when validation rejects', async () => {
+    // A sleeping database refuses the first connection after idling. Answering that with a 401
+    // would make the MCP client drop a valid token; a 503 is what `@app/api-client` retries.
+    it('throws SessionUnavailableError, not the original error, when validation rejects', async () => {
         const validateMcpToken = vi.fn().mockRejectedValue(new Error('database unreachable'));
         const guard = new McpBearerAuthGuard({ validateMcpToken } as never);
         const context = contextFor({ authorization: 'Bearer good' });
 
-        await expect(guard.canActivate(context as never)).rejects.toBeInstanceOf(UnauthorizedError);
+        await expect(guard.canActivate(context as never)).rejects.toBeInstanceOf(SessionUnavailableError);
     });
 
     // The one property that distinguishes this guard's `validate` from a blanket try/catch: a
