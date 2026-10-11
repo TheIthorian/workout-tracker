@@ -34,7 +34,7 @@
         "better-auth": "1.7.1",
         "dotenv": "17.4.2",
         "drizzle-orm": "0.45.2",
-        "fastify": "5.12.0",
+        "fastify": "5.12.5",
         "joi": "18.2.3",
         "reflect-metadata": "0.2.2",
         "rxjs": "7.8.2",
@@ -50,6 +50,6 @@
         "pino": "10.3.1",
         "typescript": "6.0.3",
         "unplugin-swc": "1.5.11",
-        "vitest": "4.1.10"
+        "vitest": "4.1.11"
     }
 }
