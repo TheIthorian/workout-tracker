@@ -18,12 +18,12 @@
         "format": "oxfmt --config ../../.oxfmtrc.json ."
     },
     "dependencies": {
-        "undici": "8.10.2"
+        "undici": "8.11.0"
     },
     "devDependencies": {
         "@app/tsconfig": "workspace:*",
         "@types/node": "26.2.0",
         "typescript": "6.0.3",
-        "vitest": "4.1.10"
+        "vitest": "5.0.3"
     }
 }
