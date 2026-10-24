@@ -1,4 +1,4 @@
-import { bucket, defineRailway, github, postgres, preserve, project, service, volume } from 'railway/iac';
+import { defineRailway, github, postgres, preserve, project, service, volume } from 'railway/iac';
 
 // Infrastructure as code for this project's Railway deployment. `preserve()` keeps whatever value
 // Railway already holds for a variable, so no secret is ever written into this file.
@@ -24,9 +24,6 @@ export default defineRailway(() => {
         region,
         sizeMB: 5000,
     });
-
-    // Only needed if your app stores files. Delete it, and the S3_* variables below, if not.
-    const fileBucket = bucket('app-bucket', { region: 'ams' });
 
     const api = service('api', {
         source: repo,
@@ -105,6 +102,6 @@ export default defineRailway(() => {
     });
 
     return project('workout-tracker', {
-        resources: [api, mcp, database, postgresVolume, fileBucket],
+        resources: [api, mcp, database, postgresVolume],
     });
 });
