@@ -11,7 +11,7 @@
         "format": "oxfmt --config .oxfmtrc.json '*.md' 'docs/**/*.md' && turbo format"
     },
     "devDependencies": {
-        "fastify": "5.12.0",
+        "fastify": "5.12.5",
         "oxfmt": "0.60.0",
         "oxlint": "1.75.0",
         "railway": "3.11.0",

@@ -20,13 +20,13 @@
         "@app/logger": "workspace:*",
         "@app/nest-common": "workspace:*",
         "@fastify/cors": "11.3.0",
-        "@modelcontextprotocol/sdk": "1.30.0",
+        "@modelcontextprotocol/sdk": "1.32.0",
         "@nestjs/common": "11.1.28",
         "@nestjs/core": "11.1.28",
-        "@nestjs/platform-fastify": "11.1.28",
+        "@nestjs/platform-fastify": "11.2.4",
         "dotenv": "17.4.2",
-        "fastify": "5.12.0",
-        "joi": "18.2.3",
+        "fastify": "5.12.5",
+        "joi": "18.2.9",
         "reflect-metadata": "0.2.2",
         "rxjs": "7.8.2",
         "zod": "4.4.3"
@@ -42,6 +42,6 @@
         "pino": "10.3.1",
         "typescript": "6.0.3",
         "unplugin-swc": "1.5.11",
-        "vitest": "4.1.10"
+        "vitest": "5.0.5"
     }
 }
